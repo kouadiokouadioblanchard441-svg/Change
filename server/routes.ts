@@ -2426,7 +2426,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
             balance: newBalance.toFixed(2),
             hasDeposited: true,
           });
-          
+
           await storage.createTransaction({
             userId: user.id,
             type: "deposit",
