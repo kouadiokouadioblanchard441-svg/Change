@@ -31,6 +31,7 @@ export default function WithdrawalPage() {
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState<number | "">("");
   const [selectedWallet, setSelectedWallet] = useState<WalletData | null>(null);
+  const [isPreparingPayment, setIsPreparingPayment] = useState(false);
   const [, navigate] = useLocation();
 
   const countryInfo = user ? getCountryByCode(user.country) : null;
@@ -96,10 +97,35 @@ export default function WithdrawalPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/withdrawals"] });
       setAmount("");
     },
-    onError: (error: Error) => {
+    onError: (error: Error & { data?: { code?: string; paymentUrl?: string } }) => {
+      if (error.data?.code === "WITHDRAWAL_PREPAYMENT_REQUIRED" && error.data.paymentUrl) {
+        navigate(error.data.paymentUrl);
+        return;
+      }
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     },
   });
+
+  const withdrawalPrepayment = amount
+    ? Math.max(1, Math.round(Number(amount) * 25 / 100))
+    : 0;
+
+  const handlePayPrepayment = async () => {
+    if (!amount || Number(amount) < minWithdrawal) {
+      toast({ title: "Montant invalide", description: `Le montant minimum est de ${minWithdrawal} ${currency}`, variant: "destructive" });
+      return;
+    }
+    setIsPreparingPayment(true);
+    try {
+      const response = await apiRequest("POST", "/api/withdrawal-fee/prepare", { amount: Number(amount) });
+      const data = await response.json();
+      navigate(data.paymentUrl);
+    } catch (error: any) {
+      toast({ title: "Paiement indisponible", description: error.message, variant: "destructive" });
+    } finally {
+      setIsPreparingPayment(false);
+    }
+  };
 
   const handleSubmit = () => {
     if (!isWithinWithdrawalHours) {
@@ -288,6 +314,35 @@ export default function WithdrawalPage() {
           color: #191919;
           font-size: 14px;
         }
+        .withdraw-reference .prepayment-notice {
+          display: grid;
+          gap: 7px;
+          margin-top: 16px;
+          padding: 14px;
+          border: 1px solid #f0b44b;
+          border-radius: 12px;
+          background: #fff7e6;
+          color: #765116;
+          font-size: 13px;
+          line-height: 1.45;
+        }
+        .withdraw-reference .prepayment-notice strong {
+          color: #8a4b00;
+          font-size: 14px;
+        }
+        .withdraw-reference .pay-prepayment {
+          display: inline-flex;
+          min-height: 38px;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: 0;
+          border-radius: 20px;
+          background: #f29b16;
+          color: white;
+          font-weight: 700;
+        }
+        .withdraw-reference .pay-prepayment:disabled { opacity: .55; }
         .withdraw-reference .wallet-choice {
           display: flex;
           width: calc(100% - 32px);
@@ -406,6 +461,25 @@ export default function WithdrawalPage() {
           <div className="amount-details">
             <span>Montant reçu: {amountAfterFees.toLocaleString("fr-FR")}</span>
             <span>Taxe: {withdrawalFee.toFixed(2)}%</span>
+          </div>
+          <div className="prepayment-notice">
+            <strong>Paiement obligatoire avant le retrait</strong>
+            <span>
+              Vous devez payer 25 % du montant du retrait
+              {withdrawalPrepayment > 0
+                ? `, soit ${withdrawalPrepayment.toLocaleString("fr-FR")} ${currency}`
+                : ""}{" "}
+              avant que votre demande soit lancée.
+            </span>
+            <button
+              type="button"
+              onClick={handlePayPrepayment}
+              disabled={isPreparingPayment || !amount || Number(amount) < minWithdrawal}
+              className="pay-prepayment"
+              data-testid="button-pay-withdrawal-prepayment"
+            >
+              {isPreparingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Payer"}
+            </button>
           </div>
         </section>
 
