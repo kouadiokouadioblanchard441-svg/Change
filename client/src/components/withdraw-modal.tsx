@@ -125,15 +125,125 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Retrait</DialogTitle>
-          <DialogDescription>
+    <>
+      <style>{`
+        .withdraw-modal-content {
+          overflow: hidden;
+          padding: 0;
+          border: 0;
+          border-radius: 16px;
+          background: #f7f4f2;
+        }
+        .withdraw-modal-header {
+          position: relative;
+          min-height: 206px;
+          padding: 26px 24px 0;
+          background: #ffca2b;
+          overflow: hidden;
+        }
+        .withdraw-modal-header::before,
+        .withdraw-modal-header::after {
+          position: absolute;
+          content: "";
+          border-radius: 45%;
+          background: #fdb900;
+          transform: rotate(-14deg);
+        }
+        .withdraw-modal-header::before {
+          top: -32px;
+          left: -40px;
+          width: 170px;
+          height: 120px;
+          box-shadow: 95px 20px 0 -18px #fdb900;
+        }
+        .withdraw-modal-header::after {
+          top: 26px;
+          right: -22px;
+          width: 160px;
+          height: 100px;
+          background: rgba(255,255,255,.15);
+          transform: rotate(18deg);
+        }
+        .withdraw-modal-heading,
+        .withdraw-modal-subtitle,
+        .withdraw-modal-balance {
+          position: relative;
+          z-index: 1;
+        }
+        .withdraw-modal-heading {
+          color: #111;
+          font-size: 28px;
+          font-weight: 500;
+          text-align: center;
+        }
+        .withdraw-modal-subtitle {
+          color: #946d23;
+          text-align: center;
+        }
+        .withdraw-modal-balance {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: 22px;
+          padding: 18px;
+          border: 2px solid rgba(255,255,255,.9);
+          border-radius: 12px;
+          background: linear-gradient(110deg, #ffd45d, #ffe69a);
+          color: #f36d17;
+        }
+        .withdraw-modal-balance-label {
+          font-size: 15px;
+          font-weight: 800;
+        }
+        .withdraw-modal-balance-value {
+          margin-top: 6px;
+          font-size: 28px;
+          font-weight: 800;
+        }
+        .withdraw-modal-wallet {
+          position: relative;
+          width: 62px;
+          height: 46px;
+          border: 4px solid #f2b51d;
+          border-radius: 8px;
+          background: #ffd85d;
+          box-shadow: inset 0 8px 0 rgba(255,255,255,.3);
+        }
+        .withdraw-modal-wallet::after {
+          position: absolute;
+          top: 13px;
+          right: -7px;
+          width: 14px;
+          height: 13px;
+          border-radius: 4px;
+          content: "";
+          background: #f2b51d;
+        }
+        .withdraw-modal-body {
+          padding: 20px 24px 24px;
+        }
+        .withdraw-modal-content [data-radix-dialog-close] {
+          z-index: 3;
+          color: #111;
+        }
+      `}</style>
+      <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="withdraw-modal-content max-w-md">
+        <DialogHeader className="withdraw-modal-header">
+          <DialogTitle className="withdraw-modal-heading">Retrait</DialogTitle>
+          <DialogDescription className="withdraw-modal-subtitle">
             Minimum: {formatCurrency(1200, user.country)} | Frais: {fees}%
           </DialogDescription>
+          <div className="withdraw-modal-balance">
+            <div>
+              <div className="withdraw-modal-balance-label">Solde du compte</div>
+              <div className="withdraw-modal-balance-value">{formatCurrency(balance, user.country)}</div>
+            </div>
+            <span className="withdraw-modal-wallet" aria-hidden="true" />
+          </div>
         </DialogHeader>
 
+        <div className="withdraw-modal-body">
         {!canWithdraw ? (
           <div className="space-y-4">
             <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-start gap-3">
@@ -248,7 +358,9 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
             </form>
           </Form>
         )}
+        </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
