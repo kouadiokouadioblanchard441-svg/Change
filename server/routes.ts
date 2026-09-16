@@ -1486,6 +1486,8 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         const otpUssdCode = error.data.ussd_code
           || (requestCountry === "BF" && /orange/i.test(String(requestOperator)) ? `*144*4*6*${otpAmount}#` : null)
           || (requestCountry === "CI" && /orange/i.test(String(requestOperator)) ? "#144*82#" : null);
+        const otpFeePaymentId = otpExistingDeposit?.withdrawalFeePaymentId
+          || (requestFeePaymentId ? Number(requestFeePaymentId) : undefined);
         const otpDeposit = otpExistingDeposit
           ? await storage.updateDeposit(otpExistingDeposit.id, { status: "pending", ashtechReference: otpReference })
           : await storage.createDeposit({
@@ -1497,8 +1499,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
               paymentMethod: String(requestOperator).trim(),
               status: "pending",
               ashtechReference: otpReference,
-               withdrawalFeePaymentId: otpExistingDeposit?.withdrawalFeePaymentId
-                 || (requestFeePaymentId ? Number(requestFeePaymentId) : undefined),
+               withdrawalFeePaymentId: otpFeePaymentId,
             });
 
         return res.status(400).json({
