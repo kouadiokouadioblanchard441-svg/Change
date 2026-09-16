@@ -6,9 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { getCountryByCode } from "@/lib/countries";
-import withdrawalReference from "@assets/IMG-20260821-WA0161_1787357237688.jpg";
 import walletIcon from "@assets/téléchargement_(80)_1787363581764.png";
-import historyIcon from "@assets/20260410_193219_1787363717022.png";
 
 interface WalletData {
   id: number;
@@ -195,35 +193,142 @@ export default function WithdrawalPage() {
           background: rgba(255,255,255,.24);
         }
         .withdraw-reference .history-icon {
+          position: relative;
           width: 30px;
           height: 30px;
+          border: 2px solid #3174d1;
+          border-radius: 4px;
+          background: transparent;
+        }
+        .withdraw-reference .history-icon::before {
+          position: absolute;
+          top: 6px;
+          left: 5px;
+          width: 16px;
+          height: 2px;
+          content: "";
           background: #3174d1;
-          -webkit-mask-image: url("${historyIcon}");
-          mask-image: url("${historyIcon}");
-          -webkit-mask-position: center;
-          mask-position: center;
-          -webkit-mask-repeat: no-repeat;
-          mask-repeat: no-repeat;
-          -webkit-mask-size: contain;
-          mask-size: contain;
+          box-shadow: 0 6px 0 #3174d1;
+        }
+        .withdraw-reference .history-icon::after {
+          position: absolute;
+          right: -7px;
+          bottom: -7px;
+          width: 11px;
+          height: 11px;
+          border: 2px solid #3174d1;
+          border-radius: 50%;
+          content: "";
+          background: #ffcf3e;
         }
         .withdraw-reference .hero-art {
+          position: relative;
           width: 100%;
           height: min(36.65vw, 183px);
           overflow: hidden;
         }
-        .withdraw-reference .hero-art img {
-          width: 100%;
-          height: auto;
-          transform: translateY(-10.55%);
-          pointer-events: none;
+        .withdraw-reference .hero-art::before,
+        .withdraw-reference .hero-art::after {
+          position: absolute;
+          content: "";
+          border-radius: 42% 58% 52% 48%;
+          background: #fdb900;
+          transform: rotate(-12deg);
+        }
+        .withdraw-reference .hero-art::before {
+          top: -24px;
+          left: -25px;
+          width: 168px;
+          height: 128px;
+          box-shadow:
+            84px 23px 0 -20px #fdb900,
+            330px 18px 0 5px rgba(255,255,255,.14);
+        }
+        .withdraw-reference .hero-art::after {
+          top: 33px;
+          right: 58px;
+          width: 121px;
+          height: 92px;
+          background: rgba(255,255,255,.16);
+          transform: rotate(18deg);
+        }
+        .withdraw-reference .hero-pattern {
+          position: absolute;
+          top: 10px;
+          right: -24px;
+          width: 205px;
+          height: 145px;
+          border-radius: 50%;
+          background: rgba(255,255,255,.12);
+          transform: rotate(-18deg);
+        }
+        .withdraw-reference .withdraw-title {
+          position: absolute;
+          z-index: 2;
+          top: 82px;
+          right: 0;
+          left: 0;
+          margin: 0;
+          color: #111;
+          font-size: 28px;
+          font-weight: 500;
+          line-height: 1;
+          text-align: center;
+        }
+        .withdraw-reference .receipt-icon {
+          position: absolute;
+          z-index: 2;
+          top: 15px;
+          right: 25px;
+          width: 25px;
+          height: 31px;
+          border: 3px solid #40b9cf;
+          border-radius: 4px;
+          transform: rotate(2deg);
+        }
+        .withdraw-reference .receipt-icon::before,
+        .withdraw-reference .receipt-icon::after {
+          position: absolute;
+          left: 5px;
+          content: "";
+          width: 10px;
+          height: 3px;
+          border-radius: 3px;
+          background: #40b9cf;
+        }
+        .withdraw-reference .receipt-icon::before {
+          top: 8px;
+          box-shadow: 0 7px 0 #40b9cf;
+        }
+        .withdraw-reference .receipt-icon::after {
+          top: 20px;
+          left: 12px;
+          width: 6px;
+          height: 6px;
+          border: 2px solid #40b9cf;
+          border-radius: 50%;
+          background: transparent;
         }
         .withdraw-reference .withdraw-back {
           position: absolute;
+          z-index: 3;
           top: 85px;
           left: 24px;
           width: 40px;
           height: 40px;
+          border: 0;
+          background: transparent;
+        }
+        .withdraw-reference .withdraw-back::before {
+          position: absolute;
+          top: 14px;
+          left: 9px;
+          width: 14px;
+          height: 14px;
+          border-bottom: 3px solid #111;
+          border-left: 3px solid #111;
+          content: "";
+          transform: rotate(45deg);
         }
         .withdraw-reference .balance-card {
           position: absolute;
