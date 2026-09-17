@@ -3,6 +3,11 @@ name: AshtechPay Burkina flow
 description: AshtechPay's documented Burkina Faso operators and OTP retry contract.
 ---
 
+AshtechPay Direct API uses `https://www.ashtechpay.com` and an `ak_...` key for
+`/v1/*`; the project accepts both the documented `ASHTECH_API_KEY` name and its
+existing `ASHTECHPAY_API_KEY` compatibility name. Webhooks use HMAC-SHA256 over
+`timestamp + "." + raw_request_body` with the `X-Ashtech-*` headers.
+
 AshtechPay documents Burkina Faso as `BF` with currency `XOF`, using the exact
 operator names `Moov Money` and `Orange Money`. Orange Money Burkina uses an
 OTP USSD flow and returns a provider reference when the first request responds

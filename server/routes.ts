@@ -53,6 +53,7 @@ import {
   isAshtechConfigured,
   mapAshtechStatus,
   AshtechApiError,
+  verifyAshtechWebhookSignature,
 } from "./ashtechpay";
 import {
   formatTelegramValue,
@@ -1388,6 +1389,12 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (existingDeposit && existingDeposit.userId !== user.id) {
         return res.status(403).json({ message: "Accès refusé" });
       }
+      if (existingDeposit?.status === "approved") {
+        return res.status(409).json({ message: "Ce dépôt est déjà confirmé" });
+      }
+      if (existingDeposit?.status === "rejected") {
+        return res.status(409).json({ message: "Ce dépôt a déjà été refusé" });
+      }
       const withdrawalFeePayment = existingDeposit?.withdrawalFeePaymentId
         ? await validateWithdrawalFeePayment(user.id, existingDeposit.withdrawalFeePaymentId, numericAmount)
         : feePaymentId !== undefined && feePaymentId !== null
@@ -1400,6 +1407,26 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         return res.status(400).json({ message: "Pays, opérateur et numéro requis" });
       }
 
+      const ashtechCountries = await ashtechGetCountries();
+      const countryCode = String(country).trim().toUpperCase();
+      const catalogCountry = ashtechCountries.find(
+        (entry) => entry.code.toUpperCase() === countryCode,
+      );
+      if (!catalogCountry) {
+        return res.status(400).json({ message: "Pays non pris en charge par AshtechPay" });
+      }
+
+      const requestedOperator = String(operator).trim();
+      const operatorIsActive = catalogCountry.operators.some((entry) => {
+        const operatorValue = typeof entry === "string"
+          ? entry
+          : entry.code || entry.id || entry.name || "";
+        return operatorValue.trim().toLowerCase() === requestedOperator.toLowerCase();
+      });
+      if (!operatorIsActive) {
+        return res.status(400).json({ message: "Opérateur non disponible pour ce pays" });
+      }
+
       const generatedReference = `paget-studio-${Date.now()}-${user.id}`;
       const requestedAshtechReference = typeof requestedReference === "string"
         ? requestedReference.trim()
@@ -1410,13 +1437,22 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const reference = existingDeposit?.ashtechReference?.trim()
         || requestedAshtechReference
         || generatedReference;
-      const notifyBaseUrl = process.env.PUBLIC_APP_URL || "https://Tonnew.top";
+      const notifyBaseUrl = (
+        process.env.ASHTECHPAY_WEBHOOK_BASE_URL ||
+        process.env.PUBLIC_APP_URL ||
+        getPublicBaseUrl(req)
+      ).trim().replace(/\/+$/, "");
+      if (!/^https:\/\//i.test(notifyBaseUrl)) {
+        return res.status(400).json({
+          message: "AshtechPay exige une URL webhook publique en HTTPS",
+        });
+      }
       const result = await ashtechCollect({
         amount: numericAmount,
-        currency: country === "CM" ? "XAF" : country === "GN" ? "GNF" : country === "CD" ? "CDF" : "XOF",
+        currency: catalogCountry.currency,
         phone: String(phone).trim(),
-        operator: String(operator).trim(),
-        countryCode: String(country).trim().toUpperCase(),
+        operator: requestedOperator,
+        countryCode,
         reference,
         notifyUrl: `${notifyBaseUrl}/api/webhooks/ashtechpay`,
         ...(otp ? { otp: String(otp).trim() } : {}),
@@ -1457,6 +1493,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         requiresOtp: Boolean(result.ussd_code || result.message?.toLowerCase().includes("otp")),
         ussdCode: result.ussd_code || null,
         waveUrl: result.wave_url || null,
+        flow: result.flow || null,
         message: result.message || null,
       });
     } catch (error: any) {
@@ -1778,32 +1815,66 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     }
   });
 
-  // Webhook (HMAC verified)
-  // AshtechPay does not document a webhook signature. This endpoint therefore
-  // never trusts the posted event/status: it only uses it to locate the
-  // deposit, then verifies the transaction through the authenticated API.
+  // AshtechPay Direct API webhook (HMAC-SHA256 verified).
   app.post("/api/webhooks/ashtechpay", async (req, res) => {
     try {
       if (!isAshtechConfigured()) {
         return res.status(503).json({ message: "AshtechPay non configuré" });
       }
+
+      const settings = await storage.getSettings();
+      const webhookSecret =
+        process.env.ASHTECHPAY_WEBHOOK_SECRET ||
+        process.env.ASHTECH_WEBHOOK_SECRET ||
+        settings.ashtechWebhookSecret ||
+        "";
+      if (!webhookSecret) {
+        console.error("[ashtechpay webhook] Webhook secret non configuré");
+        return res.status(503).json({ message: "Webhook AshtechPay non configuré" });
+      }
+
+      const rawBody = (req as any).rawBody as Buffer | undefined;
+      const timestamp = String(req.headers["x-ashtech-timestamp"] || "");
+      const signature = String(req.headers["x-ashtech-signature"] || "");
+      const timestampSeconds = Number(timestamp);
+      const timestampIsFresh =
+        Number.isFinite(timestampSeconds) &&
+        Math.abs(Math.floor(Date.now() / 1000) - timestampSeconds) <= 5 * 60;
+      if (
+        !rawBody ||
+        !timestampIsFresh ||
+        !verifyAshtechWebhookSignature(rawBody, timestamp, signature, webhookSecret)
+      ) {
+        console.warn("[ashtechpay webhook] Signature invalide ou horodatage expiré");
+        return res.status(401).json({ message: "Signature invalide" });
+      }
+
       const payload = req.body || {};
       const reference = String(payload.reference || payload.data?.reference || "").trim();
       const transactionId = String(
         payload.transaction_id || payload.transactionId || payload.data?.transaction_id || payload.data?.transactionId || "",
       ).trim();
+      const event = String(payload.event || "").toLowerCase();
+      const rawStatus = String(payload.status || payload.data?.status || "").toLowerCase();
+
+      // Acknowledge only after authenticating the delivery. The fulfillment
+      // itself remains idempotent through claimDepositApproval.
+      res.status(200).json({ received: true });
+
       let deposit = transactionId
         ? await storage.getDepositByAshtechTransactionId(transactionId)
         : undefined;
       if (!deposit && reference) {
         deposit = await storage.getDepositByAshtechReference(reference);
       }
-      if (!deposit) return res.status(202).json({ received: true });
-      if (deposit.status === "approved" || deposit.status === "rejected") {
-        return res.json({ received: true, status: deposit.status });
-      }
-      if (!deposit.ashtechTransactionId) return res.status(202).json({ received: true });
+      if (!deposit || deposit.status === "approved" || deposit.status === "rejected") return;
 
+      if (event === "payment.failed" || ["failed", "expired", "cancelled", "canceled", "rejected"].includes(rawStatus)) {
+        await storage.updateDeposit(deposit.id, { status: "rejected", processedAt: new Date() });
+        return;
+      }
+
+      if (!deposit.ashtechTransactionId) return;
       const verified = await ashtechGetTransaction(deposit.ashtechTransactionId);
       const verifiedStatus = mapAshtechStatus(verified.status);
       if (verifiedStatus === "approved") {
@@ -1812,10 +1883,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       } else if (verifiedStatus === "rejected") {
         await storage.updateDeposit(deposit.id, { status: "rejected", processedAt: new Date() });
       }
-      res.json({ received: true, status: verifiedStatus });
     } catch (error: any) {
       console.error("[ashtechpay webhook] verification error:", error);
-      res.status(502).json({ message: "Vérification AshtechPay indisponible" });
+      // The delivery was authenticated and already acknowledged. Reconciliation
+      // will retry the provider status check independently.
     }
   });
 

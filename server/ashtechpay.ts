@@ -1,10 +1,15 @@
-const ASHTECHPAY_API_BASE = process.env.ASHTECHPAY_API_BASE || "https://ashtechpay.top";
+import crypto from "node:crypto";
+
+const ASHTECHPAY_API_BASE =
+  process.env.ASHTECHPAY_API_BASE ||
+  process.env.ASHTECH_API_BASE ||
+  "https://www.ashtechpay.com";
 
 export interface AshtechCountry {
   code: string;
   name: string;
   currency: string;
-  operators: string[];
+  operators: Array<string | { code?: string; id?: string; name?: string }>;
 }
 
 export interface AshtechCollectParams {
@@ -32,6 +37,7 @@ export interface AshtechCollectResponse {
   wave_url?: string;
   ussd_code?: string | null;
   message?: string;
+  flow?: string;
 }
 
 export class AshtechApiError extends Error {
@@ -47,8 +53,10 @@ export class AshtechApiError extends Error {
 }
 
 function getApiKey() {
-  const key = process.env.ASHTECHPAY_API_KEY;
-  if (!key) throw new Error("AshtechPay non configuré : ASHTECHPAY_API_KEY est manquante");
+  const key = process.env.ASHTECH_API_KEY || process.env.ASHTECHPAY_API_KEY;
+  if (!key) {
+    throw new Error("AshtechPay non configuré : ASHTECH_API_KEY est manquante");
+  }
   return key;
 }
 
@@ -101,5 +109,26 @@ export function mapAshtechStatus(status: string | undefined): "pending" | "appro
 }
 
 export function isAshtechConfigured() {
-  return Boolean(process.env.ASHTECHPAY_API_KEY);
+  return Boolean(process.env.ASHTECH_API_KEY || process.env.ASHTECHPAY_API_KEY);
+}
+
+export function verifyAshtechWebhookSignature(
+  rawBody: string | Buffer,
+  timestamp: string,
+  signature: string,
+  secret: string,
+) {
+  if (!rawBody || !timestamp || !signature || !secret) return false;
+  const receivedHex = signature.replace(/^sha256=/i, "").trim();
+  if (!/^[a-f0-9]{64}$/i.test(receivedHex)) return false;
+
+  const expectedHex = crypto
+    .createHmac("sha256", secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest("hex");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(receivedHex, "hex"),
+    Buffer.from(expectedHex, "hex"),
+  );
 }
