@@ -183,7 +183,7 @@ export default function WithdrawalPage() {
         .withdraw-reference .withdraw-hero {
           position: relative;
           box-sizing: border-box;
-          min-height: 430px;
+          min-height: 406px;
           padding: 0 16px 20px;
           background: #fff8f2;
           border-bottom: 2px solid #111827;
@@ -341,7 +341,7 @@ export default function WithdrawalPage() {
         .withdraw-reference .amount-panel {
           box-sizing: border-box;
           min-height: 154px;
-          padding: 20px 16px 18px;
+          padding: 12px 16px 18px;
           background: #fff;
           border-bottom: 2px solid #111827;
         }
@@ -517,7 +517,7 @@ export default function WithdrawalPage() {
         }
         .withdraw-reference .submit:disabled { opacity: .6; }
         @media (max-width: 360px) {
-          .withdraw-reference .withdraw-hero { min-height: 414px; padding-right: 12px; padding-left: 12px; }
+          .withdraw-reference .withdraw-hero { min-height: 384px; padding-right: 12px; padding-left: 12px; }
           .withdraw-reference .history-button { right: 12px; }
           .withdraw-reference .withdraw-back { left: 12px; }
           .withdraw-reference .hero-art { height: 154px; }
