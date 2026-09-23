@@ -3,8 +3,8 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
-import { PlugZap, Send } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Send } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import "./home.css";
 
 import noticeBell from "@/assets/notice-bell.png";
@@ -98,7 +98,6 @@ export default function HomePage() {
   const totalEarnings = Number.parseFloat(user.totalEarnings || "0");
   const groupLink = settings?.groupLink || "";
   const popupMessage = settings?.welcomeText || settings?.noticeText || "Retrouvez les nouveautés et l'assistance ChargePoint dans votre espace.";
-  const popupButtonLabel = settings?.popupButtonLabel || "Rejoindre Telegram";
   const formatMoney = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${currency}`;
   const withdrawnTotal = withdrawals?.filter((item) => item.status === "approved")
     .reduce((sum, item) => sum + (Number.parseFloat(item.amount) || 0), 0);
@@ -209,20 +208,18 @@ export default function HomePage() {
 
       <Dialog open={welcomePopupOpen} onOpenChange={setWelcomePopupOpen}>
         <DialogContent className="cp-dialog">
-          <DialogHeader>
-            <DialogTitle>Message important</DialogTitle>
-          </DialogHeader>
           <div className="cp-dialog-copy">
-            <PlugZap size={28} aria-hidden="true" />
             <p className="cp-dialog-message">{popupMessage}</p>
           </div>
-          {groupLink && (
-            <a className="cp-dialog-link" href={groupLink} target="_blank" rel="noreferrer" onClick={() => setWelcomePopupOpen(false)}>
-              <Send size={16} aria-hidden="true" />
-              {popupButtonLabel}
-            </a>
-          )}
-          <button className="cp-dialog-close" type="button" onClick={() => setWelcomePopupOpen(false)}>Fermer</button>
+          <div className="cp-dialog-actions">
+            {groupLink && (
+              <a className="cp-dialog-telegram" href={groupLink} target="_blank" rel="noreferrer" onClick={() => setWelcomePopupOpen(false)}>
+                <Send size={15} aria-hidden="true" />
+                Telegram
+              </a>
+            )}
+            <button className="cp-dialog-close" type="button" onClick={() => setWelcomePopupOpen(false)}>Sure</button>
+          </div>
         </DialogContent>
       </Dialog>
     </>
