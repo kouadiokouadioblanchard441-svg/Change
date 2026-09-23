@@ -11,18 +11,13 @@ import type { Product } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 import emptyProductsIllustration from "@assets/generated_images/chargepoint-empty-products.png";
-import productImage1 from "@assets/téléchargement_(16)_1784561452683.jpeg";
-import productImage2 from "@assets/téléchargement_(20)_1784561452229.jpeg";
-import productImage3 from "@assets/téléchargement_(19)_1784561452588.jpeg";
-import productImage4 from "@assets/images_(50)_1783210180466.jpeg";
-import productImage5 from "@assets/images_(41)_1783210181134.jpeg";
-import productImage6 from "@assets/images_(49)_1783210181155.jpeg";
-import productImage7 from "@assets/images_(40)_1783210181193.jpeg";
-import productImage8 from "@assets/images_(39)_1783210181215.jpeg";
+import chargepointProduct1 from "@assets/ChargePoint-CPF50-electric-car-fleet-charging-station-EVSE-1_1790160713799.jpg";
+import chargepointProduct2 from "@assets/ChargePoint-Home-Flex-50A-CPH50-app-1280px__29346__78945__7114_1790148214522.png";
+import chargepointProduct3 from "@assets/overview-chargeflex-no-bg.png";
+import chargepointProduct4 from "@assets/overview-cpf50-no-bg.png";
 
 const PRODUCT_IMAGES = [
-  productImage1, productImage2, productImage3, productImage4,
-  productImage5, productImage6, productImage7, productImage8,
+  chargepointProduct1, chargepointProduct2, chargepointProduct3, chargepointProduct4,
 ];
 
 interface ProductWithOwnership extends Product {
@@ -157,7 +152,7 @@ export default function ProductsPage() {
           width: 118px; height: 118px; overflow: hidden; border: 2px solid #ff7a14;
           border-radius: 11px; background: #fff8f2;
         }
-        .cp-product-image img { width: 100%; height: 100%; object-fit: cover; }
+        .cp-product-image img { width: 100%; height: 100%; padding: 7px; object-fit: contain; background: #fff8f2; }
         .cp-product-info { min-width: 0; }
         .cp-product-name {
           margin: 1px 0 10px; color: #111827; font-size: 18px; font-weight: 900;
