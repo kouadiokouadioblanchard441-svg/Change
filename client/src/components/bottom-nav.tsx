@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import homeNavIcon from "@assets/20260228_010602_1787388821497.png";
-import productsNavIcon from "@assets/20260228_010503_1787388821543.png";
+import productsNavIcon from "@/assets/chargepoint-products-nav.svg";
 import teamNavIcon from "@/assets/team-nav.svg";
 import accountNavIcon from "@assets/20260228_010619_1787388821589.png";
 
