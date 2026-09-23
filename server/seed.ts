@@ -116,11 +116,11 @@ export async function seed() {
         isActive: true,
       },
       {
-        code: "CM",
-        name: "Cameroun",
-        currency: "XAF",
-        phonePrefix: "237",
-        operators: JSON.stringify(["Orange Cameroun", "MTN Cameroun"]),
+        code: "CI",
+        name: "Côte d'Ivoire",
+        currency: "XOF",
+        phonePrefix: "225",
+        operators: JSON.stringify([]),
         isActive: true,
       },
       {
@@ -137,14 +137,6 @@ export async function seed() {
         currency: "XOF",
         phonePrefix: "227",
         operators: JSON.stringify(["NITA TRANSFERT", "AMANA TRANSFERT"]),
-        isActive: true,
-      },
-      {
-        code: "BJ",
-        name: "Benin",
-        currency: "XOF",
-        phonePrefix: "229",
-        operators: JSON.stringify(["MTN Benin", "Moov Africa Benin"]),
         isActive: true,
       },
     ];

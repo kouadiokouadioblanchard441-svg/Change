@@ -379,6 +379,10 @@ export async function registerRoutes(
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = registerSchema.parse(req.body);
+      const activeCountries = await storage.getActiveCountries();
+      if (!activeCountries.some(country => country.code === data.country)) {
+        return res.status(400).json({ message: "Pays indisponible" });
+      }
       
       const existing = await storage.getUserByPhone(data.phone, data.country);
       if (existing) {
