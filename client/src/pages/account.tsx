@@ -15,17 +15,20 @@ import { useToast } from "@/hooks/use-toast";
 import { ADMIN_PATH } from "@/lib/admin-path";
 import accountBackground from "@assets/images_(72)_1787363798761.jpeg";
 import tonLogo from "@assets/images_(25)_1787363798796.png";
-import rechargeIcon from "@assets/6_1787388071510.png";
 import withdrawalIcon from "@assets/mine-mod-bankcard-CLOhqwHj_1787388454905.png";
 import historyIcon from "@assets/4-1_1787388071574.png";
 import taskIcon from "@assets/téléchargement_(66)_1787388422746.png";
-import teamIcon from "@assets/20260822_002731_1787387728085.png";
 import walletIcon from "@assets/20260822_002744_1787387728119.png";
 import aboutIcon from "@assets/20260822_083448_1787387727726.png";
 import serviceIcon from "@assets/20260822_083355_1787387728003.png";
 import passwordIcon from "@assets/20260822_002632_1787387728169.png";
 import rulesIcon from "@assets/20260822_002803_1787387728051.png";
 import logoutIcon from "@assets/logout_1787368185297.png";
+import checkinIcon from "@/assets/home-actions/checkin.png";
+import downloadIcon from "@assets/mine-mod-download-B1teb57W_1784762231070.png";
+import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
+import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
+import "./account.css";
 
 const tonGreen = "#00CC2C";
 
@@ -62,20 +65,21 @@ export default function AccountPage() {
   const phonePrefix = country?.phonePrefix || "";
   const formatAmount = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${currency}`;
 
-  const actionButtons = [
-    { label: "Recharger", image: rechargeIcon, href: "/deposit" },
+  const quickActions = [
     { label: "Retrait", image: withdrawalIcon, href: "/withdrawal" },
     { label: "Historique", image: historyIcon, href: "/history" },
-    { label: "Code cadeau", image: taskIcon, href: "/gift-code" },
+    { label: "Pointage", image: checkinIcon, href: "/checkin" },
   ];
 
-  const menuItems = [
-    { label: "à propos de\nnous", image: aboutIcon, href: "/about" },
-    { label: "Service Client", image: serviceIcon, href: "/service" },
-    { label: "Équipe", image: teamIcon, href: "/team" },
-    { label: "Règles de la\nplateforme", image: rulesIcon, href: "/rules" },
-    { label: "Lier le compte\nde portefeuille", image: walletIcon, href: "/wallet" },
+  const serviceItems = [
+    { label: "À propos", image: aboutIcon, href: "/about" },
+    { label: "Réglementation", image: rulesIcon, href: "/rules" },
+    { label: "Historique", image: historyIcon, href: "/history" },
+    { label: "Service client", image: serviceIcon, href: "/service" },
+    { label: "Télécharger", image: downloadIcon, action: "download" as const },
+    { label: "Lier une carte\nbancaire", image: walletIcon, href: "/wallet" },
     { label: "Changer le mot\nde passe", image: passwordIcon, href: "/change-password" },
+    { label: "Échanger un\ncadeau", image: taskIcon, href: "/gift-code" },
   ];
 
   const handleLogout = async () => {
@@ -92,7 +96,7 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="account-reference min-h-full bg-white pb-[84px]">
+    <main className="cp-account">
       <style>{`
         .account-reference {
           color: #141414;
@@ -364,78 +368,76 @@ export default function AccountPage() {
         }
       `}</style>
 
-      <div className="account-screen">
-        <section className="account-header" aria-label="Informations du compte">
-          <div className="profile-row">
-            <div className="avatar" aria-hidden="true" />
-            <div className="profile-copy">
-              <p className="phone">+{phonePrefix} {user.phone}</p>
-              <p className="level">Niveau d'équipe <strong>Lv1</strong></p>
+      <div className="cp-account-shell">
+        <section className="cp-account-header" aria-label="Informations du compte">
+          <div className="cp-profile-row">
+            <div className="cp-profile-avatar">
+              <img src={chargepointLogo} alt="ChargePoint" />
             </div>
+            <div className="cp-profile-copy">
+              <p className="cp-account-phone">+{phonePrefix} {user.phone}</p>
+              <span className="cp-account-level">Lv1</span>
+            </div>
+            <button className="cp-logout-top" onClick={handleLogout} data-testid="button-logout">
+              <img src={logoutIcon} alt="" />
+              <span>Déconnexion</span>
+            </button>
           </div>
-          <section className="account-summaries" aria-label="Résumé du compte">
-            <article className="summary balance">
-              <p className="summary-amount">{formatAmount(balance)}</p>
-              <p className="summary-label">Solde</p>
-            </article>
-            <article className="summary earnings">
-              <p className="summary-amount">{formatAmount(earnings)}</p>
-              <p className="summary-label">Revenu</p>
-            </article>
+
+          <section className="cp-balance-card" aria-label="Solde du compte">
+            <div>
+              <span>Solde du compte</span>
+              <strong>{formatAmount(balance)}</strong>
+            </div>
+            <button type="button" onClick={() => navigate("/deposit")}>Recharger <span aria-hidden="true">›</span></button>
           </section>
         </section>
 
-        <section className="promo-banner" aria-label="Centre d'enregistrement">
-          <img src={accountBackground} alt="" />
-          <div className="promo-copy">
-            <strong>Centre d'enregistrement</strong>
-            <span>Connectez-vous pour obtenir des récompenses quotidiennes supplémentaires</span>
-            <button type="button" onClick={() => navigate("/checkin")}>Aller</button>
-          </div>
-        </section>
-
-        <section className="account-actions" aria-label="Actions du compte">
-          {actionButtons.map((action) => (
-            <button
-              key={action.label}
-              className="account-action"
-              onClick={() => navigate(action.href)}
-            >
+        <section className="cp-account-quick-actions" aria-label="Actions rapides">
+          {quickActions.map((action) => (
+            <button key={action.label} type="button" onClick={() => navigate(action.href)}>
               <img src={action.image} alt="" />
               <span>{action.label}</span>
             </button>
           ))}
         </section>
 
-        <h2 className="services-title">Autres services</h2>
+        <section className="cp-account-promo" aria-label="Solutions ChargePoint">
+          <img src={chargepointPromo} alt="" />
+          <div>
+            <strong>Solutions de recharge ChargePoint</strong>
+            <span>Des équipements pensés pour votre mobilité</span>
+            <button type="button" onClick={() => navigate("/about")}>Découvrir</button>
+          </div>
+        </section>
 
-        <section className="settings-grid" aria-label="Paramètres du compte">
-          {menuItems.map((item) => {
-            return (
+        <section className="cp-account-services" aria-labelledby="account-services-title">
+          <h2 id="account-services-title">Plus</h2>
+          <div className="cp-services-grid">
+            {serviceItems.map((item) => (
               <button
-                key={item.href}
-                className="setting-button"
-                onClick={() => navigate(item.href)}
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  if (item.action === "download") {
+                    toast({ title: "Application ChargePoint", description: "Le téléchargement sera bientôt disponible." });
+                    return;
+                  }
+                  navigate(item.href);
+                }}
               >
                 <img src={item.image} alt="" />
                 <span>{item.label}</span>
               </button>
-            );
-          })}
-        </section>
-
-        <div className="account-hidden-actions">
-          <button className="logout" onClick={handleLogout} data-testid="button-logout">
-            <img src={logoutIcon} alt="" />
-            Déconnexion
-          </button>
+            ))}
+          </div>
           {user.isAdmin && (
-            <button className="admin" onClick={handleAdminClick} data-testid="button-admin">
-              <Shield className="mr-2 inline h-4 w-4" />
-              Panel Admin
+            <button className="cp-admin-button" onClick={handleAdminClick} data-testid="button-admin">
+              <Shield size={17} />
+              Panel administrateur
             </button>
           )}
-        </div>
+        </section>
       </div>
 
       <Dialog open={showPinModal} onOpenChange={setShowPinModal}>

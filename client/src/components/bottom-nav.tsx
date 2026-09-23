@@ -15,11 +15,13 @@ export default function BottomNav() {
   const [location, navigate] = useLocation();
   const isTeam = location === "/team" || location.startsWith("/team-details");
   const isHome = location === "/";
+  const isAccount = location === "/account";
+  const usesOrangeBrand = isTeam || isHome || isAccount;
 
   return (
     <nav
       className={`bottom-nav fixed bottom-0 left-0 right-0 z-50 border-t bg-white shadow-[0_-1px_2px_rgba(0,0,0,.05)] ${isHome ? "cp-bottom-nav" : ""}`}
-      style={{ borderColor: isTeam ? "rgba(255, 122, 20, 0.3)" : isHome ? "rgba(255, 122, 20, 0.28)" : "rgba(0, 204, 44, 0.2)" }}
+      style={{ borderColor: usesOrangeBrand ? "rgba(255, 122, 20, 0.3)" : "rgba(0, 204, 44, 0.2)" }}
       aria-label="Navigation principale"
     >
       <div className="mx-auto flex h-[59px] max-w-[500px] items-center justify-around pb-1">
@@ -44,14 +46,14 @@ export default function BottomNav() {
                 aria-hidden="true"
                 className="bottom-nav-icon h-[32px] w-[32px]"
                 style={{
-                  backgroundColor: isActive ? (isTeam || isHome ? "#ff7a14" : "#00cc2c") : "#8f969b",
+                  backgroundColor: isActive ? (usesOrangeBrand ? "#ff7a14" : "#00cc2c") : "#8f969b",
                   WebkitMaskImage: `url("${item.icon}")`,
                   maskImage: `url("${item.icon}")`,
                 }}
               />
               <span
                 className="text-[11px] font-medium leading-none"
-                  style={{ color: isActive ? (isTeam || isHome ? "#9e4100" : "#00cc2c") : "#55565a" }}
+                  style={{ color: isActive ? (usesOrangeBrand ? "#9e4100" : "#00cc2c") : "#55565a" }}
               >
                 {isHome ? homeLabel : item.label}
               </span>
