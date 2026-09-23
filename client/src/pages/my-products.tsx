@@ -1,14 +1,8 @@
-import { useState } from "react";
-import { useSearch } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
 import { Loader2 } from "lucide-react";
-import type { Product } from "@shared/schema";
 
-import emptyIllustration from "@assets/illustration-8_1784762965573.png";
 import emptyProductsIllustration from "@assets/generated_images/chargepoint-empty-products.png";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -30,73 +24,23 @@ const PRODUCT_IMAGES = [
   productImage7,
 ];
 
-interface ProductWithOwnership extends Product {
-  isOwned: boolean;
-  canClaimFree: boolean;
-  ownedCount?: number;
-}
-
 export default function MyProductsPage() {
-  const { user, refreshUser } = useAuth();
-  const { toast } = useToast();
-  const search = useSearch();
-  const initialTab = new URLSearchParams(search).get("tab") === "my" ? "my" : "our";
-  const [activeTab, setActiveTab] = useState<"our" | "my">(initialTab);
-  const [confirmProduct, setConfirmProduct] = useState<ProductWithOwnership | null>(null);
-
-  const { data: products, isLoading: loadingProducts } = useQuery<ProductWithOwnership[]>({
-    queryKey: ["/api/products"],
-    staleTime: 0,
-  });
+  const { user } = useAuth();
 
   const { data: userProducts, isLoading: loadingUserProducts } = useQuery<any[]>({
     queryKey: ["/api/user/products"],
     staleTime: 0,
   });
 
-  const purchaseMutation = useMutation({
-    mutationFn: async (productId: number) => {
-      const response = await apiRequest("POST", `/api/products/${productId}/purchase`, {});
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Erreur");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/products"] });
-      refreshUser();
-      setConfirmProduct(null);
-      toast({ title: "Produit acheté !", description: "Vous commencerez à recevoir des gains demain." });
-    },
-    onError: (error: any) => {
-      setConfirmProduct(null);
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    },
-  });
-
   if (!user) return null;
 
   const country = getCountryByCode(user.country);
   const currency = country?.currency === "FCFA" ? "XOF" : country?.currency || "XOF";
-  const paidProducts = products?.filter(p => !p.isFree) || [];
   const allUserProducts = userProducts || [];
   const activeUserProducts = allUserProducts.filter(up => up.status === "active");
   const activeProductCount = activeUserProducts.length;
   const totalUserEarnings = Math.round(Number(user.totalEarnings || 0));
   const formatStatAmount = (amount: number) => `${amount.toLocaleString("fr-FR")} ${currency}`;
-
-  const formatDateTime = (dateStr: string) => {
-    if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, "0");
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-  };
 
   // Format date as "20 Jul 2026, 15:00"
   const formatPurchaseDate = (dateStr: string) => {
@@ -361,64 +305,15 @@ export default function MyProductsPage() {
         </header>
         <section className="products-hero" aria-label="Produits">
           <img src={chargepointPromo} alt="Solutions de recharge ChargePoint" />
-          <div className="hero-copy"><strong>ChargePoint</strong><span>Gérez vos produits et vos revenus</span></div>
-          <div className={`stat-panel our ${activeTab === "our" ? "active" : ""}`} aria-label={`${activeProductCount} produit${activeProductCount === 1 ? "" : "s"} actif${activeProductCount === 1 ? "" : "s"}`}>
-            <span className="stat-value">{activeProductCount}</span>
-            <span className="stat-label">Catalogue</span>
-          </div>
-          <div className={`stat-panel my ${activeTab === "my" ? "active" : ""}`} aria-label={`Revenus : ${formatStatAmount(totalUserEarnings)}`}>
+          <div className="hero-copy"><strong>ChargePoint</strong><span>Vos produits achetés et leurs revenus</span></div>
+          <div className="stat-panel my my-only active" aria-label={`Revenus : ${formatStatAmount(totalUserEarnings)}`}>
             <span className="stat-value">{formatStatAmount(totalUserEarnings)}</span>
-            <span className="stat-label">Produits achetés</span>
+            <span className="stat-label">Revenus cumulés</span>
           </div>
-          <button className="stat-toggle our" onClick={() => setActiveTab("our")} data-testid="tab-our-products" aria-label="Mes produits disponibles" />
-          <button className="stat-toggle my" onClick={() => setActiveTab("my")} data-testid="tab-my-product" aria-label="Mes revenus et produits achetés" />
         </section>
 
         <div className="product-list">
-
-        {/* ── OUR PRODUCTS tab ── */}
-        {activeTab === "our" && (
           <div>
-            {loadingProducts ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-[#FF7A14]" />
-              </div>
-            ) : paidProducts.length === 0 ? (
-              <div className="empty">
-                <img src={emptyIllustration} alt="Vide" />
-                <p>Aucun produit disponible</p>
-              </div>
-            ) : (
-              paidProducts.map((product, idx) => {
-                const img = PRODUCT_IMAGES[idx % PRODUCT_IMAGES.length];
-                return (
-                  <div
-                    key={product.id}
-                    className="product-card"
-                    data-testid={`product-card-${product.id}`}
-                  >
-                    <div className="product-picture"><img src={img} alt={product.name} /></div>
-                    <div className="product-details">
-                      <p className="product-name">{product.name}</p>
-                      <p className="product-price">{Number(product.price).toLocaleString("fr-FR")} {currency}</p>
-                      <p className="product-line">Durée :<strong>{product.cycleDays}jours</strong></p>
-                      <p className="product-line">Revenu quotidien :<strong>{Number(product.dailyEarnings).toLocaleString("fr-FR")} {currency}</strong></p>
-                      <p className="product-line">Revenu total :<strong>{Number(product.totalReturn).toLocaleString("fr-FR")} {currency}</strong></p>
-                    </div>
-                    <button onClick={() => setConfirmProduct(product)} className="buy" data-testid={`button-purchase-${product.id}`}>
-                      <span>ACHETER<br />MAINTENANT</span>
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-
-        {/* ── MY PRODUCT tab ── */}
-        {activeTab === "my" && (
-          <div>
-            <div>
               {loadingUserProducts ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-[#FF7A14]" />
