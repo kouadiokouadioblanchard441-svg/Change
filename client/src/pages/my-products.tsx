@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
+import emptyProductsIllustration from "@assets/generated_images/chargepoint-empty-products.png";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 import productImage1 from "@assets/images_(67)_1787404892163.jpeg";
@@ -424,7 +425,7 @@ export default function MyProductsPage() {
                 </div>
               ) : allUserProducts.length === 0 ? (
                 <div className="empty">
-                  <img src={emptyIllustration} alt="Vide" />
+                  <img src={emptyProductsIllustration} alt="Aucun produit acheté" />
                   <p>Aucun produit ChargePoint acheté</p>
                   <p className="text-sm text-gray-400">Achetez des produits pour commencer à gagner</p>
                 </div>
