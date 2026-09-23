@@ -610,7 +610,8 @@ export default function DepositPage() {
         .recharge-reference .recharge-hero {
           position: relative;
           box-sizing: border-box;
-          min-height: 286px;
+          height: 286px;
+          min-height: 0;
           padding: 0 16px 20px;
           background: #fff8f2;
           border-bottom: 2px solid #111827;
@@ -855,7 +856,7 @@ export default function DepositPage() {
         }
         .recharge-reference .instruction strong { color: #111827; font-weight: 800; }
         @media (max-width: 360px) {
-          .recharge-reference .recharge-hero { min-height: 270px; padding-right: 12px; padding-left: 12px; }
+          .recharge-reference .recharge-hero { height: 270px; min-height: 0; padding-right: 12px; padding-left: 12px; }
           .recharge-reference .recharge-hero-art { height: 150px; }
           .recharge-reference .history-button { right: 12px; }
           .recharge-reference .recharge-back { left: 12px; }
