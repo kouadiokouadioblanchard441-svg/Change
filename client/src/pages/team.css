@@ -251,7 +251,67 @@
   height: 17px;
 }
 
-.team-page button:focus-visible {
+.team-share {
+  margin: 16px 7px 0;
+  padding: 18px 14px 15px;
+  border: 1px solid #f0b17d;
+  border-radius: 9px;
+  background: #fffdf8;
+}
+
+.team-share h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.team-share > p {
+  margin: 6px 0 0;
+  color: #49444a;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.team-share-links {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 17px;
+}
+
+.team-share-links a {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  border-radius: 8px;
+  padding: 6px 2px;
+  color: #302c2a;
+  font-size: 11px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.team-share-links a:hover {
+  background: #fff0e0;
+}
+
+.team-share-links img {
+  width: 43px;
+  height: 43px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.team-share .team-share-note {
+  margin-top: 13px;
+  color: #665e57;
+  font-size: 11px;
+}
+
+.team-page button:focus-visible,
+.team-page a:focus-visible {
   outline: 2px solid #202128;
   outline-offset: 2px;
 }

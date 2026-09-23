@@ -3,6 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import instagramIcon from "@assets/Instagram_icon_1787367952152.png";
+import facebookIcon from "@assets/images_(27)_1787367952249.png";
+import whatsappIcon from "@assets/images_(26)_1787367952281.png";
+import telegramIcon from "@assets/tg-1_1787367952311.png";
 import "./team.css";
 
 interface TeamStats {
@@ -34,6 +38,13 @@ export default function TeamPage() {
   if (!user) return null;
 
   const referralLink = `${window.location.origin}/invitation?code=${encodeURIComponent(user.referralCode)}`;
+  const referralMessage = `Rejoins mon équipe sur ChargePoint ! Inscris-toi avec mon lien de parrainage :\n${referralLink}\nMon code d'invitation : ${user.referralCode}`;
+  const referralText = "Rejoins mon équipe sur ChargePoint ! Inscris-toi avec mon lien de parrainage.";
+  const shareLinks = [
+    { name: "WhatsApp", icon: whatsappIcon, url: `https://wa.me/?text=${encodeURIComponent(referralMessage)}` },
+    { name: "Telegram", icon: telegramIcon, url: `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(`${referralText} Mon code d'invitation : ${user.referralCode}`)}` },
+    { name: "Facebook", icon: facebookIcon, url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}&quote=${encodeURIComponent(`${referralText} Mon code d'invitation : ${user.referralCode}`)}` },
+  ];
   const totalMembers = stats
     ? stats.level1Count + stats.level2Count + stats.level3Count
     : undefined;
@@ -124,6 +135,39 @@ export default function TeamPage() {
           <button type="button" className="team-details-link" onClick={() => navigate("/team-details")} data-testid="button-centre-taches">
             Voir les membres de l'équipe <ChevronRight aria-hidden="true" />
           </button>
+
+          <section className="team-share" aria-label="Partager mon invitation">
+            <h2>Partager</h2>
+            <p>Invite tes proches à rejoindre ton équipe ChargePoint.</p>
+            <div className="team-share-links">
+              {shareLinks.map(target => (
+                <a
+                  key={target.name}
+                  href={target.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Partager mon lien d'invitation sur ${target.name}`}
+                  data-testid={`share-${target.name.toLowerCase()}`}
+                  onClick={target.name === "Facebook" ? () => void copy(referralMessage, "Message de parrainage") : undefined}
+                >
+                  <img src={target.icon} alt="" />
+                  <span>{target.name}</span>
+                </a>
+              ))}
+              <a
+                href="https://www.instagram.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Copier mon message d'invitation et ouvrir Instagram"
+                data-testid="share-instagram"
+                onClick={() => void copy(referralMessage, "Message d'invitation")}
+              >
+                <img src={instagramIcon} alt="" />
+                <span>Instagram</span>
+              </a>
+            </div>
+            <p className="team-share-note">Sur Instagram, le message et le lien sont copiés : colle-les dans ta publication ou ton message.</p>
+          </section>
         </div>
       </div>
     </main>
