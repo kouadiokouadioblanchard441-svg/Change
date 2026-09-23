@@ -28,13 +28,19 @@ const quickActions = [
   { label: "Pointage", href: "/checkin", icon: checkinIcon },
 ] as const;
 
-const homeAnnouncements = [
+const announcementLibrary = [
   "052**85 a obtenu 20 000 F de bonus d'équipe",
   "55*368 a retiré 23 654 F",
   "07****42 a obtenu 12 500 F de bonus d'équipe",
   "01****73 a retiré 8 000 F",
   "05****91 a obtenu 15 000 F de bonus d'équipe",
   "07****26 a retiré 32 400 F",
+  "05****14 a obtenu 10 000 F de bonus d'équipe",
+  "01****82 a retiré 15 000 F",
+  "07****63 a obtenu 18 500 F de bonus d'équipe",
+  "05****47 a retiré 27 800 F",
+  "01****29 a obtenu 25 000 F de bonus d'équipe",
+  "07****18 a retiré 11 250 F",
 ] as const;
 
 export default function HomePage() {
@@ -88,7 +94,7 @@ export default function HomePage() {
               <span className="cp-notice-track">
                 {[0, 1].map((copy) => (
                   <span className="cp-notice-group" key={copy}>
-                    {homeAnnouncements.map((announcement, index) => (
+                    {announcementLibrary.map((announcement, index) => (
                       <span className="cp-notice-item" key={`${copy}-${index}`}>
                         <span>{announcement}</span>
                         <img src={announcementStar} alt="" aria-hidden="true" />
@@ -98,7 +104,7 @@ export default function HomePage() {
                 ))}
               </span>
             </span>
-            <span className="sr-only" id="cp-notice-messages">{homeAnnouncements.join(". ")}</span>
+            <span className="sr-only" id="cp-notice-messages">{announcementLibrary.join(". ")}</span>
           </button>
 
           <section className="cp-overview" aria-labelledby="overview-title">
