@@ -3,11 +3,12 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
-import { Bell, PlugZap } from "lucide-react";
+import { PlugZap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import HomeActionIcon from "@/components/home-action-icon";
 import "./home.css";
 
+import noticeBell from "@/assets/notice-bell.png";
 import homeFlex from "@assets/ChargePoint-Home-Flex-50A-CPH50-app-1280px__29346__78945__7114_1790148214522.png";
 import ct4000 from "@assets/CT4000-Top-main-with-energy-star_1790148214627.png";
 
@@ -23,6 +24,15 @@ const quickActions = [
   { label: "Pointage", href: "/checkin", kind: "checkin" },
 ] as const;
 
+const homeAnnouncements = [
+  "Bienvenue dans votre espace ChargePoint.",
+  "Accédez à vos dépôts depuis l'accueil.",
+  "Suivez vos retraits dans l'application.",
+  "Consultez votre solde dans la rubrique Aperçu.",
+  "Besoin d'aide ? Notre équipe vous accompagne.",
+  "Effectuez votre pointage depuis l'accueil.",
+] as const;
+
 export default function HomePage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -35,9 +45,6 @@ export default function HomePage() {
   const currency = country?.currency || "XOF";
   const balance = Number.parseFloat(user.balance || "0");
   const totalEarnings = Number.parseFloat(user.totalEarnings || "0");
-  const noticeText = settings?.noticeText && !/stone by ton|pierres naturelles|travertin/i.test(settings.noticeText)
-    ? settings.noticeText
-    : "Bienvenue dans votre espace ChargePoint.";
   const groupLink = settings?.groupLink || "";
   const formatMoney = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${currency}`;
   const withdrawnTotal = withdrawals?.filter((item) => item.status === "approved")
@@ -71,9 +78,20 @@ export default function HomePage() {
             ))}
           </section>
 
-          <button className="cp-notice" type="button" onClick={() => setWelcomePopupOpen(true)} aria-label={`Informations : ${noticeText}`}>
-            <span className="cp-notice-icon"><Bell size={16} /></span>
-            <span>{noticeText}</span>
+          <button className="cp-notice" type="button" onClick={() => setWelcomePopupOpen(true)} aria-label="Ouvrir les informations ChargePoint" aria-describedby="cp-notice-messages">
+            <span className="cp-notice-icon"><img src={noticeBell} alt="" width={26} height={26} /></span>
+            <span className="cp-notice-marquee" aria-hidden="true">
+              <span className="cp-notice-track">
+                {[0, 1].map((copy) => (
+                  <span className="cp-notice-group" key={copy}>
+                    {homeAnnouncements.map((announcement, index) => (
+                      <span className="cp-notice-item" key={`${copy}-${index}`}>{announcement}</span>
+                    ))}
+                  </span>
+                ))}
+              </span>
+            </span>
+            <span className="sr-only" id="cp-notice-messages">{homeAnnouncements.join(". ")}</span>
           </button>
 
           <section className="cp-overview" aria-labelledby="overview-title">

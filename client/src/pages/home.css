@@ -29,8 +29,16 @@
 .cp-action:hover .cp-action-icon { transform:translateY(-3px); }
 .cp-action:focus-visible,.cp-notice:focus-visible,.cp-balance:focus-visible { outline:2px solid var(--cp-orange); outline-offset:2px; }
 .cp-notice { display:flex; align-items:center; gap:10px; width:calc(100% - 24px); margin:12px 12px 0; min-height:48px; padding:9px 12px; border:1px solid #dededc; border-left:3px solid var(--cp-orange); border-radius:10px; background:#fff; text-align:left; color:#52565a; font-size:12px; overflow:hidden; cursor:pointer; }
-.cp-notice-icon { flex:none; color:var(--cp-orange); display:grid; place-items:center; width:27px;height:27px; border-radius:8px; background:#fff1e6; }
-.cp-notice span:last-child { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.cp-notice-icon { flex:none; display:grid; place-items:center; width:32px; height:32px; }
+.cp-notice-icon img { display:block; width:26px; height:26px; object-fit:contain; }
+.cp-notice-marquee { flex:1; min-width:0; overflow:hidden; -webkit-mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 8px),transparent); mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 8px),transparent); }
+.cp-notice-track { display:flex; width:max-content; animation:cp-notice-scroll 45s linear infinite; }
+.cp-notice-group { display:flex; flex:none; align-items:center; }
+.cp-notice-item { display:inline-flex; flex:none; align-items:center; gap:24px; margin-right:24px; white-space:nowrap; }
+.cp-notice-item::after { content:"•"; color:var(--cp-orange); font-size:15px; line-height:1; }
+.cp-notice:hover .cp-notice-track,.cp-notice:focus-visible .cp-notice-track { animation-play-state:paused; }
+@keyframes cp-notice-scroll { to { transform:translateX(-50%); } }
+@media (prefers-reduced-motion:reduce) { .cp-notice-track { animation:none; }.cp-notice-group:not(:first-child),.cp-notice-item:not(:first-child),.cp-notice-item::after { display:none; } }
 .cp-overview { margin:16px 12px 0; padding:0 16px 16px; border:1px solid #dfe1e4; border-radius:17px; background:#fff; overflow:hidden; box-shadow:0 3px 12px rgba(17,24,39,.05); }
 .cp-section-heading { display:flex; align-items:center; margin:0 -16px 18px; padding:10px 17px; background:var(--cp-orange); }
 .cp-section-heading h2 { margin:0; font:500 23px/28px "Space Grotesk"; letter-spacing:-.04em; }

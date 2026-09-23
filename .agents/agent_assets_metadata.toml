@@ -26,3 +26,17 @@ mtime_ms = 1790157903919
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:5b5a68ec-a699-4053-b777-28a59e6c3126/48545674-99cc-4de5-84d5-75f1fcbdccc5/2fe933f0-e317-4d92-abd3-2f42f7864866"
 storage_version_token = "1790157951689484"
 content_type = "image/png"
+
+[[outputs]]
+id = "9tk-tTQFp9yOqWRtYgQiK"
+uri = "file://client/src/assets/notice-bell.png"
+type = "image"
+title = "Icône PNG du bandeau"
+description = "Cloche transparente orange ChargePoint, utilisée directement comme image dans le bandeau de l’accueil."
+logical_id = "e2d770e9-173e-47aa-bc33-ad118fe68181"
+content_hash = "sha256:0c6fd4dfd057533261f7c43b6e5f58c4f357dfd0900ddf2268ab23d336541ec4"
+size = 3957
+mtime_ms = 1790158666203
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:5b5a68ec-a699-4053-b777-28a59e6c3126/e2d770e9-173e-47aa-bc33-ad118fe68181/0eba6261-77a5-496f-92c5-56ca936e453f"
+storage_version_token = "1790158749907436"
+content_type = "image/png"
