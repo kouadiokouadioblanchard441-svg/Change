@@ -22,6 +22,9 @@ const productSchema = z.object({
   dailyEarnings: z.string().min(1, "Gains journaliers requis"),
   cycleDays: z.string().min(1, "Durée requise"),
   imageUrl: z.string().optional(),
+  sortOrder: z.string().min(1, "Ordre requis"),
+  isFree: z.boolean(),
+  isActive: z.boolean(),
 });
 
 type ProductForm = z.infer<typeof productSchema>;
@@ -37,12 +40,12 @@ export default function AdminProducts() {
 
   const editForm = useForm<ProductForm>({
     resolver: zodResolver(productSchema),
-    defaultValues: { name: "", price: "", dailyEarnings: "", cycleDays: "80", imageUrl: "" },
+    defaultValues: { name: "", price: "", dailyEarnings: "", cycleDays: "", imageUrl: "", sortOrder: "0", isFree: false, isActive: true },
   });
 
   const createForm = useForm<ProductForm>({
     resolver: zodResolver(productSchema),
-    defaultValues: { name: "", price: "", dailyEarnings: "", cycleDays: "80", imageUrl: "" },
+    defaultValues: { name: "", price: "", dailyEarnings: "", cycleDays: "", imageUrl: "", sortOrder: "0", isFree: false, isActive: true },
   });
 
   const createMutation = useMutation({
@@ -131,6 +134,9 @@ export default function AdminProducts() {
       dailyEarnings: product.dailyEarnings.toString(),
       cycleDays: product.cycleDays.toString(),
       imageUrl: product.imageUrl || "",
+      sortOrder: product.sortOrder.toString(),
+      isFree: product.isFree,
+      isActive: product.isActive,
     });
   };
 
@@ -141,7 +147,17 @@ export default function AdminProducts() {
     const cycleDays = parseInt(data.cycleDays);
     updateMutation.mutate({
       id: selectedProduct.id,
-      data: { name: data.name, price, dailyEarnings, cycleDays, totalReturn: dailyEarnings * cycleDays, imageUrl: data.imageUrl || null },
+      data: {
+        name: data.name,
+        price,
+        dailyEarnings,
+        cycleDays,
+        totalReturn: dailyEarnings * cycleDays,
+        imageUrl: data.imageUrl || null,
+        sortOrder: parseInt(data.sortOrder),
+        isFree: data.isFree,
+        isActive: data.isActive,
+      },
     });
   };
 
@@ -179,6 +195,27 @@ export default function AdminProducts() {
           <FormLabel>Durée (jours)</FormLabel>
           <FormControl><Input {...field} type="number" /></FormControl>
           <FormMessage />
+        </FormItem>
+      )} />
+      <div className="grid grid-cols-2 gap-4">
+        <FormField control={form.control} name="sortOrder" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Ordre d’affichage</FormLabel>
+            <FormControl><Input {...field} type="number" min="0" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+        <FormField control={form.control} name="isFree" render={({ field }) => (
+          <FormItem className="flex items-center justify-between rounded-lg border p-3">
+            <FormLabel>Produit gratuit</FormLabel>
+            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+          </FormItem>
+        )} />
+      </div>
+      <FormField control={form.control} name="isActive" render={({ field }) => (
+        <FormItem className="flex items-center justify-between rounded-lg border p-3">
+          <FormLabel>Visible dans le catalogue</FormLabel>
+          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
         </FormItem>
       )} />
       <FormField control={form.control} name="imageUrl" render={({ field }) => (

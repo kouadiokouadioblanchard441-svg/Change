@@ -250,7 +250,7 @@ export default function ProductsPage() {
             </div>
           ) : availableProducts.map((product, index) => (
             <article className="cp-product-card" key={product.id} data-testid={`product-card-${product.id}`}>
-              <div className="cp-product-image"><img src={PRODUCT_IMAGES[index % PRODUCT_IMAGES.length]} alt={product.name} /></div>
+              <div className="cp-product-image"><img src={product.imageUrl || PRODUCT_IMAGES[index % PRODUCT_IMAGES.length]} alt={product.name} /></div>
               <div className="cp-product-info">
                 <h3 className="cp-product-name">{product.name}</h3>
                 <div className="cp-product-line"><span>Prix :</span><strong>{formatAmount(Number(product.price))}</strong></div>

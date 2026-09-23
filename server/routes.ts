@@ -2870,7 +2870,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, price, dailyEarnings, cycleDays, imageUrl } = req.body;
+      const { name, price, dailyEarnings, cycleDays, imageUrl, sortOrder, isFree, isActive } = req.body;
       if (!name || !price || !dailyEarnings || !cycleDays) {
         return res.status(400).json({ message: "Champs requis manquants" });
       }
@@ -2884,9 +2884,9 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         cycleDays: cycleInt,
         totalReturn: dailyInt * cycleInt,
         imageUrl: imageUrl || null,
-        isFree: false,
-        isActive: true,
-        sortOrder: 0,
+        isFree: isFree === true || isFree === "true",
+        isActive: isActive !== false && isActive !== "false",
+        sortOrder: Number.isFinite(parseInt(sortOrder)) ? parseInt(sortOrder) : 0,
       });
       await storage.logAdminAction(req.session.userId!, "create_product", null, `Produit ${product.name} créé`);
       res.json(product);
