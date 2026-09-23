@@ -8,7 +8,7 @@
   background: #ffffff;
   color: var(--cp-ink);
   font-family: "DM Sans", sans-serif;
-  padding-bottom: 84px;
+  padding-bottom: 16px;
 }
 .cp-shell { max-width: 510px; margin: auto; overflow: hidden; background: #ffffff; }
 .cp-hero { position: relative; height: 282px; margin:12px 12px 0; overflow: hidden; border:2px solid #25272a; border-radius:16px; background: #fff; box-shadow:0 4px 0 #25272a, 0 8px 16px rgba(17,24,39,.1); }
