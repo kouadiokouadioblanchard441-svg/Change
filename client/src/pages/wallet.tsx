@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getPaymentMethodsForCountry, type ApiCountry } from "@/lib/countries";
-import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, Shield, Check, Search, X } from "lucide-react";
+import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X } from "lucide-react";
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
 import { Link, useLocation, useSearch } from "wouter";
 import type { WithdrawalWallet } from "@shared/schema";
@@ -401,6 +401,108 @@ const walletStyles = `
   .wallet-primary:disabled {
     cursor: not-allowed;
     opacity: .55;
+  }
+  .wallet-form-page {
+    background: #fff8f2;
+  }
+  .wallet-form-topbar {
+    border-bottom: 0;
+    background: #ff7a14;
+  }
+  .wallet-form-topbar .wallet-back {
+    border-color: rgba(255, 255, 255, .38);
+    background: rgba(255, 255, 255, .16);
+    color: #ffffff;
+  }
+  .wallet-form-topbar .wallet-eyebrow,
+  .wallet-form-topbar .wallet-title {
+    color: #ffffff;
+  }
+  .wallet-form-content {
+    padding-top: 20px;
+    background: #fff8f2;
+  }
+  .wallet-reference-card {
+    overflow: hidden;
+    border: 1px solid #f0e1d5;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(104, 57, 24, .08);
+  }
+  .wallet-reference-card h2 {
+    margin: 0;
+    padding: 20px 20px 14px;
+    color: #171717;
+    font-size: 19px;
+    font-weight: 800;
+  }
+  .wallet-reference-row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 20px;
+    border: 0;
+    background: #ffffff;
+    color: #171717;
+    text-align: left;
+    cursor: pointer;
+  }
+  .wallet-reference-row:hover,
+  .wallet-reference-row:focus-visible {
+    background: #fffaf6;
+    outline: none;
+  }
+  .wallet-reference-label {
+    width: 72px;
+    flex: none;
+    color: #4e4742;
+    font-size: 15px;
+  }
+  .wallet-reference-value {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    color: #171717;
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wallet-reference-value.is-empty {
+    color: #9b918a;
+    font-weight: 500;
+  }
+  .wallet-reference-row svg {
+    flex: none;
+    color: #c65100;
+  }
+  .wallet-reference-divider {
+    height: 1px;
+    margin: 0 20px;
+    background: #eadfd7;
+  }
+  .wallet-reference-address {
+    padding: 18px 20px 22px;
+  }
+  .wallet-reference-address label {
+    display: block;
+    margin-bottom: 8px;
+    color: #4e4742;
+    font-size: 15px;
+  }
+  .wallet-reference-address .wallet-input {
+    border-bottom-color: #d9cec5;
+    padding: 4px 0 9px;
+    font-size: 15px;
+    text-align: left;
+  }
+  .wallet-form-note {
+    margin: 14px 2px 0;
+    color: #756b64;
+    font-size: 12px;
+    line-height: 1.45;
+    text-align: center;
   }
   @media (min-width: 700px) {
     .wallet-footer {
