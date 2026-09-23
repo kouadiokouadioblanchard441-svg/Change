@@ -196,7 +196,7 @@ export default function ProductsPage() {
         .cp-products-modal p { margin: 8px 0 0; color: #4b5563; font-size: 13px; line-height: 1.4; }
         .cp-products-modal-warning {
           display: flex; gap: 8px; margin-top: 15px; padding: 10px;
-          border: 1px solid #b42318; border-radius: 10px; background: #fff1f0; color: #b42318;
+          border: 1px solid #ff0000; border-radius: 10px; background: #fff1f0; color: #ff0000;
           font-size: 12px;
         }
         .cp-products-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
