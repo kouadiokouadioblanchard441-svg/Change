@@ -1079,47 +1079,49 @@ export default function DepositPage() {
 
   // ── Compatibility redirect for old in-app navigation ──────────────────────
   if (step === "select") return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-4">
-        <button className="flex items-center gap-1 text-gray-800" onClick={() => setStep("amount")}>
+    <div className="deposit-step-shell">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button className="deposit-step-back" onClick={() => setStep("amount")}>
           <ChevronLeft className="h-5 w-5" /><span className="font-semibold text-base">Choisir le pays</span>
         </button>
-        <Link href="/history"><button className="rounded-full border border-[#FF7A14] px-3 py-1.5 text-xs font-semibold text-[#E85D00]">Historique</button></Link>
+        <Link href="/history"><button className="deposit-step-history">Historique</button></Link>
       </header>
-      <div className="mx-4 mt-4 flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50 p-4">
+      <div className="deposit-step-summary mx-4 mt-4 flex items-center justify-between p-4">
         <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} FCFA</p></div>
         <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
       </div>
-      <div className="p-4">
-        <div className="rounded-2xl border-2 border-[#FF7A14] bg-orange-50 p-4">
+      <div className="deposit-step-content">
+        <div className="deposit-step-card deposit-step-card-orange p-4">
           <p className="mb-2 text-sm font-bold text-gray-900">Pays du paiement</p>
-          <select value={depositCountry} onChange={e => setDepositCountry(e.target.value)} className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-sm text-gray-700 outline-none">
+          <select value={depositCountry} onChange={e => setDepositCountry(e.target.value)} className="deposit-step-field w-full appearance-none px-4 py-4 text-sm text-gray-700 outline-none">
             <option value="">Sélectionnez un pays</option>
             {activeDepositCountries.map(c => <option key={c.code} value={c.code}>{c.name} ({c.currency})</option>)}
           </select>
           <p className="mt-2 text-xs text-gray-500">Seuls les pays activés par l’administration sont affichés.</p>
         </div>
-        <button onClick={openRobotPay} disabled={!depositCountry} className="mt-5 w-full rounded-xl bg-[#FF7A14] py-3 font-semibold text-gray-900 disabled:opacity-50">Continuer vers le paiement</button>
+        <button onClick={openRobotPay} disabled={!depositCountry} className="deposit-step-primary mt-5 w-full py-3 disabled:opacity-50">Continuer vers le paiement</button>
       </div>
     </div>
   );
 
   // ── STEP 3: Manual deposit form ────────────────────────────────────────────
   if (step === "form" && selectedNumber) return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
-        <button className="flex items-center gap-1 text-gray-800" onClick={() => setStep("select")}>
+    <div className="deposit-step-shell">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button className="deposit-step-back" onClick={() => setStep("select")}>
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">Confirmer le paiement</span>
         </button>
       </header>
 
-      <div className="p-4 space-y-4 pb-10">
-        <div className="rounded-xl border border-orange-100 bg-orange-50 p-4 flex items-center gap-3">
+      <div className="deposit-step-content space-y-4 pb-10">
+        <div className="deposit-step-card deposit-step-card-orange p-4 flex items-center gap-3">
           {selectedNumber.logoUrl ? (
             <img src={selectedNumber.logoUrl} alt={selectedNumber.operatorName} className="w-10 h-10 rounded-lg object-contain" />
           ) : (
-            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-orange-100">
+            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border-2 border-[#FF7A14]">
               <Phone className="w-5 h-5 text-[#FF7A14]" />
             </div>
           )}
@@ -1147,7 +1149,7 @@ export default function DepositPage() {
 
         <div>
           <p className="text-sm font-semibold text-gray-800 mb-2">Votre numéro payeur</p>
-          <div className="border border-gray-300 rounded-md flex items-center overflow-hidden bg-white">
+            <div className="deposit-step-field flex items-center overflow-hidden">
             <Phone className="w-4 h-4 text-gray-400 ml-4" />
             <input
               type="tel"
@@ -1166,7 +1168,7 @@ export default function DepositPage() {
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             placeholder="Numéro de référence de la transaction"
-            className="w-full border border-gray-300 rounded-md px-4 py-4 text-sm text-gray-700 outline-none bg-white"
+            className="deposit-step-field w-full px-4 py-4 text-sm text-gray-700 outline-none"
           />
         </div>
 
@@ -1177,7 +1179,7 @@ export default function DepositPage() {
             onChange={(e) => setPaymentMessage(e.target.value)}
             placeholder="Collez ici le SMS ou message de confirmation reçu..."
             rows={3}
-            className="w-full border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none bg-white resize-none"
+            className="deposit-step-field w-full px-4 py-3 text-sm text-gray-700 outline-none resize-none"
           />
         </div>
 
@@ -1206,7 +1208,7 @@ export default function DepositPage() {
         <button
           onClick={handleSubmit}
           disabled={depositMutation.isPending}
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg disabled:opacity-50"
+          className="deposit-step-primary w-full py-5 disabled:opacity-50"
           style={{ background: TON_GRADIENT }}
         >
           {depositMutation.isPending ? (
@@ -1221,17 +1223,18 @@ export default function DepositPage() {
 
   // ── WESTPAY: Confirm + redirect ────────────────────────────────────────────
   if (step === "westpay") return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
-        <button className="flex items-center gap-1 text-gray-800" onClick={() => setStep("select")}>
+    <div className="deposit-step-shell">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button className="deposit-step-back" onClick={() => setStep("select")}>
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">{westpayChannelName}</span>
         </button>
       </header>
 
-      <div className="p-4 space-y-5 pb-10">
+      <div className="deposit-step-content space-y-5 pb-10">
         {/* Amount recap */}
-        <div className="mx-0 rounded-xl p-4 border-2 border-[#FF7A14] bg-orange-50 flex items-center justify-between">
+        <div className="deposit-step-summary mx-0 p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-500">Montant à déposer</p>
             <p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p>
@@ -1240,7 +1243,7 @@ export default function DepositPage() {
         </div>
 
         {/* Info card */}
-        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-2">
+        <div className="deposit-step-card p-4 space-y-2">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-[#FF7A14]" />
             <p className="font-semibold text-gray-900 text-sm">Comment ça marche ?</p>
@@ -1259,7 +1262,7 @@ export default function DepositPage() {
         <button
           onClick={() => wpInitiateMutation.mutate()}
           disabled={wpInitiateMutation.isPending}
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg disabled:opacity-40 flex items-center justify-center gap-2"
+          className="deposit-step-primary w-full py-5 disabled:opacity-40 flex items-center justify-center gap-2"
           style={{ background: TON_GRADIENT }}
         >
           {wpInitiateMutation.isPending ? (
@@ -1278,31 +1281,32 @@ export default function DepositPage() {
 
   // ── ASHTECHPAY: Select country + operator ─────────────────────────────────
   if (step === "ashtech-operator") return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
-        <button className="flex items-center gap-1 text-gray-800" onClick={() => setStep("select")}>
+    <div className="deposit-step-shell">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button className="deposit-step-back" onClick={() => setStep("select")}>
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">{ashtechChannelName}</span>
         </button>
-        <Link href="/history"><button className="text-xs text-[#E85D00] font-semibold px-3 py-1.5 rounded-full border border-[#FF7A14]">Historique</button></Link>
+        <Link href="/history"><button className="deposit-step-history">Historique</button></Link>
       </header>
-      <div className="mx-4 mt-4 rounded-xl p-4 border border-orange-100 bg-orange-50 flex items-center justify-between">
+      <div className="deposit-step-summary mx-4 mt-4 p-4 flex items-center justify-between">
         <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p></div>
         <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
       </div>
-      <div className="p-4 space-y-4 pb-10">
+      <div className="deposit-step-content space-y-4 pb-10">
         <div>
           <p className="text-sm font-semibold text-gray-800 mb-2">Pays</p>
           {ashtechCountriesLoading ? <Loader2 className="w-6 h-6 animate-spin text-[#FF7A14] mx-auto" /> : (
             <select value={ashtechCountry} onChange={(e) => { setAshtechCountry(e.target.value); setAshtechOperator(""); }}
-              className="w-full border border-gray-300 rounded-md px-4 py-4 text-sm text-gray-700 outline-none bg-white appearance-none">
+              className="deposit-step-field w-full px-4 py-4 text-sm text-gray-700 outline-none appearance-none">
               {availableAshtechCountries.map(c => <option key={c.code} value={c.code}>{c.name} ({c.currency})</option>)}
             </select>
           )}
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-800 mb-2">Numéro Mobile Money</p>
-          <div className="border border-gray-300 rounded-md flex items-center overflow-hidden bg-white">
+          <div className="deposit-step-field flex items-center overflow-hidden">
             <Phone className="w-4 h-4 text-gray-400 ml-4 flex-shrink-0" />
             <input type="tel" inputMode="numeric" value={ashtechPhone} onChange={(e) => setAshtechPhone(e.target.value)}
               placeholder="Votre numéro Mobile Money" className="flex-1 px-3 py-4 text-sm text-gray-700 outline-none bg-transparent" />
@@ -1315,7 +1319,7 @@ export default function DepositPage() {
               {ashtechOperators.map((operator, index) => {
                 const name = typeof operator === "string" ? operator : (operator.name || operator.code || `Opérateur ${index + 1}`);
                 return <button key={`${name}-${index}`} onClick={() => setAshtechOperator(name)}
-                  className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border-2 ${ashtechOperator === name ? "border-[#FF7A14] bg-orange-50" : "border-gray-200 bg-white"}`}>
+                  className={`deposit-step-operator w-full flex items-center justify-between px-4 py-4 ${ashtechOperator === name ? "deposit-step-operator-selected" : ""}`}>
                   <span className="font-semibold text-gray-900 text-sm">{name}</span>
                   {ashtechOperator === name && <CheckCircle className="w-5 h-5 text-[#FF7A14]" />}
                 </button>;
@@ -1324,7 +1328,7 @@ export default function DepositPage() {
           )}
         </div>
         <button onClick={() => ashtechCollectMutation.mutate(undefined)} disabled={!ashtechOperator || !ashtechPhone.trim() || ashtechCollectMutation.isPending}
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg disabled:opacity-40" style={{ background: TON_GRADIENT }}>
+          className="deposit-step-primary w-full py-5 disabled:opacity-40" style={{ background: TON_GRADIENT }}>
           {ashtechCollectMutation.isPending ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Initiation en cours...</span> : "Initier le paiement"}
         </button>
       </div>
@@ -1333,14 +1337,15 @@ export default function DepositPage() {
 
   // ── ASHTECHPAY: OTP screen ────────────────────────────────────────────────
   if (step === "ashtech-otp") return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center gap-2 px-4 py-4 bg-white border-b border-gray-100">
-        <button onClick={() => setStep("ashtech-operator")} className="flex items-center gap-1 text-gray-800"><ChevronLeft className="w-5 h-5" /><span className="font-semibold text-base">Code OTP</span></button>
+    <div className="deposit-step-shell">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button onClick={() => setStep("ashtech-operator")} className="deposit-step-back"><ChevronLeft className="w-5 h-5" /><span>Code OTP</span></button>
       </header>
-      <div className="p-4 space-y-5 pb-10">
-        <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4">
+      <div className="deposit-step-content space-y-5 pb-10">
+        <div className="deposit-step-card deposit-step-card-orange p-4">
           <p className="font-bold text-gray-900 text-sm mb-2">Code à composer</p>
-          {ashtechUssdCode && <p className="bg-white rounded-xl border border-orange-200 px-4 py-3 text-center font-mono font-black text-2xl text-[#E85D00] tracking-widest">{ashtechUssdCode}</p>}
+          {ashtechUssdCode && <p className="deposit-step-otp px-4 py-3 text-center font-mono font-black text-2xl text-[#E85D00] tracking-widest">{ashtechUssdCode}</p>}
           <p className="text-sm text-gray-600 mt-3">
             {ashtechUssdCode
               ? "Composez ce code sur votre téléphone pour obtenir le code OTP, puis saisissez-le ci-dessous."
@@ -1348,9 +1353,9 @@ export default function DepositPage() {
           </p>
         </div>
         <input type="text" inputMode="numeric" value={ashtechOtp} onChange={(e) => setAshtechOtp(e.target.value)} maxLength={8}
-          placeholder="Code OTP reçu par SMS" className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none bg-white focus:border-[#FF7A14]" />
+          placeholder="Code OTP reçu par SMS" className="deposit-step-otp w-full px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none focus:border-[#FF7A14]" />
         <button onClick={() => ashtechCollectMutation.mutate(ashtechOtp)} disabled={!ashtechOtp.trim() || ashtechCollectMutation.isPending}
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg disabled:opacity-40" style={{ background: TON_GRADIENT }}>
+          className="deposit-step-primary w-full py-5 disabled:opacity-40" style={{ background: TON_GRADIENT }}>
           {ashtechCollectMutation.isPending ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Vérification...</span> : "Valider le code OTP"}
         </button>
       </div>
@@ -1359,15 +1364,16 @@ export default function DepositPage() {
 
   // ── ASHTECHPAY: Wave redirect ─────────────────────────────────────────────
   if (step === "ashtech-redirect") return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="flex items-center gap-2 px-4 py-4 bg-white border-b border-gray-100">
-        <button onClick={() => setStep("ashtech-operator")} className="flex items-center gap-1 text-gray-800"><ChevronLeft className="w-5 h-5" /><span className="font-semibold text-base">Finaliser le paiement</span></button>
+    <div className="deposit-step-shell flex flex-col">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button onClick={() => setStep("ashtech-operator")} className="deposit-step-back"><ChevronLeft className="w-5 h-5" /><span>Finaliser le paiement</span></button>
       </header>
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center"><ExternalLink className="w-10 h-10 text-[#FF7A14]" /></div>
+        <div className="deposit-step-icon"><ExternalLink className="w-10 h-10 text-[#FF7A14]" /></div>
         <div><p className="font-bold text-gray-900 text-xl mb-2">Finaliser avec Wave</p><p className="text-sm text-gray-500">Ouvrez la page Wave pour confirmer votre dépôt de <strong>{Number(amount).toLocaleString()} {currency}</strong>.</p></div>
         <a href={ashtechWaveUrl} target="_blank" rel="noopener noreferrer" onClick={() => { setAshtechPolling(true); setStep("ashtech-waiting"); }}
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg flex items-center justify-center gap-2" style={{ background: TON_GRADIENT }}>
+          className="deposit-step-primary w-full py-5 flex items-center justify-center gap-2" style={{ background: TON_GRADIENT }}>
           <ExternalLink className="w-5 h-5" /> Ouvrir Wave
         </a>
       </div>
@@ -1376,13 +1382,14 @@ export default function DepositPage() {
 
   // ── ASHTECHPAY: Waiting / polling ─────────────────────────────────────────
   if (step === "ashtech-waiting") return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="flex items-center gap-2 px-4 py-4 bg-white border-b border-gray-100"><span className="font-semibold text-base text-gray-800">Paiement en cours</span></header>
+    <div className="deposit-step-shell flex flex-col">
+      <DepositStepStyles />
+      <header className="deposit-step-header"><span className="font-semibold text-base text-gray-800">Paiement en cours</span></header>
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center"><RefreshCw className="w-10 h-10 text-[#FF7A14] animate-spin" style={{ animationDuration: "2s" }} /></div>
+        <div className="deposit-step-icon"><RefreshCw className="w-10 h-10 text-[#FF7A14] animate-spin" style={{ animationDuration: "2s" }} /></div>
         <div><p className="font-bold text-gray-900 text-xl">En attente de confirmation</p><p className="text-sm text-gray-500 mt-2">Validez le paiement sur votre téléphone. Cette page se met à jour automatiquement.</p></div>
-        <div className="flex gap-3 w-full"><Link href="/history" className="flex-1"><button className="w-full py-3 rounded-full border border-[#FF7A14] text-[#E85D00] font-semibold text-sm">Voir l'historique</button></Link>
-          <button onClick={() => { setStep("amount"); setAmount(""); setAshtechDepositId(null); setAshtechPolling(false); setAshtechStatus(""); }} className="flex-1 py-3 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm">Nouvelle recharge</button>
+        <div className="flex gap-3 w-full"><Link href="/history" className="flex-1"><button className="deposit-step-secondary w-full py-3 text-sm">Voir l'historique</button></Link>
+          <button onClick={() => { setStep("amount"); setAmount(""); setAshtechDepositId(null); setAshtechPolling(false); setAshtechStatus(""); }} className="deposit-step-secondary flex-1 py-3 text-sm">Nouvelle recharge</button>
         </div>
       </div>
     </div>
@@ -1390,19 +1397,20 @@ export default function DepositPage() {
 
   // ── SENDAVAPAY: Select country + operator ──────────────────────────────────
   if (step === "sv-operator") return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
-        <button className="flex items-center gap-1 text-gray-800" onClick={() => setStep("amount")}>
+    <div className="deposit-step-shell">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button className="deposit-step-back" onClick={() => setStep("amount")}>
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">Top up</span>
         </button>
         <Link href="/history">
-          <button className="text-xs text-[#E85D00] font-semibold px-3 py-1.5 rounded-full border border-[#FF7A14]">Historique</button>
+          <button className="deposit-step-history">Historique</button>
         </Link>
       </header>
 
       {/* Amount recap */}
-      <div className="mx-4 mt-4 rounded-xl p-4 border border-orange-100 bg-orange-50 flex items-center justify-between">
+      <div className="deposit-step-summary mx-4 mt-4 p-4 flex items-center justify-between">
         <div>
           <p className="text-xs text-gray-500">Montant à déposer</p>
           <p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p>
@@ -1410,14 +1418,14 @@ export default function DepositPage() {
         <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
       </div>
 
-      <div className="p-4 space-y-4 pb-10">
+      <div className="deposit-step-content space-y-4 pb-10">
         {/* Country selector */}
         <div>
           <p className="text-sm font-semibold text-gray-800 mb-2">Pays</p>
           <select
             value={svCountry}
             onChange={(e) => { setSvCountry(e.target.value); setSvOperator(null); }}
-            className="w-full border border-gray-300 rounded-md px-4 py-4 text-sm text-gray-700 outline-none bg-white appearance-none"
+            className="deposit-step-field w-full px-4 py-4 text-sm text-gray-700 outline-none appearance-none"
           >
             {activeDepositCountries.map((c: any) => (
               <option key={c.code} value={c.code}>{c.name}</option>
@@ -1428,7 +1436,7 @@ export default function DepositPage() {
         {/* Phone number */}
         <div>
           <p className="text-sm font-semibold text-gray-800 mb-2">Numéro Mobile Money</p>
-          <div className="border border-gray-300 rounded-md flex items-center overflow-hidden bg-white">
+          <div className="deposit-step-field flex items-center overflow-hidden">
             <Phone className="w-4 h-4 text-gray-400 ml-4 flex-shrink-0" />
             <input
               type="tel"
@@ -1460,10 +1468,10 @@ export default function DepositPage() {
                   <button
                     key={op.id}
                     onClick={() => setSvOperator(op)}
-                    className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border-2 transition-all ${
+                    className={`deposit-step-operator w-full flex items-center justify-between px-4 py-4 transition-all ${
                       svOperator?.id === op.id
-                        ? "border-[#FF7A14] bg-orange-50"
-                        : "border-gray-200 bg-white hover:border-green-200"
+                        ? "deposit-step-operator-selected"
+                        : ""
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1492,7 +1500,7 @@ export default function DepositPage() {
         <button
           onClick={() => svInitiateMutation.mutate()}
           disabled={!svOperator || svInitiateMutation.isPending}
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg disabled:opacity-40"
+           className="deposit-step-primary w-full py-5 disabled:opacity-40"
             style={{ background: TON_GRADIENT }}
         >
           {svInitiateMutation.isPending ? (
@@ -1507,26 +1515,27 @@ export default function DepositPage() {
 
   // ── SENDAVAPAY: OTP screen ─────────────────────────────────────────────────
   if (step === "sv-otp") return (
-    <div className="min-h-screen bg-white">
-      <header className="flex items-center gap-2 px-4 py-4 bg-white border-b border-gray-100">
-        <button onClick={() => setStep("sv-operator")} className="flex items-center gap-1 text-gray-800">
+    <div className="deposit-step-shell">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button onClick={() => setStep("sv-operator")} className="deposit-step-back">
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">Code OTP</span>
         </button>
       </header>
 
-      <div className="p-4 space-y-5 pb-10">
+      <div className="deposit-step-content space-y-5 pb-10">
 
         {/* Step 1 — Dial USSD code */}
-        <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4">
+        <div className="deposit-step-card deposit-step-card-orange p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-full bg-[#FF7A14] flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-xs">1</span>
+           <div className="w-7 h-7 rounded-full bg-[#FF7A14] flex items-center justify-center flex-shrink-0">
+              <span className="text-gray-900 font-bold text-xs">1</span>
             </div>
             <p className="font-bold text-gray-900 text-sm">Composez ce code sur votre téléphone</p>
           </div>
           {svUssdCode ? (
-            <div className="bg-white rounded-xl border border-orange-200 px-4 py-3 text-center">
+             <div className="deposit-step-otp px-4 py-3 text-center">
               <p className="font-mono font-black text-2xl text-[#E85D00] tracking-widest">{svUssdCode}</p>
               <p className="text-xs text-gray-400 mt-1">Composez ce code USSD sur votre téléphone</p>
             </div>
@@ -1548,21 +1557,21 @@ export default function DepositPage() {
           <p className="text-xs text-gray-500 mb-3">
             Après avoir composé le code, vous recevrez un SMS avec un code OTP. Saisissez-le ci-dessous pour confirmer le paiement de <strong>{Number(amount).toLocaleString()} {currency}</strong>.
           </p>
-          <input
+         <input
             type="text"
             inputMode="numeric"
             value={svOtp}
             onChange={(e) => setSvOtp(e.target.value)}
             placeholder="Code OTP reçu par SMS"
-            className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none bg-white focus:border-[#FF7A14]"
+           className="deposit-step-otp w-full px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none focus:border-[#FF7A14]"
             maxLength={8}
           />
         </div>
 
-        <button
+         <button
           onClick={() => svOtpMutation.mutate()}
           disabled={!svOtp.trim() || svOtpMutation.isPending}
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg disabled:opacity-40"
+           className="deposit-step-primary w-full py-5 disabled:opacity-40"
           style={{ background: TON_GRADIENT }}
         >
           {svOtpMutation.isPending ? (
@@ -1575,16 +1584,17 @@ export default function DepositPage() {
 
   // ── SENDAVAPAY: Redirect screen (Wave, etc.) ──────────────────────────────
   if (step === "sv-redirect") return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="flex items-center gap-2 px-4 py-4 bg-white border-b border-gray-100">
-        <button onClick={() => setStep("sv-operator")} className="flex items-center gap-1 text-gray-800">
+    <div className="deposit-step-shell flex flex-col">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
+        <button onClick={() => setStep("sv-operator")} className="deposit-step-back">
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">Finaliser le paiement</span>
         </button>
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center">
+        <div className="deposit-step-icon">
           <ExternalLink className="w-10 h-10 text-[#FF7A14]" />
         </div>
         <div>
@@ -1598,7 +1608,7 @@ export default function DepositPage() {
           href={svRedirectUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg flex items-center justify-center gap-2"
+           className="deposit-step-primary w-full py-5 flex items-center justify-center gap-2"
            style={{ background: TON_GRADIENT }}
           onClick={() => { setSvPolling(true); setStep("sv-waiting"); }}
         >
@@ -1610,15 +1620,16 @@ export default function DepositPage() {
 
   // ── SENDAVAPAY: Waiting / polling screen ────────────────────────────────────
   if (step === "sv-waiting") return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="flex items-center gap-2 px-4 py-4 bg-white border-b border-gray-100">
+    <div className="deposit-step-shell flex flex-col">
+      <DepositStepStyles />
+      <header className="deposit-step-header">
         <span className="font-semibold text-base text-gray-800">Paiement en cours</span>
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
         {svStatus === "approved" ? (
           <>
-            <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center">
+            <div className="deposit-step-icon">
               <CheckCircle className="w-10 h-10 text-[#FF7A14]" />
             </div>
             <div>
@@ -1628,7 +1639,7 @@ export default function DepositPage() {
           </>
         ) : svStatus === "rejected" ? (
           <>
-            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+            <div className="deposit-step-icon">
               <RefreshCw className="w-10 h-10 text-red-400" />
             </div>
             <div>
@@ -1640,7 +1651,7 @@ export default function DepositPage() {
                 <button
                   onClick={() => svRetryMutation.mutate()}
                   disabled={svRetryMutation.isPending}
-                  className="flex-1 py-3 rounded-full text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                   className="deposit-step-primary flex-1 py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                    style={{ background: TON_GRADIENT }}
                 >
                   {svRetryMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
@@ -1649,7 +1660,7 @@ export default function DepositPage() {
               )}
               <button
                 onClick={() => { setStep("amount"); setAmount(""); setSvOperator(null); setSvDepositId(null); setSvPaymentToken(""); setSvPolling(false); setSvStatus(""); }}
-                className="flex-1 py-3 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm"
+                 className="deposit-step-secondary flex-1 py-3 text-sm"
               >
                 Nouvelle recharge
               </button>
@@ -1657,7 +1668,7 @@ export default function DepositPage() {
           </>
         ) : (
           <>
-            <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center">
+            <div className="deposit-step-icon">
               <RefreshCw className="w-10 h-10 text-[#FF7A14] animate-spin" style={{ animationDuration: "2s" }} />
             </div>
             <div>
@@ -1669,13 +1680,13 @@ export default function DepositPage() {
             </div>
             <div className="flex gap-3 w-full">
               <Link href="/history" className="flex-1">
-                <button className="w-full py-3 rounded-full border border-[#FF7A14] text-[#E85D00] font-semibold text-sm">
+                 <button className="deposit-step-secondary w-full py-3 text-sm">
                   Voir l'historique
                 </button>
               </Link>
               <button
                 onClick={() => { setStep("amount"); setAmount(""); setSvOperator(null); setSvDepositId(null); setSvPaymentToken(""); setSvPolling(false); setSvStatus(""); }}
-                className="flex-1 py-3 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm"
+                 className="deposit-step-secondary flex-1 py-3 text-sm"
               >
                 Nouvelle recharge
               </button>
