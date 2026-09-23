@@ -2260,8 +2260,9 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     try {
       const stats = await storage.getTeamStats(req.session.userId!);
       res.json(stats);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      console.error("[team] Unable to load team statistics:", error);
+      res.status(500).json({ message: "Impossible de charger les statistiques de l'équipe" });
     }
   });
 
@@ -2269,8 +2270,9 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     try {
       const team = await storage.getDetailedTeam(req.session.userId!);
       res.json(team);
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
+    } catch (error) {
+      console.error("[team] Unable to load team details:", error);
+      res.status(500).json({ message: "Impossible de charger les membres de l'équipe" });
     }
   });
 

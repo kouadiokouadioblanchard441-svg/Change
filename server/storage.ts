@@ -886,36 +886,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Referrals
-  async getReferrals(userId: number, level: number): Promise<User[]> {
+  private async getReferralLevels(userId: number): Promise<[User[], User[], User[]]> {
     const user = await this.getUser(userId);
-    if (!user) return [];
+    if (!user) return [[], [], []];
 
-    if (level === 1) {
-      return await db.select().from(users).where(eq(users.referredBy, user.referralCode));
-    }
-    
-    // For level 2 and 3, we need recursive queries
-    const level1 = await this.getReferrals(userId, 1);
-    if (level === 2) {
-      const level2: User[] = [];
-      for (const l1 of level1) {
-        const refs = await db.select().from(users).where(eq(users.referredBy, l1.referralCode));
-        level2.push(...refs);
-      }
-      return level2;
-    }
-    
-    if (level === 3) {
-      const level2 = await this.getReferrals(userId, 2);
-      const level3: User[] = [];
-      for (const l2 of level2) {
-        const refs = await db.select().from(users).where(eq(users.referredBy, l2.referralCode));
-        level3.push(...refs);
-      }
-      return level3;
-    }
-    
-    return [];
+    const level1 = await db.select().from(users)
+      .where(eq(users.referredBy, user.referralCode))
+      .orderBy(desc(users.createdAt), desc(users.id));
+    const level1Codes = level1.map(member => member.referralCode);
+    const level2 = level1Codes.length
+      ? await db.select().from(users)
+        .where(inArray(users.referredBy, level1Codes))
+        .orderBy(desc(users.createdAt), desc(users.id))
+      : [];
+    const level2Codes = level2.map(member => member.referralCode);
+    const level3 = level2Codes.length
+      ? await db.select().from(users)
+        .where(inArray(users.referredBy, level2Codes))
+        .orderBy(desc(users.createdAt), desc(users.id))
+      : [];
+
+    return [level1, level2, level3];
+  }
+
+  async getReferrals(userId: number, level: number): Promise<User[]> {
+    if (!Number.isInteger(level) || level < 1 || level > 3) return [];
+    const levels = await this.getReferralLevels(userId);
+    return levels[level - 1];
   }
 
   async createReferralCommission(data: Partial<ReferralCommission>): Promise<ReferralCommission> {
@@ -977,9 +974,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTeamStats(userId: number): Promise<TeamStats> {
-    const level1 = await this.getReferrals(userId, 1);
-    const level2 = await this.getReferrals(userId, 2);
-    const level3 = await this.getReferrals(userId, 3);
+    const [level1, level2, level3] = await this.getReferralLevels(userId);
     const totalCommission = await this.getUserCommissions(userId);
     const teamIds = Array.from(new Set([...level1, ...level2, ...level3].map(member => member.id)));
     const todayStart = new Date();
@@ -1020,13 +1015,11 @@ export class DatabaseStorage implements IStorage {
     };
 
     const countRecharged = async (userList: User[]) => {
-      let count = 0;
-      for (const u of userList) {
-        const userDeposits = await db.select({ id: deposits.id }).from(deposits)
-          .where(and(eq(deposits.userId, u.id), eq(deposits.status, "approved")));
-        if (userDeposits.length > 0) count++;
-      }
-      return count;
+      const userIds = userList.map(user => user.id);
+      if (!userIds.length) return 0;
+      const rows = await db.selectDistinct({ userId: deposits.userId }).from(deposits)
+        .where(and(inArray(deposits.userId, userIds), eq(deposits.status, "approved")));
+      return rows.length;
     };
 
     return {
@@ -1044,16 +1037,15 @@ export class DatabaseStorage implements IStorage {
       level1Recharged: await countRecharged(level1),
       totalDepositAmount,
       totalWithdrawalAmount,
-      todayNewMembers: [...level1, ...level2, ...level3].filter(member => member.createdAt >= todayStart).length,
+      todayNewMembers: [...level1, ...level2, ...level3]
+        .filter(member => !member.phone.startsWith("DEMO-") && member.createdAt >= todayStart).length,
       todayDepositAmount,
       todayWithdrawalAmount,
     };
   }
 
   async getDetailedTeam(userId: number): Promise<any> {
-    const level1 = await this.getReferrals(userId, 1);
-    const level2 = await this.getReferrals(userId, 2);
-    const level3 = await this.getReferrals(userId, 3);
+    const [level1, level2, level3] = await this.getReferralLevels(userId);
     const members = [...level1, ...level2, ...level3];
     const memberIds = Array.from(new Set(members.map(member => member.id)));
     const countryCodes = Array.from(new Set(members.map(member => member.country)));
@@ -1106,6 +1098,24 @@ export class DatabaseStorage implements IStorage {
     const enrichUser = (user: User) => {
       const userProductsList = productsByMember.get(user.id) || [];
       const totalInvested = userProductsList.reduce((sum, p) => sum + p.productPrice, 0);
+      const demoPreview = getDemoReferralPreview(user.phone);
+      const prefix = prefixByCountry.get(user.country) || null;
+      let digits = user.phone.replace(/\D/g, "");
+      const countryPrefix = prefix?.replace(/\D/g, "") || "";
+      const isInternational = user.phone.trim().startsWith("+") ||
+        Boolean(countryPrefix && digits.startsWith(countryPrefix) && digits.length > countryPrefix.length + 5);
+      if (isInternational && countryPrefix && digits.startsWith(countryPrefix)) {
+        digits = digits.slice(countryPrefix.length);
+      }
+      const maskedPhone = demoPreview?.maskedPhone ||
+        (digits.length > 5 ? `${digits.slice(0, 3)}***${digits.slice(-2)}` : "***");
+      const whatsappNumber = demoPreview
+        ? null
+        : isInternational
+          ? `${countryPrefix}${digits}`
+          : countryPrefix
+            ? `${countryPrefix}${digits}`
+            : null;
       const vipLevel = Math.max(
         stakingVipByMember.get(user.id) || 0,
         ...userProductsList.filter(p => !p.isFree).map(p => Number(/^VIP\s*(\d+)$/i.exec(p.productName)?.[1] || 0)),
@@ -1113,20 +1123,13 @@ export class DatabaseStorage implements IStorage {
 
       return {
         id: user.id,
-        fullName: user.fullName,
-        phone: user.phone,
-        isDemo: user.phone.startsWith("DEMO-"),
-        demoPreview: getDemoReferralPreview(user.phone),
-        phonePrefix: prefixByCountry.get(user.country) || null,
-        country: user.country,
-        balance: user.balance,
-        hasActiveProduct: user.hasActiveProduct,
-        hasDeposited: user.hasDeposited,
-        createdAt: user.createdAt,
+        maskedPhone,
+        whatsappNumber: whatsappNumber && /^\d{8,15}$/.test(whatsappNumber) ? whatsappNumber : null,
+        isDemo: Boolean(demoPreview),
+        demoPreview,
         totalInvested,
         totalReferralRevenue: revenueByMember.get(user.id) || 0,
         vipLevel: vipLevel || null,
-        products: userProductsList,
       };
     };
 

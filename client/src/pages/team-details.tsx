@@ -10,7 +10,8 @@ import "./team-details.css";
 
 interface TeamMember {
   id: number;
-  phone: string;
+  maskedPhone: string;
+  whatsappNumber: string | null;
   isDemo: boolean;
   demoPreview: {
     maskedPhone: string;
@@ -18,8 +19,6 @@ interface TeamMember {
     totalInvested: number;
     totalReferralRevenue: number;
   } | null;
-  phonePrefix: string | null;
-  country: string;
   totalReferralRevenue: number;
   vipLevel: number | null;
 }
@@ -33,24 +32,6 @@ interface TeamDetails {
   totalLevel3Invested: number;
 }
 
-function maskPhone(phone: string, prefix: string | null): string {
-  let digits = phone.replace(/\D/g, "");
-  const countryPrefix = prefix?.replace(/\D/g, "") || "";
-  if (countryPrefix && digits.startsWith(countryPrefix) && digits.length > countryPrefix.length + 5) {
-    digits = digits.slice(countryPrefix.length);
-  }
-  return digits.length > 5 ? `${digits.slice(0, 3)}***${digits.slice(-2)}` : "***";
-}
-
-function whatsAppNumber(phone: string, prefix: string | null): string | null {
-  const digits = phone.replace(/\D/g, "");
-  const countryPrefix = prefix?.replace(/\D/g, "") || "";
-  const isInternational = phone.trim().startsWith("+") ||
-    (countryPrefix && digits.startsWith(countryPrefix) && digits.length > countryPrefix.length + 5);
-  const number = isInternational ? digits : countryPrefix ? `${countryPrefix}${digits}` : "";
-  return /^\d{8,15}$/.test(number) ? number : null;
-}
-
 const levelFromUrl = (): 1 | 2 | 3 => {
   const level = Number(new URLSearchParams(window.location.search).get("level"));
   return level === 2 || level === 3 ? level : 1;
@@ -60,8 +41,11 @@ export default function TeamDetailsPage() {
   const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(levelFromUrl);
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const { data: team, isLoading, isError } = useQuery<TeamDetails>({
+  const { data: team, isLoading, isFetching, isError, refetch } = useQuery<TeamDetails>({
     queryKey: ["/api/team/details"],
+    staleTime: 30_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
   const { data: countries } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
 
@@ -89,7 +73,7 @@ export default function TeamDetailsPage() {
           <span>ChargePoint</span>
         </header>
 
-        <div className="team-details-content">
+        <div className="team-details-content" aria-busy={isLoading || isFetching}>
           <nav className="team-details-tabs" aria-label="Choisir un niveau d'équipe">
             {levels.map(level => (
               <button
@@ -137,7 +121,13 @@ export default function TeamDetailsPage() {
                 {[0, 1, 2].map(i => <Skeleton key={i} className="h-16 w-full" />)}
               </div>
             ) : isError ? (
-              <p className="team-details-empty" role="alert">Impossible de charger les membres de l'équipe. Réessayez plus tard.</p>
+              <div className="team-details-empty" role="alert">
+                <strong>Impossible de charger les membres de l'équipe.</strong>
+                <span>Vérifiez votre connexion puis réessayez.</span>
+                <button type="button" className="team-details-retry" onClick={() => void refetch()} disabled={isFetching}>
+                  {isFetching ? "Chargement…" : "Réessayer"}
+                </button>
+              </div>
             ) : selected.members.length === 0 ? (
               <div className="team-details-empty">
                 <UsersRound aria-hidden="true" />
@@ -145,11 +135,10 @@ export default function TeamDetailsPage() {
                 <span>Invitez des proches pour développer votre équipe.</span>
               </div>
             ) : selected.members.map(member => {
-              const phone = member.demoPreview?.maskedPhone || maskPhone(member.phone, member.phonePrefix);
-              const number = member.isDemo ? null : whatsAppNumber(member.phone, member.phonePrefix);
+              const phone = member.maskedPhone;
               const whatsappHref = member.isDemo
                 ? `https://wa.me/?text=${encodeURIComponent(message)}`
-                : number ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : null;
+                : member.whatsappNumber ? `https://wa.me/${member.whatsappNumber}?text=${encodeURIComponent(message)}` : null;
               return (
                 <div className="team-details-row" key={member.id} data-testid={`team-member-${member.id}`}>
                   <strong data-testid={`text-member-phone-${member.id}`}>

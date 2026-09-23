@@ -294,6 +294,24 @@
   font-size: 15px;
 }
 
+.team-details-retry {
+  min-height: 40px;
+  margin-top: 4px;
+  padding: 0 16px;
+  border: 2px solid #111827;
+  border-radius: 8px;
+  background: #ff7a14;
+  color: #111827;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.team-details-retry:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .team-details-page button:focus-visible,
 .team-details-page a:focus-visible {
   outline: 2px solid #111827;

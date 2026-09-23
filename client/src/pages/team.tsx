@@ -29,8 +29,11 @@ export default function TeamPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { data: stats, isLoading, isError } = useQuery<TeamStats>({
+  const { data: stats, isLoading, isFetching, isError, refetch } = useQuery<TeamStats>({
     queryKey: ["/api/team/stats"],
+    staleTime: 30_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
   const { data: settings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
@@ -83,7 +86,7 @@ export default function TeamPage() {
           <span className="team-header-brand">ChargePoint</span>
         </header>
 
-        <div className="team-content">
+        <div className="team-content" aria-busy={isLoading || isFetching}>
           <section className="team-invite" aria-label="Invitation">
             <h2>Mon invitation</h2>
             <div className="team-invite-row">
@@ -120,7 +123,14 @@ export default function TeamPage() {
               {stats.demoMemberCount} filleuls « Démo » sont inclus dans le nombre de membres. Les montants affichés ici restent les montants réels, sans les exemples fictifs.
             </p>
           )}
-          {isError && <p className="team-error" role="alert">Impossible de charger les statistiques de l'équipe.</p>}
+          {isError && (
+            <div className="team-error" role="alert">
+              <span>Impossible de charger les statistiques de l'équipe.</span>
+              <button type="button" onClick={() => void refetch()} disabled={isFetching}>
+                {isFetching ? "Chargement…" : "Réessayer"}
+              </button>
+            </div>
+          )}
 
           <section className="team-levels" aria-label="Niveaux d'équipe">
             {levels.map((level, index) => (

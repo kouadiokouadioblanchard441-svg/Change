@@ -210,9 +210,35 @@
 }
 
 .team-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: -8px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #a02719;
+  border-radius: 9px;
+  background: #fff4f2;
   color: #a02719;
   font-size: 13px;
+}
+
+.team-error button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #a02719;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #7f1d1d;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.team-error button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .team-demo-note {
