@@ -70,6 +70,13 @@ export default function WithdrawalPage() {
     queryKey: ["/api/user/products"],
   });
 
+  const { data: availableBalance } = useQuery<{ availableBalance: string }>({
+    queryKey: ["/api/withdrawals/available"],
+    enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+
   const hasActiveProduct = userProducts.some((p) => p.status === "active");
 
   useEffect(() => {
@@ -97,6 +104,7 @@ export default function WithdrawalPage() {
       toast({ title: "Demande envoyée", description: "Votre demande de retrait a été envoyée." });
       refreshUser();
       queryClient.invalidateQueries({ queryKey: ["/api/withdrawals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/withdrawals/available"] });
       setAmount("");
     },
     onError: (error: Error & { data?: { code?: string; paymentUrl?: string } }) => {
@@ -160,7 +168,7 @@ export default function WithdrawalPage() {
 
   if (!user) return null;
 
-  const balance = parseFloat(user?.balance || "0");
+  const balance = parseFloat(availableBalance?.availableBalance || "0");
   const hasWallets = wallets.length > 0;
 
   return (

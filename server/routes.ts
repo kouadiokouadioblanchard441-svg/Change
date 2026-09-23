@@ -2079,6 +2079,15 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
   });
 
   // Withdrawals
+  app.get("/api/withdrawals/available", requireAuth, async (req, res) => {
+    try {
+      const availableBalance = await storage.getWithdrawableBalance(req.session.userId!);
+      res.json({ availableBalance });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/withdrawal-fee/prepare", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUser(req.session.userId!);
@@ -2090,6 +2099,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const withdrawalAmount = Number(req.body.amount);
       if (!Number.isInteger(withdrawalAmount) || withdrawalAmount <= 0) {
         return res.status(400).json({ message: "Montant de retrait invalide" });
+      }
+      const withdrawableBalance = parseFloat(await storage.getWithdrawableBalance(user.id));
+      if (withdrawalAmount > withdrawableBalance) {
+        return res.status(400).json({ message: "Le montant des dépôts n'est pas retirable" });
       }
       const { payment, requiredAmount } = await prepareWithdrawalFeePayment(user.id, withdrawalAmount);
       res.json({
@@ -2137,10 +2150,11 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         }
       }
 
-      const balance = parseFloat(user.balance);
-      if (numericAmount > balance) {
-        return res.status(400).json({ message: "Solde insuffisant" });
+       const withdrawableBalance = parseFloat(await storage.getWithdrawableBalance(user.id));
+       if (numericAmount > withdrawableBalance) {
+         return res.status(400).json({ message: "Le montant des dépôts n'est pas retirable" });
       }
+       const balance = parseFloat(user.balance);
 
       const wallet = await storage.getDefaultWallet(user.id);
       if (!wallet) {

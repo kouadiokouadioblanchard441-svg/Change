@@ -36,6 +36,7 @@ type TeamStats = {
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
+  getWithdrawableBalance(userId: number): Promise<string>;
   getUserByPhone(phone: string, country: string): Promise<User | undefined>;
   getUserByPhoneAnyCountry(phone: string): Promise<User | undefined>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
@@ -172,6 +173,29 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
+  }
+
+  async getWithdrawableBalance(userId: number): Promise<string> {
+    const user = await this.getUser(userId);
+    if (!user) return "0.00";
+
+    const approvedDeposits = await db.select({ amount: deposits.amount })
+      .from(deposits)
+      .where(and(
+        eq(deposits.userId, userId),
+        eq(deposits.status, "approved"),
+        isNull(deposits.withdrawalFeePaymentId),
+      ));
+
+    const transactionsForUser = await this.getUserTransactions(userId);
+    const depositPrincipal = approvedDeposits.reduce((sum, deposit) => sum + deposit.amount, 0);
+    const balanceSpentOnProducts = transactionsForUser
+      .filter((transaction) => transaction.type === "purchase" || transaction.type === "staking")
+      .reduce((sum, transaction) => sum + Math.max(0, -parseFloat(transaction.amount)), 0);
+    const protectedDepositBalance = Math.max(0, depositPrincipal - balanceSpentOnProducts);
+    const withdrawableBalance = Math.max(0, parseFloat(user.balance) - protectedDepositBalance);
+
+    return withdrawableBalance.toFixed(2);
   }
 
   async getUserByPhone(phone: string, country: string): Promise<User | undefined> {
