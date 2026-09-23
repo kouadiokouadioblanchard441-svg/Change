@@ -186,7 +186,6 @@ export default function HomePage() {
           <section className="cp-partners" aria-labelledby="partners-title">
             <header className="cp-partners-heading">
               <h2 id="partners-title">Nos partenaires</h2>
-              <span>Des marques qui avancent avec nous</span>
             </header>
             <div className="cp-partners-grid">
               {partners.map(({ name, logo, className }) => (
