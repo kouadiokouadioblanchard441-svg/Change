@@ -654,111 +654,79 @@ export default function WalletPage() {
 
   if (showForm) {
     return (
-      <div className="wallet-page">
+      <div className="wallet-page wallet-form-page">
         <style>{walletStyles}</style>
         <div className="wallet-shell">
-          <header className="wallet-topbar">
-          <button
-            onClick={() => { setShowForm(false); form.reset(); setSelectedMethod(""); }}
-            className="wallet-back"
-            data-testid="button-back-form"
-            aria-label="Retour"
-          >
-            <ChevronLeft size={19} />
-          </button>
-          <div className="wallet-heading">
-            <span className="wallet-eyebrow">Compte de retrait</span>
-            <h1 className="wallet-title">Lier une carte bancaire</h1>
-          </div>
-          <div className="w-10" aria-hidden="true" />
-        </header>
-
-        <main className="wallet-content">
-          <section className="wallet-hero">
-            <div className="wallet-hero-icon"><Shield size={21} /></div>
-            <div>
-              <h2>Ajoutez un moyen de retrait</h2>
-              <p>Renseignez les informations exactes du compte qui recevra vos retraits.</p>
-            </div>
-          </section>
-
-          <section className="wallet-section">
-            <div className="wallet-section-header">
-              <div>
-                <h2 className="wallet-section-title">Type</h2>
-                <p className="wallet-section-caption">Sélectionnez le pays du compte</p>
-              </div>
-              <span className="wallet-step">1</span>
-            </div>
+          <header className="wallet-topbar wallet-form-topbar">
             <button
-              type="button"
-              onClick={() => setShowCountrySheet(true)}
-              className="wallet-selector"
-              data-testid="button-select-country"
+              onClick={() => { setShowForm(false); form.reset(); setSelectedMethod(""); setSelectedCountry(user.country); }}
+              className="wallet-back"
+              data-testid="button-back-form"
+              aria-label="Retour"
             >
-              <span className="wallet-selector-copy">
-                <span className="wallet-label">Pays</span>
-                <span className={`wallet-value${selectedCountry ? "" : " is-empty"}`}>
+              <ChevronLeft size={21} />
+            </button>
+            <div className="wallet-heading">
+              <span className="wallet-eyebrow">Compte de retrait</span>
+              <h1 className="wallet-title">Ajouter un compte</h1>
+            </div>
+            <div className="w-10" aria-hidden="true" />
+          </header>
+
+          <main className="wallet-content wallet-form-content">
+            <section className="wallet-reference-card">
+              <h2>Informations du compte</h2>
+
+              <button
+                type="button"
+                onClick={() => setShowCountrySheet(true)}
+                className="wallet-reference-row"
+                data-testid="button-select-country"
+              >
+                <span className="wallet-reference-label">Type</span>
+                <span className={`wallet-reference-value${selectedCountry ? "" : " is-empty"}`}>
                   {selectedCountryLabel}
                 </span>
-              </span>
-              <ChevronRight size={18} />
-            </button>
-          </section>
+                <ChevronDown size={19} />
+              </button>
 
-          <section className="wallet-section">
-            <div className="wallet-section-header">
-              <div>
-                <h2 className="wallet-section-title">Network</h2>
-                <p className="wallet-section-caption">Sélectionnez l’opérateur de paiement</p>
-              </div>
-              <span className="wallet-step">2</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowBankSheet(true)}
-              className="wallet-selector"
-              data-testid="button-select-network"
-            >
-              <span className="wallet-selector-copy">
-                <span className="wallet-label">Opérateur</span>
-                <span className={`wallet-value${selectedMethod ? "" : " is-empty"}`}>
+              <div className="wallet-reference-divider" />
+
+              <button
+                type="button"
+                onClick={() => setShowBankSheet(true)}
+                className="wallet-reference-row"
+                data-testid="button-select-network"
+              >
+                <span className="wallet-reference-label">Network</span>
+                <span className={`wallet-reference-value${selectedMethod ? "" : " is-empty"}`}>
                   {selectedMethod || "Sélectionner un opérateur"}
                 </span>
-              </span>
-              <ChevronRight size={18} />
-            </button>
-          </section>
+                <ChevronDown size={19} />
+              </button>
 
-          <section className="wallet-section">
-            <div className="wallet-section-header">
-              <div>
-                <h2 className="wallet-section-title">Adresse</h2>
-                <p className="wallet-section-caption">Saisissez le numéro associé à l’opérateur</p>
+              <div className="wallet-reference-divider" />
+
+              <div className="wallet-reference-address">
+                <label htmlFor="wallet-account-number">Adresse</label>
+                <input
+                  id="wallet-account-number"
+                  {...form.register("accountNumber")}
+                  type="tel"
+                  placeholder="Saisissez le numéro"
+                  className="wallet-input"
+                  data-testid="input-wallet-number"
+                />
+                {form.formState.errors.accountNumber && (
+                  <p className="wallet-error">{form.formState.errors.accountNumber.message}</p>
+                )}
               </div>
-              <span className="wallet-step">3</span>
-            </div>
-            <div className="wallet-field">
-              <label className="wallet-label" htmlFor="wallet-account-number">Numéro de téléphone ou de compte</label>
-              <input
-                id="wallet-account-number"
-                {...form.register("accountNumber")}
-                type="tel"
-                placeholder="Ex. 07 00 00 00 00"
-                className="wallet-input"
-                data-testid="input-wallet-number"
-              />
-              {form.formState.errors.accountNumber && (
-                <p className="wallet-error">{form.formState.errors.accountNumber.message}</p>
-              )}
-            </div>
-          </section>
+            </section>
 
-          <p className="wallet-note">
-            <Shield size={15} />
-            Vérifiez chaque information avant de confirmer. Elle sera utilisée pour traiter vos retraits.
-          </p>
-        </main>
+            <p className="wallet-form-note">
+              Le numéro sera utilisé pour recevoir vos retraits.
+            </p>
+          </main>
 
         <footer className="wallet-footer">
           <div className="wallet-footer-inner">
@@ -774,7 +742,7 @@ export default function WalletPage() {
                   Enregistrement...
                 </>
               ) : (
-                "Enregistrer ce compte"
+                "Confirmer"
               )}
             </button>
           </div>
