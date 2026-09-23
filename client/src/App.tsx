@@ -34,6 +34,7 @@ const RulesPage = lazy(() => import("@/pages/rules"));
 const GiftCodePage = lazy(() => import("@/pages/gift-code"));
 const TeamDetailsPage = lazy(() => import("@/pages/team-details"));
 const MyProductsPage = lazy(() => import("@/pages/my-products"));
+const ProductsPage = lazy(() => import("@/pages/products"));
 const CheckinPage = lazy(() => import("@/pages/checkin"));
 const RewardsPage = lazy(() => import("@/pages/rewards"));
 const WithdrawalHistoryPage = lazy(() => import("@/pages/withdrawal-history"));
@@ -202,7 +203,7 @@ function Router() {
       <Route path="/products">
         <ProtectedRoute>
           <AppLayout>
-            <InvestPage />
+            <ProductsPage />
           </AppLayout>
         </ProtectedRoute>
       </Route>
