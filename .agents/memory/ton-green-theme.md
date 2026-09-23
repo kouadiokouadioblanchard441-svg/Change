@@ -20,3 +20,9 @@ The four home action icons should follow the same native-image rule while preser
 **Why:** The user asked to keep the prior visual style and only replace the implementation with transparent PNG assets.
 
 **How to apply:** Use transparent PNGs for Dépôt, Retrait, Aide and Pointage; keep the dark outline and orange accent balance rather than recoloring the entire icon.
+
+Home announcement text should be easy to read: use a bold, enlarged treatment and a transparent orange star PNG as the separator between messages.
+
+**Why:** The user found the earlier ticker text too small and requested a native orange star instead of the small CSS separator.
+
+**How to apply:** Keep the ticker's messages scrolling, make the text visibly bold, and use an image asset for each orange star separator.
