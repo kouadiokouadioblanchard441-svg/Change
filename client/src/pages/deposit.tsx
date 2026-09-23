@@ -103,12 +103,9 @@ export default function DepositPage() {
   });
   const MIN_DEPOSIT = Math.max(3500, parseInt(platformSettings?.minDeposit || "3500"));
   const depositPresets = [
-    MIN_DEPOSIT,
-    MIN_DEPOSIT + 1500,
-    MIN_DEPOSIT + 6500,
-    MIN_DEPOSIT + 21500,
-    MIN_DEPOSIT + 46500,
-  ];
+    3500, 5000, 10000, 25000, 50000,
+    100000, 200000, 300000, 400000, 500000,
+  ].filter((preset) => preset >= MIN_DEPOSIT);
   const sendavapayEnabled = platformSettings?.sendavapayEnabled === "true";
   const sendavapayChannelName = platformSettings?.sendavapayChannelName || "SendavaPay";
   const westpayEnabled = platformSettings?.westpayEnabled === "true";
@@ -725,11 +722,11 @@ export default function DepositPage() {
           background: #fff;
         }
         .recharge-reference .preset-row {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 10px;
         }
         .recharge-reference .preset {
-          flex: 1;
           height: 48px;
           border: 2px solid #d1d5db;
           border-radius: 11px;
@@ -865,8 +862,8 @@ export default function DepositPage() {
           .recharge-reference .amount-panel { padding-right: 12px; padding-left: 12px; }
           .recharge-reference .country-panel { margin-right: 12px; margin-left: 12px; }
           .recharge-reference .continue { width: calc(100% - 24px); margin-right: 12px; margin-left: 12px; }
-          .recharge-reference .preset-row { gap: 10px; }
-          .recharge-reference .preset { font-size: 13px; }
+          .recharge-reference .preset-row { gap: 8px; }
+          .recharge-reference .preset { height: 44px; font-size: 11px; }
           .recharge-reference .instruction { font-size: 15px; }
         }
       `}</style>
