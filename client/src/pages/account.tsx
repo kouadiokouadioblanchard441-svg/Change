@@ -408,7 +408,7 @@ export default function AccountPage() {
           <div>
             <strong>Solutions de recharge ChargePoint</strong>
             <span>Des équipements pensés pour votre mobilité</span>
-            <button type="button" onClick={() => navigate("/about")}>Découvrir</button>
+            <button type="button" onClick={() => navigate("/my-products")}>Découvrir</button>
           </div>
         </section>
 
