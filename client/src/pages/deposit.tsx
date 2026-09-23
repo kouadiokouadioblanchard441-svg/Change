@@ -949,14 +949,14 @@ export default function DepositPage() {
         <button className="flex items-center gap-1 text-gray-800" onClick={() => setStep("amount")}>
           <ChevronLeft className="h-5 w-5" /><span className="font-semibold text-base">Choisir le pays</span>
         </button>
-        <Link href="/history"><button className="rounded-full border border-[#00CC2C] px-3 py-1.5 text-xs font-semibold text-[#00CC2C]">Historique</button></Link>
+        <Link href="/history"><button className="rounded-full border border-[#FF7A14] px-3 py-1.5 text-xs font-semibold text-[#E85D00]">Historique</button></Link>
       </header>
       <div className="mx-4 mt-4 flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50 p-4">
-        <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#00CC2C]">{Number(amount).toLocaleString()} FCFA</p></div>
-        <button onClick={() => setStep("amount")} className="text-xs text-[#00CC2C] underline">Modifier</button>
+        <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} FCFA</p></div>
+        <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
       </div>
       <div className="p-4">
-        <div className="rounded-2xl border-2 border-[#00CC2C] bg-green-50 p-4">
+        <div className="rounded-2xl border-2 border-[#FF7A14] bg-orange-50 p-4">
           <p className="mb-2 text-sm font-bold text-gray-900">Pays du paiement</p>
           <select value={depositCountry} onChange={e => setDepositCountry(e.target.value)} className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-4 text-sm text-gray-700 outline-none">
             <option value="">Sélectionnez un pays</option>
@@ -964,7 +964,7 @@ export default function DepositPage() {
           </select>
           <p className="mt-2 text-xs text-gray-500">Seuls les pays activés par l’administration sont affichés.</p>
         </div>
-        <button onClick={openRobotPay} disabled={!depositCountry} className="mt-5 w-full rounded-xl bg-[#00CC2C] py-3 font-semibold text-white disabled:opacity-50">Continuer vers le paiement</button>
+        <button onClick={openRobotPay} disabled={!depositCountry} className="mt-5 w-full rounded-xl bg-[#FF7A14] py-3 font-semibold text-gray-900 disabled:opacity-50">Continuer vers le paiement</button>
       </div>
     </div>
   );
@@ -985,7 +985,7 @@ export default function DepositPage() {
             <img src={selectedNumber.logoUrl} alt={selectedNumber.operatorName} className="w-10 h-10 rounded-lg object-contain" />
           ) : (
             <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-orange-100">
-              <Phone className="w-5 h-5 text-[#00CC2C]" />
+              <Phone className="w-5 h-5 text-[#FF7A14]" />
             </div>
           )}
           <div className="flex-1">
@@ -995,12 +995,12 @@ export default function DepositPage() {
                 href={selectedNumber.paymentLink}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-1 flex items-center gap-1 text-sm font-bold text-[#00CC2C] underline"
+                className="mt-1 flex items-center gap-1 text-sm font-bold text-[#E85D00] underline"
               >
                 <ExternalLink className="h-4 w-4" /> Ouvrir le lien de paiement
               </a>
             ) : (
-              <p className="font-bold text-[#00CC2C] text-sm">{selectedNumber.operatorName} — {selectedNumber.phone}</p>
+              <p className="font-bold text-[#E85D00] text-sm">{selectedNumber.operatorName} — {selectedNumber.phone}</p>
             )}
             <p className="text-xs text-gray-500">{selectedNumber.ownerName}</p>
           </div>
@@ -1052,11 +1052,11 @@ export default function DepositPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             className={`w-full border-2 border-dashed rounded-xl py-7 flex flex-col items-center gap-2 transition-colors ${
-              screenshot ? "border-green-400 bg-green-50" : "border-gray-300 bg-gray-50 hover:border-[#00CC2C] hover:bg-green-50"
+              screenshot ? "border-orange-400 bg-orange-50" : "border-gray-300 bg-gray-50 hover:border-[#FF7A14] hover:bg-orange-50"
             }`}
           >
             {screenshot ? (
-              <><CheckCircle className="w-8 h-8 text-green-500" /><p className="text-sm font-medium text-green-600">{screenshotName}</p><p className="text-xs text-gray-400">Appuyez pour changer</p></>
+              <><CheckCircle className="w-8 h-8 text-[#FF7A14]" /><p className="text-sm font-medium text-[#E85D00]">{screenshotName}</p><p className="text-xs text-gray-400">Appuyez pour changer</p></>
             ) : (
               <><ImageIcon className="w-8 h-8 text-gray-400" /><p className="text-sm font-medium text-gray-600">Appuyez pour ajouter la capture</p><p className="text-xs text-gray-400">JPG, PNG — max 5 Mo</p></>
             )}
@@ -1096,18 +1096,18 @@ export default function DepositPage() {
 
       <div className="p-4 space-y-5 pb-10">
         {/* Amount recap */}
-        <div className="mx-0 rounded-xl p-4 border border-orange-100 bg-orange-50 flex items-center justify-between">
+        <div className="mx-0 rounded-xl p-4 border-2 border-[#FF7A14] bg-orange-50 flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-500">Montant à déposer</p>
-            <p className="text-xl font-bold text-[#00CC2C]">{Number(amount).toLocaleString()} {currency}</p>
+            <p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p>
           </div>
-          <button onClick={() => setStep("amount")} className="text-xs text-[#00CC2C] underline">Modifier</button>
+          <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
         </div>
 
         {/* Info card */}
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-[#00CC2C]" />
+            <Zap className="w-5 h-5 text-[#FF7A14]" />
             <p className="font-semibold text-gray-900 text-sm">Comment ça marche ?</p>
           </div>
           <p className="text-xs text-gray-600 leading-relaxed">
@@ -1149,16 +1149,16 @@ export default function DepositPage() {
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">{ashtechChannelName}</span>
         </button>
-        <Link href="/history"><button className="text-xs text-[#00CC2C] font-semibold px-3 py-1.5 rounded-full border border-[#00CC2C]">Historique</button></Link>
+        <Link href="/history"><button className="text-xs text-[#E85D00] font-semibold px-3 py-1.5 rounded-full border border-[#FF7A14]">Historique</button></Link>
       </header>
       <div className="mx-4 mt-4 rounded-xl p-4 border border-orange-100 bg-orange-50 flex items-center justify-between">
-        <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#00CC2C]">{Number(amount).toLocaleString()} {currency}</p></div>
-        <button onClick={() => setStep("amount")} className="text-xs text-[#00CC2C] underline">Modifier</button>
+        <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p></div>
+        <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
       </div>
       <div className="p-4 space-y-4 pb-10">
         <div>
           <p className="text-sm font-semibold text-gray-800 mb-2">Pays</p>
-          {ashtechCountriesLoading ? <Loader2 className="w-6 h-6 animate-spin text-[#00CC2C] mx-auto" /> : (
+          {ashtechCountriesLoading ? <Loader2 className="w-6 h-6 animate-spin text-[#FF7A14] mx-auto" /> : (
             <select value={ashtechCountry} onChange={(e) => { setAshtechCountry(e.target.value); setAshtechOperator(""); }}
               className="w-full border border-gray-300 rounded-md px-4 py-4 text-sm text-gray-700 outline-none bg-white appearance-none">
               {availableAshtechCountries.map(c => <option key={c.code} value={c.code}>{c.name} ({c.currency})</option>)}
@@ -1180,9 +1180,9 @@ export default function DepositPage() {
               {ashtechOperators.map((operator, index) => {
                 const name = typeof operator === "string" ? operator : (operator.name || operator.code || `Opérateur ${index + 1}`);
                 return <button key={`${name}-${index}`} onClick={() => setAshtechOperator(name)}
-                  className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border-2 ${ashtechOperator === name ? "border-[#00CC2C] bg-green-50" : "border-gray-200 bg-white"}`}>
+                  className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border-2 ${ashtechOperator === name ? "border-[#FF7A14] bg-orange-50" : "border-gray-200 bg-white"}`}>
                   <span className="font-semibold text-gray-900 text-sm">{name}</span>
-                  {ashtechOperator === name && <CheckCircle className="w-5 h-5 text-[#00CC2C]" />}
+                  {ashtechOperator === name && <CheckCircle className="w-5 h-5 text-[#FF7A14]" />}
                 </button>;
               })}
             </div>
@@ -1205,7 +1205,7 @@ export default function DepositPage() {
       <div className="p-4 space-y-5 pb-10">
         <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4">
           <p className="font-bold text-gray-900 text-sm mb-2">Code à composer</p>
-          {ashtechUssdCode && <p className="bg-white rounded-xl border border-orange-200 px-4 py-3 text-center font-mono font-black text-2xl text-[#00CC2C] tracking-widest">{ashtechUssdCode}</p>}
+          {ashtechUssdCode && <p className="bg-white rounded-xl border border-orange-200 px-4 py-3 text-center font-mono font-black text-2xl text-[#E85D00] tracking-widest">{ashtechUssdCode}</p>}
           <p className="text-sm text-gray-600 mt-3">
             {ashtechUssdCode
               ? "Composez ce code sur votre téléphone pour obtenir le code OTP, puis saisissez-le ci-dessous."
@@ -1213,7 +1213,7 @@ export default function DepositPage() {
           </p>
         </div>
         <input type="text" inputMode="numeric" value={ashtechOtp} onChange={(e) => setAshtechOtp(e.target.value)} maxLength={8}
-          placeholder="Code OTP reçu par SMS" className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none bg-white focus:border-[#00CC2C]" />
+          placeholder="Code OTP reçu par SMS" className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none bg-white focus:border-[#FF7A14]" />
         <button onClick={() => ashtechCollectMutation.mutate(ashtechOtp)} disabled={!ashtechOtp.trim() || ashtechCollectMutation.isPending}
           className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg disabled:opacity-40" style={{ background: TON_GRADIENT }}>
           {ashtechCollectMutation.isPending ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Vérification...</span> : "Valider le code OTP"}
@@ -1229,7 +1229,7 @@ export default function DepositPage() {
         <button onClick={() => setStep("ashtech-operator")} className="flex items-center gap-1 text-gray-800"><ChevronLeft className="w-5 h-5" /><span className="font-semibold text-base">Finaliser le paiement</span></button>
       </header>
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center"><ExternalLink className="w-10 h-10 text-[#00CC2C]" /></div>
+        <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center"><ExternalLink className="w-10 h-10 text-[#FF7A14]" /></div>
         <div><p className="font-bold text-gray-900 text-xl mb-2">Finaliser avec Wave</p><p className="text-sm text-gray-500">Ouvrez la page Wave pour confirmer votre dépôt de <strong>{Number(amount).toLocaleString()} {currency}</strong>.</p></div>
         <a href={ashtechWaveUrl} target="_blank" rel="noopener noreferrer" onClick={() => { setAshtechPolling(true); setStep("ashtech-waiting"); }}
           className="w-full py-5 rounded-full text-white font-bold text-base shadow-lg flex items-center justify-center gap-2" style={{ background: TON_GRADIENT }}>
@@ -1244,9 +1244,9 @@ export default function DepositPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <header className="flex items-center gap-2 px-4 py-4 bg-white border-b border-gray-100"><span className="font-semibold text-base text-gray-800">Paiement en cours</span></header>
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center"><RefreshCw className="w-10 h-10 text-[#00CC2C] animate-spin" style={{ animationDuration: "2s" }} /></div>
+        <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center"><RefreshCw className="w-10 h-10 text-[#FF7A14] animate-spin" style={{ animationDuration: "2s" }} /></div>
         <div><p className="font-bold text-gray-900 text-xl">En attente de confirmation</p><p className="text-sm text-gray-500 mt-2">Validez le paiement sur votre téléphone. Cette page se met à jour automatiquement.</p></div>
-        <div className="flex gap-3 w-full"><Link href="/history" className="flex-1"><button className="w-full py-3 rounded-full border border-[#00CC2C] text-[#00CC2C] font-semibold text-sm">Voir l'historique</button></Link>
+        <div className="flex gap-3 w-full"><Link href="/history" className="flex-1"><button className="w-full py-3 rounded-full border border-[#FF7A14] text-[#E85D00] font-semibold text-sm">Voir l'historique</button></Link>
           <button onClick={() => { setStep("amount"); setAmount(""); setAshtechDepositId(null); setAshtechPolling(false); setAshtechStatus(""); }} className="flex-1 py-3 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm">Nouvelle recharge</button>
         </div>
       </div>
@@ -1262,7 +1262,7 @@ export default function DepositPage() {
           <span className="font-semibold text-base">Top up</span>
         </button>
         <Link href="/history">
-          <button className="text-xs text-[#00CC2C] font-semibold px-3 py-1.5 rounded-full border border-[#00CC2C]">Historique</button>
+          <button className="text-xs text-[#E85D00] font-semibold px-3 py-1.5 rounded-full border border-[#FF7A14]">Historique</button>
         </Link>
       </header>
 
@@ -1270,9 +1270,9 @@ export default function DepositPage() {
       <div className="mx-4 mt-4 rounded-xl p-4 border border-orange-100 bg-orange-50 flex items-center justify-between">
         <div>
           <p className="text-xs text-gray-500">Montant à déposer</p>
-          <p className="text-xl font-bold text-[#00CC2C]">{Number(amount).toLocaleString()} {currency}</p>
+          <p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p>
         </div>
-        <button onClick={() => setStep("amount")} className="text-xs text-[#00CC2C] underline">Modifier</button>
+        <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
       </div>
 
       <div className="p-4 space-y-4 pb-10">
@@ -1311,7 +1311,7 @@ export default function DepositPage() {
           <p className="text-sm font-semibold text-gray-800 mb-2">Opérateur Mobile Money</p>
           {svOperatorsLoading ? (
             <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-[#00CC2C]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#FF7A14]" />
             </div>
           ) : svOperators.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
@@ -1327,7 +1327,7 @@ export default function DepositPage() {
                     onClick={() => setSvOperator(op)}
                     className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border-2 transition-all ${
                       svOperator?.id === op.id
-                        ? "border-[#00CC2C] bg-green-50"
+                        ? "border-[#FF7A14] bg-orange-50"
                         : "border-gray-200 bg-white hover:border-green-200"
                     }`}
                   >
@@ -1336,17 +1336,17 @@ export default function DepositPage() {
                         <img src={icon} alt={op.name} className="w-10 h-10 rounded-full object-cover border border-gray-100" />
                       ) : (
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                          svOperator?.id === op.id ? "bg-[#00CC2C] text-white" : "bg-gray-100 text-gray-600"
+                          svOperator?.id === op.id ? "bg-[#FF7A14] text-gray-900" : "bg-gray-100 text-gray-600"
                         }`}>
                           {op.name.charAt(0)}
                         </div>
                       )}
                       <div className="text-left">
                         <p className="font-semibold text-gray-900 text-sm">{op.name}</p>
-                        {op.requiresOtp && <p className="text-xs text-[#00CC2C]">Code OTP requis</p>}
+                        {op.requiresOtp && <p className="text-xs text-[#E85D00]">Code OTP requis</p>}
                       </div>
                     </div>
-                    {svOperator?.id === op.id && <CheckCircle className="w-5 h-5 text-[#00CC2C]" />}
+                    {svOperator?.id === op.id && <CheckCircle className="w-5 h-5 text-[#FF7A14]" />}
                   </button>
                 );
               })}
@@ -1385,19 +1385,19 @@ export default function DepositPage() {
         {/* Step 1 — Dial USSD code */}
         <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-full bg-[#00CC2C] flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#FF7A14] flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-xs">1</span>
             </div>
             <p className="font-bold text-gray-900 text-sm">Composez ce code sur votre téléphone</p>
           </div>
           {svUssdCode ? (
             <div className="bg-white rounded-xl border border-orange-200 px-4 py-3 text-center">
-              <p className="font-mono font-black text-2xl text-[#00CC2C] tracking-widest">{svUssdCode}</p>
+              <p className="font-mono font-black text-2xl text-[#E85D00] tracking-widest">{svUssdCode}</p>
               <p className="text-xs text-gray-400 mt-1">Composez ce code USSD sur votre téléphone</p>
             </div>
           ) : (
             <p className="text-sm text-gray-600">
-              Composez le code USSD de votre opérateur (ex&nbsp;: <span className="font-mono font-bold text-[#00CC2C]">*144#</span>) sur votre téléphone pour recevoir le code OTP par SMS.
+              Composez le code USSD de votre opérateur (ex&nbsp;: <span className="font-mono font-bold text-[#E85D00]">*144#</span>) sur votre téléphone pour recevoir le code OTP par SMS.
             </p>
           )}
         </div>
@@ -1405,7 +1405,7 @@ export default function DepositPage() {
         {/* Step 2 — Enter OTP */}
         <div className="rounded-2xl border-2 border-orange-100 bg-orange-50 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-full bg-[#00CC2C] flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#FF7A14] flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-xs">2</span>
             </div>
             <p className="font-bold text-gray-900 text-sm">Entrez le code OTP reçu par SMS</p>
@@ -1419,7 +1419,7 @@ export default function DepositPage() {
             value={svOtp}
             onChange={(e) => setSvOtp(e.target.value)}
             placeholder="Code OTP reçu par SMS"
-            className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none bg-white focus:border-[#00CC2C]"
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-4 text-center text-2xl tracking-widest font-black text-gray-800 outline-none bg-white focus:border-[#FF7A14]"
             maxLength={8}
           />
         </div>
@@ -1450,7 +1450,7 @@ export default function DepositPage() {
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
         <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center">
-          <ExternalLink className="w-10 h-10 text-[#00CC2C]" />
+          <ExternalLink className="w-10 h-10 text-[#FF7A14]" />
         </div>
         <div>
           <p className="font-bold text-gray-900 text-xl mb-2">Finaliser sur l'application</p>
@@ -1483,8 +1483,8 @@ export default function DepositPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
         {svStatus === "approved" ? (
           <>
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="w-10 h-10 text-green-500" />
+            <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center">
+              <CheckCircle className="w-10 h-10 text-[#FF7A14]" />
             </div>
             <div>
               <p className="font-bold text-gray-900 text-xl">Paiement confirmé !</p>
@@ -1523,7 +1523,7 @@ export default function DepositPage() {
         ) : (
           <>
             <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center">
-              <RefreshCw className="w-10 h-10 text-[#00CC2C] animate-spin" style={{ animationDuration: "2s" }} />
+              <RefreshCw className="w-10 h-10 text-[#FF7A14] animate-spin" style={{ animationDuration: "2s" }} />
             </div>
             <div>
               <p className="font-bold text-gray-900 text-xl">En attente de confirmation</p>
@@ -1534,7 +1534,7 @@ export default function DepositPage() {
             </div>
             <div className="flex gap-3 w-full">
               <Link href="/history" className="flex-1">
-                <button className="w-full py-3 rounded-full border border-[#00CC2C] text-[#00CC2C] font-semibold text-sm">
+                <button className="w-full py-3 rounded-full border border-[#FF7A14] text-[#E85D00] font-semibold text-sm">
                   Voir l'historique
                 </button>
               </Link>
