@@ -130,13 +130,12 @@ export default function TeamPage() {
                     <span>Avantages d'équipe</span>
                   </div>
                 </div>
+                <button type="button" className="team-level-open" onClick={() => navigate(`/team-details?level=${index + 1}`)}>
+                  Voir les membres de l'équipe {level.name} <ChevronRight aria-hidden="true" />
+                </button>
               </article>
             ))}
           </section>
-
-          <button type="button" className="team-details-link" onClick={() => navigate("/team-details")} data-testid="button-centre-taches">
-            Voir les membres de l'équipe <ChevronRight aria-hidden="true" />
-          </button>
 
           <section className="team-share" aria-label="Partager mon invitation">
             <h2>Partager</h2>

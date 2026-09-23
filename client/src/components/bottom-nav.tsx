@@ -13,7 +13,7 @@ const navItems = [
 
 export default function BottomNav() {
   const [location, navigate] = useLocation();
-  const isTeam = location === "/team";
+  const isTeam = location === "/team" || location.startsWith("/team-details");
 
   return (
     <nav
@@ -23,7 +23,7 @@ export default function BottomNav() {
     >
       <div className="mx-auto flex h-[59px] max-w-[500px] items-center justify-around pb-1">
         {navItems.map((item) => {
-          const isActive = location === item.path;
+          const isActive = location === item.path || (item.path === "/team" && isTeam);
 
           return (
             <button

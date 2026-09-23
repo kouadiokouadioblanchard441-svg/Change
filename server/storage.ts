@@ -1051,39 +1051,83 @@ export class DatabaseStorage implements IStorage {
     const level1 = await this.getReferrals(userId, 1);
     const level2 = await this.getReferrals(userId, 2);
     const level3 = await this.getReferrals(userId, 3);
+    const members = [...level1, ...level2, ...level3];
+    const memberIds = Array.from(new Set(members.map(member => member.id)));
+    const countryCodes = Array.from(new Set(members.map(member => member.country)));
 
-    const enrichUser = async (user: User) => {
-      const userProductsList = await db.select({ 
-        productName: products.name,
-        productPrice: products.price,
-        purchaseDate: userProducts.purchaseDate,
-        isActive: userProducts.isActive,
-      })
-      .from(userProducts)
-      .innerJoin(products, eq(userProducts.productId, products.id))
-      .where(eq(userProducts.userId, user.id));
-      
-      const totalInvested = userProductsList
-        .filter(p => !p.isActive || p.isActive)
-        .reduce((sum, p) => sum + p.productPrice, 0);
+    const [commissionRows, productRows, stakingRows, countryRows] = await Promise.all([
+      memberIds.length
+        ? db.select({
+            memberId: referralCommissions.fromUserId,
+            total: sql<string>`COALESCE(SUM(${referralCommissions.amount}), 0)`,
+          }).from(referralCommissions)
+          .where(and(eq(referralCommissions.userId, userId), inArray(referralCommissions.fromUserId, memberIds)))
+          .groupBy(referralCommissions.fromUserId)
+        : [],
+      memberIds.length
+        ? db.select({
+            memberId: userProducts.userId,
+            productName: products.name,
+            productPrice: products.price,
+            isFree: products.isFree,
+            purchaseDate: userProducts.purchaseDate,
+            isActive: userProducts.isActive,
+          }).from(userProducts)
+          .innerJoin(products, eq(userProducts.productId, products.id))
+          .where(inArray(userProducts.userId, memberIds))
+        : [],
+      memberIds.length
+        ? db.select({ memberId: userStakings.userId, name: stakingProducts.name })
+          .from(userStakings)
+          .innerJoin(stakingProducts, eq(userStakings.stakingProductId, stakingProducts.id))
+          .where(inArray(userStakings.userId, memberIds))
+        : [],
+      countryCodes.length
+        ? db.select({ code: countries.code, phonePrefix: countries.phonePrefix })
+          .from(countries).where(inArray(countries.code, countryCodes))
+        : [],
+    ]);
+    const revenueByMember = new Map(commissionRows.map(row => [row.memberId, Number(row.total)]));
+    const prefixByCountry = new Map(countryRows.map(row => [row.code, row.phonePrefix]));
+    const productsByMember = new Map<number, Array<(typeof productRows)[number]>>();
+    for (const row of productRows) {
+      if (!productsByMember.has(row.memberId)) productsByMember.set(row.memberId, []);
+      productsByMember.get(row.memberId)!.push(row);
+    }
+    const stakingVipByMember = new Map<number, number>();
+    for (const row of stakingRows) {
+      const level = Number(/^Produit\s*(\d+)$/i.exec(row.name)?.[1] || 0);
+      stakingVipByMember.set(row.memberId, Math.max(stakingVipByMember.get(row.memberId) || 0, level));
+    }
+
+    const enrichUser = (user: User) => {
+      const userProductsList = productsByMember.get(user.id) || [];
+      const totalInvested = userProductsList.reduce((sum, p) => sum + p.productPrice, 0);
+      const vipLevel = Math.max(
+        stakingVipByMember.get(user.id) || 0,
+        ...userProductsList.filter(p => !p.isFree).map(p => Number(/^VIP\s*(\d+)$/i.exec(p.productName)?.[1] || 0)),
+      );
 
       return {
         id: user.id,
         fullName: user.fullName,
         phone: user.phone,
+        phonePrefix: prefixByCountry.get(user.country) || null,
         country: user.country,
         balance: user.balance,
         hasActiveProduct: user.hasActiveProduct,
         hasDeposited: user.hasDeposited,
         createdAt: user.createdAt,
         totalInvested,
+        totalReferralRevenue: revenueByMember.get(user.id) || 0,
+        vipLevel: vipLevel || null,
         products: userProductsList,
       };
     };
 
-    const level1Details = await Promise.all(level1.map(enrichUser));
-    const level2Details = await Promise.all(level2.map(enrichUser));
-    const level3Details = await Promise.all(level3.map(enrichUser));
+    const level1Details = level1.map(enrichUser);
+    const level2Details = level2.map(enrichUser);
+    const level3Details = level3.map(enrichUser);
 
     return {
       level1: level1Details,

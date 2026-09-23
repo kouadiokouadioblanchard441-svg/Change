@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ChevronLeft, User } from "lucide-react";
-import emptyIllustration from "@assets/illustration-8_1784762965573.png";
+import { ChevronLeft, UsersRound } from "lucide-react";
+import whatsappIcon from "@assets/images_(26)_1787367952281.png";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
-import { getCountryByCode } from "@/lib/countries";
+import { getCountryByCode, type ApiCountry } from "@/lib/countries";
+import "./team-details.css";
 
 interface TeamMember {
   id: number;
-  fullName: string;
   phone: string;
+  phonePrefix: string | null;
   country: string;
-  createdAt: string;
-  totalInvested: number;
+  totalReferralRevenue: number;
+  vipLevel: number | null;
 }
 
 interface TeamDetails {
@@ -25,187 +26,141 @@ interface TeamDetails {
   totalLevel3Invested: number;
 }
 
-function maskPhone(phone: string): string {
-  if (phone.length <= 4) return phone;
-  const last4 = phone.slice(-4);
-  return `******${last4}`;
+function maskPhone(phone: string, prefix: string | null): string {
+  let digits = phone.replace(/\D/g, "");
+  const countryPrefix = prefix?.replace(/\D/g, "") || "";
+  if (countryPrefix && digits.startsWith(countryPrefix) && digits.length > countryPrefix.length + 5) {
+    digits = digits.slice(countryPrefix.length);
+  }
+  return digits.length > 5 ? `${digits.slice(0, 3)}***${digits.slice(-2)}` : "***";
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  const hh = String(date.getHours()).padStart(2, "0");
-  const min = String(date.getMinutes()).padStart(2, "0");
-  const ss = String(date.getSeconds()).padStart(2, "0");
-  return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+function whatsAppNumber(phone: string, prefix: string | null): string | null {
+  const digits = phone.replace(/\D/g, "");
+  const countryPrefix = prefix?.replace(/\D/g, "") || "";
+  const isInternational = phone.trim().startsWith("+") ||
+    (countryPrefix && digits.startsWith(countryPrefix) && digits.length > countryPrefix.length + 5);
+  const number = isInternational ? digits : countryPrefix ? `${countryPrefix}${digits}` : "";
+  return /^\d{8,15}$/.test(number) ? number : null;
 }
 
-const GREEN = "#00CC2C";
-const GREEN_BG = "#e9f9ec";
+const levelFromUrl = (): 1 | 2 | 3 => {
+  const level = Number(new URLSearchParams(window.location.search).get("level"));
+  return level === 2 || level === 3 ? level : 1;
+};
 
 export default function TeamDetailsPage() {
-  const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(1);
+  const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(levelFromUrl);
   const [, navigate] = useLocation();
   const { user } = useAuth();
-
-  const { data: team, isLoading } = useQuery<TeamDetails>({
+  const { data: team, isLoading, isError } = useQuery<TeamDetails>({
     queryKey: ["/api/team/details"],
   });
+  const { data: countries } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
 
-  const country = getCountryByCode(user?.country || "");
-  const currency = country?.currency || "FCFA";
-
+  const currency = getCountryByCode(user?.country || "", countries)?.currency || "FCFA";
   const levels = [
-    {
-      num: 1 as const,
-      label: "Niveau 1",
-      members: team?.level1 || [],
-      totalInvested: team?.totalLevel1Invested || 0,
-    },
-    {
-      num: 2 as const,
-      label: "Niveau 2",
-      members: team?.level2 || [],
-      totalInvested: team?.totalLevel2Invested || 0,
-    },
-    {
-      num: 3 as const,
-      label: "Niveau 3",
-      members: team?.level3 || [],
-      totalInvested: team?.totalLevel3Invested || 0,
-    },
+    { num: 1 as const, name: "A", members: team?.level1 || [], totalInvested: team?.totalLevel1Invested || 0 },
+    { num: 2 as const, name: "B", members: team?.level2 || [], totalInvested: team?.totalLevel2Invested || 0 },
+    { num: 3 as const, name: "C", members: team?.level3 || [], totalInvested: team?.totalLevel3Invested || 0 },
   ];
-
-  const activeData = levels[activeLevel - 1];
-  const members = activeData.members;
-  const memberCount = members.length;
-  const totalInvested = activeData.totalInvested;
+  const selected = levels[activeLevel - 1];
+  const message = activeLevel === 1
+    ? "Bonjour ! Je suis votre parrain sur ChargePoint. Je voulais m'assurer que tout se passe bien pour vous. Si vous avez des questions sur l'inscription, les produits ou l'utilisation de l'application, dites-moi ce qui n'est pas clair. Je prendrai le temps de vous expliquer et de vous accompagner étape par étape. N'hésitez pas à m'écrire ici !"
+    : "Bonjour ! Je fais partie de votre équipe de parrainage sur ChargePoint. Je voulais m'assurer que tout se passe bien pour vous. Si vous avez des questions sur l'inscription, les produits ou l'utilisation de l'application, dites-moi ce qui n'est pas clair. Je prendrai le temps de vous expliquer et de vous accompagner étape par étape. N'hésitez pas à m'écrire ici !";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
-
-      {/* ── Header ── */}
-      <div className="bg-white flex items-center px-4 py-4 shadow-sm">
-        <button
-          onClick={() => navigate("/team")}
-          className="p-1 text-gray-600"
-          data-testid="button-back-team"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1
-          className="flex-1 text-center font-bold text-base pr-7"
-          style={{ color: GREEN }}
-          data-testid="text-page-title"
-        >
-          Historique d'équipe
-        </h1>
-      </div>
-
-      {/* ── Level tabs ── */}
-      <div className="bg-white border-b border-gray-100 flex">
-        {levels.map((level) => (
-          <button
-            key={level.num}
-            onClick={() => setActiveLevel(level.num)}
-            className="flex-1 py-3 text-center text-sm font-medium relative"
-            style={{ color: activeLevel === level.num ? GREEN : "#9ca3af" }}
-            data-testid={`tab-level-${level.num}`}
-          >
-            {level.label}
-            {activeLevel === level.num && (
-              <span
-                className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full"
-                style={{ backgroundColor: GREEN }}
-              />
-            )}
+    <main className="team-details-page">
+      <div className="team-details-shell">
+        <header className="team-details-header">
+          <button type="button" onClick={() => navigate("/team")} aria-label="Retour à l'équipe" data-testid="button-back-team">
+            <ChevronLeft aria-hidden="true" />
           </button>
-        ))}
-      </div>
+          <h1 data-testid="text-page-title">Détails de l'équipe</h1>
+          <span>ChargePoint</span>
+        </header>
 
-      {/* ── Stats row ── */}
-      <div className="mx-3 mt-3 flex gap-3">
-        {/* Membres */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm px-4 py-3">
-          <p className="text-xs text-gray-400 mb-1">Membres de l'équipe</p>
-          <p className="text-3xl font-black text-gray-900" data-testid="text-member-count">
-            {isLoading ? "—" : memberCount}
-          </p>
-        </div>
-
-        {/* Dépôts */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm px-4 py-3">
-          <p className="text-xs text-gray-400 mb-1">Dépôts de l'équipe</p>
-          <p
-            className="text-xl font-black"
-            style={{ color: GREEN }}
-            data-testid="text-total-invested"
-          >
-            {isLoading
-              ? "—"
-              : `${currency} ${Number(totalInvested).toLocaleString("fr-FR")}`}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Members list ── */}
-      <div className="mx-3 mt-3 mb-8 flex-1 space-y-2">
-        {isLoading ? (
-          Array(5).fill(0).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-2xl" />
-          ))
-        ) : members.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm text-center py-10 px-6 flex flex-col items-center gap-2">
-            <img src={emptyIllustration} alt="Vide" className="w-40 h-40 object-contain opacity-90" />
-            <p className="text-gray-500 text-sm font-medium">
-              Aucun membre au niveau {activeLevel}
-            </p>
-            <p className="text-gray-400 text-xs mt-1">
-              Invitez des amis pour agrandir votre équipe
-            </p>
-          </div>
-        ) : (
-          members.map((member) => (
-            <div
-              key={member.id}
-              className="bg-white rounded-2xl shadow-sm flex items-center px-4 py-3 gap-3"
-              data-testid={`team-member-${member.id}`}
-            >
-              {/* Green avatar circle */}
-              <div
-                className="w-11 h-11 rounded-full border-2 flex items-center justify-center shrink-0"
-                style={{ borderColor: GREEN, backgroundColor: GREEN_BG }}
+        <div className="team-details-content">
+          <nav className="team-details-tabs" aria-label="Choisir un niveau d'équipe">
+            {levels.map(level => (
+              <button
+                type="button"
+                key={level.num}
+                onClick={() => setActiveLevel(level.num)}
+                className={activeLevel === level.num ? "is-active" : ""}
+                aria-current={activeLevel === level.num ? "true" : undefined}
+                data-testid={`tab-level-${level.num}`}
               >
-                <User className="w-5 h-5" style={{ color: GREEN }} />
-              </div>
+                Équipe {level.name}
+              </button>
+            ))}
+          </nav>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className="text-sm font-semibold text-gray-800 truncate"
-                  data-testid={`text-member-phone-${member.id}`}
-                >
-                  Compte : {maskPhone(member.phone)}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Date : {formatDate(member.createdAt)}
-                </p>
-              </div>
-
-              {/* Amount */}
-              <p
-                className="text-sm font-bold shrink-0 text-gray-700"
-                data-testid={`text-member-invested-${member.id}`}
-              >
-                {currency} {Number(member.totalInvested).toLocaleString("fr-FR")}
-              </p>
+          <section className="team-details-stats" aria-label={`Résumé de l'équipe ${selected.name}`}>
+            <div>
+              <span>Membres de l'équipe</span>
+              <strong data-testid="text-member-count">{isLoading ? "…" : selected.members.length}</strong>
             </div>
-          ))
-        )}
-      </div>
+            <div>
+              <span>Achats de l'équipe</span>
+              <strong data-testid="text-total-invested">{isLoading ? "…" : `${Number(selected.totalInvested).toLocaleString("fr-FR")} ${currency}`}</strong>
+            </div>
+          </section>
 
-    </div>
+          <section className="team-details-members" aria-label={`Filleuls de l'équipe ${selected.name}`}>
+            <h2>Filleuls · Équipe {selected.name}</h2>
+            <p className="team-details-explanation">
+              Le revenu total correspond aux bonus de parrainage que vous avez reçus grâce à chaque membre.
+            </p>
+            <div className="team-details-columns" aria-hidden="true">
+              <span>Utilisateur</span><span>Revenu total</span><span>VIP</span><span>Contact</span>
+            </div>
+
+            {isLoading ? (
+              <div className="team-details-loading" aria-label="Chargement des filleuls">
+                {[0, 1, 2].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+              </div>
+            ) : isError ? (
+              <p className="team-details-empty" role="alert">Impossible de charger les membres de l'équipe. Réessayez plus tard.</p>
+            ) : selected.members.length === 0 ? (
+              <div className="team-details-empty">
+                <UsersRound aria-hidden="true" />
+                <strong>Aucun membre dans l'équipe {selected.name}</strong>
+                <span>Invitez des proches pour développer votre équipe.</span>
+              </div>
+            ) : selected.members.map(member => {
+              const phone = maskPhone(member.phone, member.phonePrefix);
+              const number = whatsAppNumber(member.phone, member.phonePrefix);
+              return (
+                <div className="team-details-row" key={member.id} data-testid={`team-member-${member.id}`}>
+                  <strong data-testid={`text-member-phone-${member.id}`}>{phone}</strong>
+                  <span className="team-details-revenue" data-testid={`text-member-revenue-${member.id}`}>
+                    {Number(member.totalReferralRevenue).toLocaleString("fr-FR")}
+                    <small>{currency}</small>
+                  </span>
+                  <span className="team-details-vip" data-testid={`text-member-vip-${member.id}`}>
+                    {member.vipLevel ? `VIP ${member.vipLevel}` : "—"}
+                  </span>
+                  {number ? (
+                    <a
+                      className="team-details-whatsapp"
+                      href={`https://wa.me/${number}?text=${encodeURIComponent(message)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Écrire à ${phone} sur WhatsApp`}
+                      data-testid={`whatsapp-member-${member.id}`}
+                    >
+                      <img src={whatsappIcon} alt="" />
+                    </a>
+                  ) : (
+                    <span className="team-details-contact-unavailable" title="Numéro WhatsApp indisponible" aria-label="Numéro WhatsApp indisponible">—</span>
+                  )}
+                </div>
+              );
+            })}
+          </section>
+        </div>
+      </div>
+    </main>
   );
 }

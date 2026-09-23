@@ -301,7 +301,9 @@ function Router() {
       </Route>
       <Route path="/team-details">
         <ProtectedRoute>
-          <TeamDetailsPage />
+          <AppLayout>
+            <TeamDetailsPage />
+          </AppLayout>
         </ProtectedRoute>
       </Route>
       <Route path="/daily-bonus">
