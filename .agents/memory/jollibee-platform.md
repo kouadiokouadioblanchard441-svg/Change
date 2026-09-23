@@ -10,7 +10,7 @@ description: Key architecture decisions, country config, DB setup, and image ass
 - Jollibee logo is at `attached_assets/jollibee_logo.png` (imported as `@assets/jollibee_logo.png`).
 
 ## Business Settings (current values in DB)
-- signupBonus: 200 FCFA
+- signupBonus: 500 FCFA
 - minDeposit: 2000 FCFA
 - minWithdrawal: 1000 FCFA
 - withdrawalFees: 18%
