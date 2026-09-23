@@ -135,7 +135,7 @@ export default function RegisterPage() {
 
       <div className="auth-screen">
         <section className="auth-panel">
-          <h1 className="auth-title">REGISTER</h1>
+          <h1 className="auth-title">ChargePoint</h1>
           <img className="auth-illustration" src={registerIllustration} alt="Terminaux de paiement TON" />
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <input type="hidden" {...form.register("country")} />
