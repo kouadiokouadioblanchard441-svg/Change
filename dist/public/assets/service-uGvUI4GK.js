@@ -1,29 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Link } from "wouter";
-
-import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
-import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
-import chargepointDevice from "@assets/ChargePoint-Home-Flex-50A-CPH50-app-1280px__29346__78945__7114_1790148214522.png";
-
-interface LinksSettings {
-  supportLink: string;
-  groupLink: string;
-}
-
-export default function ServicePage() {
-  const { data: settings } = useQuery<LinksSettings>({
-    queryKey: ["/api/settings/links"],
-  });
-
-  const supportLinks = [
-    { label: "Service client", href: settings?.supportLink || "https://t.me/sybotx", testId: "button-support-link", size: "short" },
-    { label: "Groupe officiel", href: settings?.groupLink || "https://t.me/sybotx", testId: "button-group-link", size: "tall" },
-  ];
-
-  return (
-    <main className="service-reference">
-      <style>{`
+import{j as e,e as t}from"./index-DWEPI5qA.js";import{u as n}from"./useQuery-baDYn0uU.js";import{c as a}from"./chargepoint_1790147948102-DERXNZnU.js";import{c}from"./auth-chargepoint-combined-BcpHOCAm.js";import{C as o}from"./chevron-left-DOFrypZ0.js";import{C as l}from"./chevron-right-CXWpG3fT.js";const d="/assets/ChargePoint-Home-Flex-50A-CPH50-app-1280px__29346__78945__7114_1790148214522-wK8mYmdW.png";function v(){const{data:i}=n({queryKey:["/api/settings/links"]}),s=[{label:"Service client",href:i?.supportLink||"https://t.me/sybotx",testId:"button-support-link",size:"short"},{label:"Groupe officiel",href:i?.groupLink||"https://t.me/sybotx",testId:"button-group-link",size:"tall"}];return e.jsxs("main",{className:"service-reference",children:[e.jsx("style",{children:`
         .service-reference { min-height: 100dvh; background: #fff8f2; color: #111827; font-family: Arial, sans-serif; }
         .service-reference .service-screen { width: 100%; max-width: 512px; min-height: 100dvh; margin: 0 auto; overflow: hidden; background: #fff8f2; }
         .service-reference .service-header { display: flex; min-height: 78px; align-items: center; gap: 14px; padding: 16px; border-bottom: 2px solid #111827; background: #fff; }
@@ -60,50 +35,4 @@ export default function ServicePage() {
           .service-reference .online-hours { font-size: 13px; line-height: 1.45; }
           .service-reference .advice-copy { font-size: 16px; }
         }
-      `}</style>
-
-      <div className="service-screen">
-        <header className="service-header">
-          <Link href="/account">
-            <button className="service-back" data-testid="button-back" aria-label="Retour">
-              <ChevronLeft aria-hidden="true" />
-            </button>
-          </Link>
-          <div className="service-brand">
-            <img className="service-logo" src={chargepointLogo} alt="ChargePoint" />
-            <h1 className="service-title">Service client</h1>
-          </div>
-        </header>
-
-        <section className="benefits" aria-label="ChargePoint">
-          <img className="benefit-banner" src={chargepointPromo} alt="Solutions de recharge ChargePoint" />
-        </section>
-
-        <section className="telegram-section" aria-labelledby="support-heading">
-          <h2 id="support-heading" className="telegram-title">Assistance ChargePoint</h2>
-          <div className="telegram-grid">
-            <img className="bike-image" src={chargepointDevice} alt="Borne de recharge ChargePoint" />
-            <div className="telegram-actions">
-              {supportLinks.map((link) => (
-                <button key={link.testId} type="button" className={`telegram-link ${link.size}`} onClick={() => window.open(link.href, "_blank")} data-testid={link.testId}>
-                  {link.label}
-                  <ChevronRight aria-hidden="true" />
-                </button>
-              ))}
-              <div className="online-hours">
-                <p>Horaires en ligne :</p>
-                <p>9:00 AM-7:00 PM</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="advice" aria-label="Conseils">
-          <h2 className="advice-title">CONSEILS :</h2>
-          <p className="advice-copy">1. Pour toute question, n'hésitez pas à contacter notre service client en ligne. Nous serons ravis de vous aider.</p>
-          <p className="advice-copy">2. Veuillez conserver votre mot de passe en lieu sûr et ne le partagez avec personne.</p>
-        </section>
-      </div>
-    </main>
-  );
-}
+      `}),e.jsxs("div",{className:"service-screen",children:[e.jsxs("header",{className:"service-header",children:[e.jsx(t,{href:"/account",children:e.jsx("button",{className:"service-back","data-testid":"button-back","aria-label":"Retour",children:e.jsx(o,{"aria-hidden":"true"})})}),e.jsxs("div",{className:"service-brand",children:[e.jsx("img",{className:"service-logo",src:a,alt:"ChargePoint"}),e.jsx("h1",{className:"service-title",children:"Service client"})]})]}),e.jsx("section",{className:"benefits","aria-label":"ChargePoint",children:e.jsx("img",{className:"benefit-banner",src:c,alt:"Solutions de recharge ChargePoint"})}),e.jsxs("section",{className:"telegram-section","aria-labelledby":"support-heading",children:[e.jsx("h2",{id:"support-heading",className:"telegram-title",children:"Assistance ChargePoint"}),e.jsxs("div",{className:"telegram-grid",children:[e.jsx("img",{className:"bike-image",src:d,alt:"Borne de recharge ChargePoint"}),e.jsxs("div",{className:"telegram-actions",children:[s.map(r=>e.jsxs("button",{type:"button",className:`telegram-link ${r.size}`,onClick:()=>window.open(r.href,"_blank"),"data-testid":r.testId,children:[r.label,e.jsx(l,{"aria-hidden":"true"})]},r.testId)),e.jsxs("div",{className:"online-hours",children:[e.jsx("p",{children:"Horaires en ligne :"}),e.jsx("p",{children:"9:00 AM-7:00 PM"})]})]})]})]}),e.jsxs("section",{className:"advice","aria-label":"Conseils",children:[e.jsx("h2",{className:"advice-title",children:"CONSEILS :"}),e.jsx("p",{className:"advice-copy",children:"1. Pour toute question, n'hésitez pas à contacter notre service client en ligne. Nous serons ravis de vous aider."}),e.jsx("p",{className:"advice-copy",children:"2. Veuillez conserver votre mot de passe en lieu sûr et ne le partagez avec personne."})]})]})]})}export{v as default};
