@@ -25,12 +25,12 @@ const quickActions = [
 ] as const;
 
 const homeAnnouncements = [
-  "Bienvenue dans votre espace ChargePoint.",
-  "Accédez à vos dépôts depuis l'accueil.",
-  "Suivez vos retraits dans l'application.",
-  "Consultez votre solde dans la rubrique Aperçu.",
-  "Besoin d'aide ? Notre équipe vous accompagne.",
-  "Effectuez votre pointage depuis l'accueil.",
+  "Exemple : 052**85 a obtenu 20 000 F de bonus d'équipe",
+  "Exemple : 55*368 a retiré 23 654 F",
+  "Exemple : 07****42 a obtenu 12 500 F de bonus d'équipe",
+  "Exemple : 01****73 a retiré 8 000 F",
+  "Exemple : 05****91 a obtenu 15 000 F de bonus d'équipe",
+  "Exemple : 07****26 a retiré 32 400 F",
 ] as const;
 
 export default function HomePage() {
