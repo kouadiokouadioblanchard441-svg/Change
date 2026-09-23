@@ -5,10 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
 import { PlugZap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import HomeActionIcon from "@/components/home-action-icon";
 import "./home.css";
 
 import noticeBell from "@/assets/notice-bell.png";
+import depositIcon from "@/assets/home-actions/deposit.png";
+import withdrawalIcon from "@/assets/home-actions/withdrawal.png";
+import supportIcon from "@/assets/home-actions/support.png";
+import checkinIcon from "@/assets/home-actions/checkin.png";
 import homeFlex from "@assets/ChargePoint-Home-Flex-50A-CPH50-app-1280px__29346__78945__7114_1790148214522.png";
 import ct4000 from "@assets/CT4000-Top-main-with-energy-star_1790148214627.png";
 
@@ -18,10 +21,10 @@ interface Withdrawal {
 }
 
 const quickActions = [
-  { label: "Dépôt", href: "/deposit", kind: "deposit" },
-  { label: "Retrait", href: "/withdrawal", kind: "withdrawal" },
-  { label: "Aide", href: "/service", kind: "support" },
-  { label: "Pointage", href: "/checkin", kind: "checkin" },
+  { label: "Dépôt", href: "/deposit", icon: depositIcon },
+  { label: "Retrait", href: "/withdrawal", icon: withdrawalIcon },
+  { label: "Aide", href: "/service", icon: supportIcon },
+  { label: "Pointage", href: "/checkin", icon: checkinIcon },
 ] as const;
 
 const homeAnnouncements = [
@@ -68,10 +71,10 @@ export default function HomePage() {
           </section>
 
           <section className="cp-actions" aria-label="Actions rapides">
-            {quickActions.map(({ label, href, kind }) => (
+            {quickActions.map(({ label, href, icon }) => (
               <button key={label} className="cp-action" onClick={() => navigate(href)}>
                 <span className="cp-action-icon">
-                  <HomeActionIcon kind={kind} />
+                  <img src={icon} alt="" />
                 </span>
                 <span>{label}</span>
               </button>
