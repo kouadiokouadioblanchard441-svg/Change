@@ -35,7 +35,8 @@
 .cp-notice-track { display:flex; width:max-content; animation:cp-notice-scroll 45s linear infinite; }
 .cp-notice-group { display:flex; flex:none; align-items:center; }
 .cp-notice-item { display:inline-flex; flex:none; align-items:center; gap:18px; margin-right:18px; color:#303236; font-size:13px; font-weight:700; white-space:nowrap; }
-.cp-notice-item img { display:block; flex:none; width:16px; height:16px; object-fit:contain; }
+.cp-notice-stars { display:inline-flex; flex:none; align-items:center; gap:3px; }
+.cp-notice-stars img { display:block; flex:none; width:13px; height:13px; object-fit:contain; }
 .cp-notice:hover .cp-notice-track,.cp-notice:focus-visible .cp-notice-track { animation-play-state:paused; }
 @keyframes cp-notice-scroll { to { transform:translateX(-50%); } }
 @media (prefers-reduced-motion:reduce) { .cp-notice-track { animation:none; }.cp-notice-group:not(:first-child),.cp-notice-item:not(:first-child) { display:none; } }

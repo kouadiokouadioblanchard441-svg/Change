@@ -126,7 +126,11 @@ export default function HomePage() {
                     {announcementLibrary.map((announcement, index) => (
                       <span className="cp-notice-item" key={`${copy}-${index}`}>
                         <span>{announcement}</span>
-                        <img src={announcementStar} alt="" aria-hidden="true" />
+                        <span className="cp-notice-stars" aria-hidden="true">
+                          {[0, 1, 2].map((star) => (
+                            <img src={announcementStar} alt="" key={star} />
+                          ))}
+                        </span>
                       </span>
                     ))}
                   </span>
