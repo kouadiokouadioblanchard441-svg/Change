@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -13,7 +13,6 @@ import { Link, useLocation, useSearch } from "wouter";
 import type { WithdrawalWallet } from "@shared/schema";
 
 const walletSchema = z.object({
-  accountName: z.string().min(2, "Nom du titulaire requis"),
   accountNumber: z.string().min(8, "Numéro requis"),
   paymentMethod: z.string().min(2, "Moyen de paiement requis"),
 });
@@ -423,8 +422,11 @@ export default function WalletPage() {
   const selectMode = params.get("from") === "withdrawal";
   const [showForm, setShowForm] = useState(false);
   const [showBankSheet, setShowBankSheet] = useState(false);
+  const [showCountrySheet, setShowCountrySheet] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [bankSearch, setBankSearch] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
 
   const { data: wallets, isLoading } = useQuery<WithdrawalWallet[]>({
     queryKey: ["/api/wallets"],
@@ -436,14 +438,21 @@ export default function WalletPage() {
 
   const form = useForm<WalletForm>({
     resolver: zodResolver(walletSchema),
-    defaultValues: { accountName: "", accountNumber: "", paymentMethod: "" },
+    defaultValues: { accountNumber: "", paymentMethod: "" },
   });
+
+  useEffect(() => {
+    if (user && !selectedCountry) {
+      setSelectedCountry(user.country);
+    }
+  }, [user, selectedCountry]);
 
   const addMutation = useMutation({
     mutationFn: async (data: WalletForm) => {
       const response = await apiRequest("POST", "/api/wallets", {
         ...data,
-        country: user!.country,
+        accountName: user!.fullName,
+        country: selectedCountry,
       });
       if (!response.ok) {
         const result = await response.json();
@@ -456,6 +465,7 @@ export default function WalletPage() {
       toast({ title: "Portefeuille ajouté !" });
       form.reset();
       setSelectedMethod("");
+      setSelectedCountry(user?.country || "");
       setShowForm(false);
     },
     onError: (error: any) => {
@@ -512,13 +522,32 @@ export default function WalletPage() {
     setShowBankSheet(false);
   };
 
+  const handleChooseCountry = (countryCode: string) => {
+    setSelectedCountry(countryCode);
+    setSelectedMethod("");
+    form.setValue("paymentMethod", "");
+    setCountrySearch("");
+    setShowCountrySheet(false);
+  };
+
   const handleSubmit = () => {
+    if (!selectedCountry) {
+      toast({ title: "Pays requis", description: "Sélectionnez un pays.", variant: "destructive" });
+      return;
+    }
     form.handleSubmit((data) => addMutation.mutate(data))();
   };
 
   if (!user) return null;
 
-  const paymentMethods = getPaymentMethodsForCountry(user.country, apiCountries);
+  const selectedCountryData = apiCountries.find(
+    (country) => country.code === selectedCountry && country.isActive,
+  );
+  const selectedCountryLabel = selectedCountryData?.name || selectedCountry || "Sélectionner un pays";
+  const paymentMethods = getPaymentMethodsForCountry(selectedCountry, apiCountries);
+  const activeCountries = apiCountries
+    .filter((country) => country.isActive)
+    .sort((first, second) => first.name.localeCompare(second.name, "fr"));
   const backLink = selectMode ? "/withdrawal" : "/account";
 
   if (showForm) {
@@ -554,16 +583,40 @@ export default function WalletPage() {
           <section className="wallet-section">
             <div className="wallet-section-header">
               <div>
-                <h2 className="wallet-section-title">Moyen de paiement</h2>
-                <p className="wallet-section-caption">Choisissez votre opérateur</p>
+                <h2 className="wallet-section-title">Type</h2>
+                <p className="wallet-section-caption">Sélectionnez le pays du compte</p>
               </div>
               <span className="wallet-step">1</span>
             </div>
             <button
               type="button"
+              onClick={() => setShowCountrySheet(true)}
+              className="wallet-selector"
+              data-testid="button-select-country"
+            >
+              <span className="wallet-selector-copy">
+                <span className="wallet-label">Pays</span>
+                <span className={`wallet-value${selectedCountry ? "" : " is-empty"}`}>
+                  {selectedCountryLabel}
+                </span>
+              </span>
+              <ChevronRight size={18} />
+            </button>
+          </section>
+
+          <section className="wallet-section">
+            <div className="wallet-section-header">
+              <div>
+                <h2 className="wallet-section-title">Network</h2>
+                <p className="wallet-section-caption">Sélectionnez l’opérateur de paiement</p>
+              </div>
+              <span className="wallet-step">2</span>
+            </div>
+            <button
+              type="button"
               onClick={() => setShowBankSheet(true)}
               className="wallet-selector"
-              data-testid="button-select-bank"
+              data-testid="button-select-network"
             >
               <span className="wallet-selector-copy">
                 <span className="wallet-label">Opérateur</span>
@@ -578,31 +631,8 @@ export default function WalletPage() {
           <section className="wallet-section">
             <div className="wallet-section-header">
               <div>
-                <h2 className="wallet-section-title">Titulaire du compte</h2>
-                <p className="wallet-section-caption">Comme indiqué sur votre compte</p>
-              </div>
-              <span className="wallet-step">2</span>
-            </div>
-            <div className="wallet-field">
-              <label className="wallet-label" htmlFor="wallet-account-name">Nom complet</label>
-              <input
-                id="wallet-account-name"
-                {...form.register("accountName")}
-                placeholder="Ex. Kouadio Blanche"
-                className="wallet-input"
-                data-testid="input-wallet-name"
-              />
-              {form.formState.errors.accountName && (
-                <p className="wallet-error">{form.formState.errors.accountName.message}</p>
-              )}
-            </div>
-          </section>
-
-          <section className="wallet-section">
-            <div className="wallet-section-header">
-              <div>
-                <h2 className="wallet-section-title">Numéro du compte</h2>
-                <p className="wallet-section-caption">Le numéro associé à l’opérateur choisi</p>
+                <h2 className="wallet-section-title">Adresse</h2>
+                <p className="wallet-section-caption">Saisissez le numéro associé à l’opérateur</p>
               </div>
               <span className="wallet-step">3</span>
             </div>
@@ -648,6 +678,65 @@ export default function WalletPage() {
           </div>
         </footer>
 
+        {showCountrySheet && (
+          <div className="country-picker-overlay" onClick={() => { setCountrySearch(""); setShowCountrySheet(false); }}>
+            <section
+              className="country-picker"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Choisir un pays"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="country-picker-header">
+                <h2>Choisir un pays</h2>
+                <button
+                  className="country-picker-close"
+                  onClick={() => { setCountrySearch(""); setShowCountrySheet(false); }}
+                  aria-label="Fermer"
+                >
+                  <X aria-hidden="true" />
+                </button>
+              </div>
+              <div className="country-picker-search">
+                <Search aria-hidden="true" />
+                <input
+                  autoFocus
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  placeholder="Rechercher un pays"
+                  aria-label="Rechercher un pays"
+                />
+              </div>
+              <div className="country-picker-list">
+                {activeCountries
+                  .filter((country) => country.name.toLowerCase().includes(countrySearch.trim().toLowerCase()))
+                  .map((country) => (
+                    <button
+                      key={country.code}
+                      onClick={() => handleChooseCountry(country.code)}
+                      className={`country-picker-row${selectedCountry === country.code ? " is-selected" : ""}`}
+                      data-testid={`button-country-${country.code}`}
+                    >
+                      <span className="country-picker-name">{country.name}</span>
+                      <span className="country-picker-prefix">{country.code}</span>
+                      {selectedCountry === country.code && (
+                        <span className="country-picker-check"><Check aria-hidden="true" /></span>
+                      )}
+                    </button>
+                  ))}
+                {activeCountries.length === 0 && (
+                  <p className="country-picker-empty">Chargement des pays...</p>
+                )}
+                {activeCountries.length > 0 && activeCountries.filter(
+                  (country) => country.name.toLowerCase().includes(countrySearch.trim().toLowerCase()),
+                ).length === 0 && (
+                  <p className="country-picker-empty">Aucun pays trouvé</p>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
         {showBankSheet && (
           <div className="country-picker-overlay" onClick={() => { setBankSearch(""); setShowBankSheet(false); }}>
             <section
@@ -659,14 +748,14 @@ export default function WalletPage() {
             >
               <div className="country-picker-header">
                 <h2>Choisir un opérateur</h2>
+                <button
+                  className="country-picker-close"
+                  onClick={() => { setBankSearch(""); setShowBankSheet(false); }}
+                  aria-label="Fermer"
+                >
+                  <X aria-hidden="true" />
+                </button>
               </div>
-              <button
-                className="country-picker-close"
-                onClick={() => { setBankSearch(""); setShowBankSheet(false); }}
-                aria-label="Fermer"
-              >
-                <X aria-hidden="true" />
-              </button>
               <div className="country-picker-search">
                 <Search aria-hidden="true" />
                 <input
