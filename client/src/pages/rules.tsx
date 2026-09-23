@@ -1,6 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import "./rules.css";
 
 export default function RulesPage() {
   const { data: settings } = useQuery<Record<string, string>>({
@@ -19,29 +20,31 @@ export default function RulesPage() {
   const lv3 = settings?.level3Commission || "1";
 
   return (
-    <div className="flex flex-col min-h-full" style={{ background: "#111" }}>
-      <header className="flex items-center px-4 py-3" style={{ background: "#111", borderBottom: "1px solid #222" }}>
+    <main className="cp-rules-page">
+      <div className="cp-rules-screen">
+      <header className="cp-rules-header">
         <Link href="/account">
-          <button className="p-1" data-testid="button-back">
-            <ChevronLeft className="w-6 h-6 text-white" />
+          <button className="cp-rules-back" data-testid="button-back">
+            <ChevronLeft aria-hidden="true" />
+            <span>Retour</span>
           </button>
         </Link>
-        <h1 className="flex-1 text-center text-base font-semibold text-white pr-6">Règles de la plateforme</h1>
+        <h1>Règles de la plateforme</h1>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5" style={{ color: "#d4d4d4", fontSize: 13.5, lineHeight: "1.75" }}>
-        <section className="space-y-2">
-          <h2 className="text-[15px] font-bold text-[#7fc9ff] border-l-2 border-[#7fc9ff] pl-2">1. Investissement</h2>
-          <ul className="list-disc pl-5 space-y-1">
+      <div className="cp-rules-body">
+        <section className="cp-rules-section">
+          <h2>1. Investissement</h2>
+          <ul>
             <li>Chaque utilisateur peut posséder plusieurs produits d'investissement simultanément.</li>
             <li>Les revenus sont générés quotidiennement et accrédités sur votre solde de compte toutes les 24 heures.</li>
             <li>Le cycle d'investissement standard est de 80 jours, sauf indication contraire pour les produits spéciaux.</li>
           </ul>
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-[15px] font-bold text-[#7fc9ff] border-l-2 border-[#7fc9ff] pl-2">2. Dépôts et Retraits</h2>
-          <ul className="list-disc pl-5 space-y-1">
+        <section className="cp-rules-section">
+          <h2>2. Dépôts et Retraits</h2>
+          <ul>
             <li>Le montant minimum de dépôt est de {parseInt(minDeposit).toLocaleString()} FCFA.</li>
             <li>Le montant minimum de retrait est de {parseInt(minWithdrawal).toLocaleString()} FCFA.</li>
             <li>Les frais de retrait sont fixés à {withdrawalFees}% pour couvrir les frais de transaction et d'entretien.</li>
@@ -50,9 +53,9 @@ export default function RulesPage() {
           </ul>
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-[15px] font-bold text-[#7fc9ff] border-l-2 border-[#7fc9ff] pl-2">3. Système de Parrainage</h2>
-          <ul className="list-disc pl-5 space-y-1">
+        <section className="cp-rules-section">
+          <h2>3. Système de Parrainage</h2>
+          <ul>
             <li>Commission de niveau 1 : {lv1}% sur le PREMIER investissement du filleul.</li>
             <li>Commission de niveau 2 : {lv2}% sur le PREMIER investissement du filleul.</li>
             <li>Commission de niveau 3 : {lv3}% sur le PREMIER investissement du filleul.</li>
@@ -60,22 +63,23 @@ export default function RulesPage() {
           </ul>
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-[15px] font-bold text-[#7fc9ff] border-l-2 border-[#7fc9ff] pl-2">4. Bonus d'inscription</h2>
-          <ul className="list-disc pl-5 space-y-1">
+        <section className="cp-rules-section">
+          <h2>4. Bonus d'inscription</h2>
+          <ul>
             <li>Chaque nouveau membre reçoit {parseInt(signupBonus).toLocaleString()} FCFA de bonus à l'inscription.</li>
           </ul>
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-[15px] font-bold text-[#7fc9ff] border-l-2 border-[#7fc9ff] pl-2">5. Sécurité</h2>
-          <ul className="list-disc pl-5 space-y-1">
+        <section className="cp-rules-section">
+          <h2>5. Sécurité</h2>
+          <ul>
             <li>Vous êtes responsable de la sécurité de votre mot de passe.</li>
             <li>Ne partagez jamais vos identifiants de connexion avec des tiers.</li>
             <li>Le service client officiel ne vous demandera jamais votre mot de passe.</li>
           </ul>
         </section>
       </div>
-    </div>
+      </div>
+    </main>
   );
 }

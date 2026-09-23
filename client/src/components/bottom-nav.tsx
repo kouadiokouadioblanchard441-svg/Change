@@ -17,7 +17,8 @@ export default function BottomNav() {
   const isHome = location === "/";
   const isAccount = location === "/account";
   const isAbout = location === "/about";
-  const usesOrangeBrand = isTeam || isHome || isAccount || isAbout;
+  const isRules = location === "/rules";
+  const usesOrangeBrand = isTeam || isHome || isAccount || isAbout || isRules;
 
   return (
     <nav
