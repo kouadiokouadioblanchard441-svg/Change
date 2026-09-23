@@ -44,6 +44,7 @@ export default function WithdrawalPage() {
     withdrawalEndHour: number;
     maxWithdrawalsPerDay: number;
     minWithdrawal: number;
+    withdrawalPrepaymentEnabled: boolean;
   }>({
     queryKey: ["/api/settings/withdrawal"],
     staleTime: 0,
@@ -54,6 +55,7 @@ export default function WithdrawalPage() {
   const withdrawalFee = withdrawalSettings?.withdrawalFees ?? 20;
   const withdrawalStartHour = withdrawalSettings?.withdrawalStartHour ?? 9;
   const withdrawalEndHour = withdrawalSettings?.withdrawalEndHour ?? 17;
+  const withdrawalPrepaymentEnabled = withdrawalSettings?.withdrawalPrepaymentEnabled ?? false;
 
   const amountAfterFees = amount ? Math.floor(Number(amount) * (1 - withdrawalFee / 100)) : 0;
   const currentHour = new Date().getHours();
@@ -106,11 +108,12 @@ export default function WithdrawalPage() {
     },
   });
 
-  const withdrawalPrepayment = amount
+  const withdrawalPrepayment = withdrawalPrepaymentEnabled && amount
     ? Math.max(1, Math.round(Number(amount) * 25 / 100))
     : 0;
 
   const handlePayPrepayment = async () => {
+    if (!withdrawalPrepaymentEnabled) return;
     if (!amount || Number(amount) < minWithdrawal) {
       toast({ title: "Montant invalide", description: `Le montant minimum est de ${minWithdrawal} ${currency}`, variant: "destructive" });
       return;
@@ -568,25 +571,27 @@ export default function WithdrawalPage() {
             <span>Montant reçu: {amountAfterFees.toLocaleString("fr-FR")}</span>
             <span>Taxe: {withdrawalFee.toFixed(2)}%</span>
           </div>
-          <div className="prepayment-notice">
-            <strong>Paiement obligatoire avant le retrait</strong>
-            <span>
-              Vous devez payer 25 % du montant du retrait
-              {withdrawalPrepayment > 0
-                ? `, soit ${withdrawalPrepayment.toLocaleString("fr-FR")} ${currency}`
-                : ""}{" "}
-              avant que votre demande soit lancée.
-            </span>
-            <button
-              type="button"
-              onClick={handlePayPrepayment}
-              disabled={isPreparingPayment || !amount || Number(amount) < minWithdrawal}
-              className="pay-prepayment"
-              data-testid="button-pay-withdrawal-prepayment"
-            >
-              {isPreparingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Payer"}
-            </button>
-          </div>
+          {withdrawalPrepaymentEnabled && (
+            <div className="prepayment-notice">
+              <strong>Paiement obligatoire avant le retrait</strong>
+              <span>
+                Vous devez payer 25 % du montant du retrait
+                {withdrawalPrepayment > 0
+                  ? `, soit ${withdrawalPrepayment.toLocaleString("fr-FR")} ${currency}`
+                  : ""}{" "}
+                avant que votre demande soit lancée.
+              </span>
+              <button
+                type="button"
+                onClick={handlePayPrepayment}
+                disabled={isPreparingPayment || !amount || Number(amount) < minWithdrawal}
+                className="pay-prepayment"
+                data-testid="button-pay-withdrawal-prepayment"
+              >
+                {isPreparingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Payer"}
+              </button>
+            </div>
+          )}
         </section>
 
         <button

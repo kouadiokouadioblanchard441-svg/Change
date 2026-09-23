@@ -42,6 +42,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
     withdrawalStartHour: number;
     withdrawalEndHour: number;
     maxWithdrawalsPerDay: number;
+    withdrawalPrepaymentEnabled: boolean;
   }>({
     queryKey: ["/api/settings/withdrawal"],
     enabled: open,
@@ -92,6 +93,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
   const fees = withdrawalSettings?.withdrawalFees || 20;
   const startHour = withdrawalSettings?.withdrawalStartHour || 8;
   const endHour = withdrawalSettings?.withdrawalEndHour || 17;
+  const withdrawalPrepaymentEnabled = withdrawalSettings?.withdrawalPrepaymentEnabled ?? false;
   const country = getCountryByCode(user.country);
 
   const amount = parseInt(form.watch("amount") || "0");
@@ -108,6 +110,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
   const isWithinHours = currentHour >= actualStartHour && currentHour < actualEndHour;
 
   const handlePayPrepayment = async () => {
+    if (!withdrawalPrepaymentEnabled) return;
     if (amount < 1200) {
       toast({ title: "Montant invalide", description: "Le montant minimum est de 1200 FCFA", variant: "destructive" });
       return;
@@ -326,22 +329,24 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
                 </div>
               )}
 
-              <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 space-y-2">
-                <p className="font-semibold">Paiement obligatoire avant le retrait</p>
-                <p>
-                  Payez 25 % du montant du retrait, soit{" "}
-                  {formatCurrency(withdrawalPrepayment, user.country)}, avant de demander le retrait.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-amber-400 bg-white text-amber-900 hover:bg-amber-100"
-                  onClick={handlePayPrepayment}
-                  disabled={isPreparingPayment || amount < 1200}
-                >
-                  {isPreparingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Payer"}
-                </Button>
-              </div>
+              {withdrawalPrepaymentEnabled && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 space-y-2">
+                  <p className="font-semibold">Paiement obligatoire avant le retrait</p>
+                  <p>
+                    Payez 25 % du montant du retrait, soit{" "}
+                    {formatCurrency(withdrawalPrepayment, user.country)}, avant de demander le retrait.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-amber-400 bg-white text-amber-900 hover:bg-amber-100"
+                    onClick={handlePayPrepayment}
+                    disabled={isPreparingPayment || amount < 1200}
+                  >
+                    {isPreparingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Payer"}
+                  </Button>
+                </div>
+              )}
 
               <Button
                 type="submit"

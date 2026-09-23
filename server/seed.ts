@@ -220,6 +220,7 @@ export async function seed() {
     { key: "withdrawalStartHour", value: "9" },
     { key: "withdrawalEndHour", value: "17" },
     { key: "maxWithdrawalsPerDay", value: "1" },
+    { key: "withdrawalPrepaymentEnabled", value: "false" },
     { key: "level1Commission", value: "25" },
     { key: "level2Commission", value: "4" },
     { key: "level3Commission", value: "1" },

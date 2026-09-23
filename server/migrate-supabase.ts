@@ -317,6 +317,7 @@ async function run() {
     const settings = [
       ["minDeposit", "3500"], ["minWithdrawal", "1200"], ["withdrawalFees", "20"],
       ["withdrawalStartHour", "9"], ["withdrawalEndHour", "17"], ["maxWithdrawalsPerDay", "1"],
+      ["withdrawalPrepaymentEnabled", "false"],
       ["level1Commission", "25"], ["level2Commission", "4"], ["level3Commission", "1"],
       ["signupBonus", "1000"], ["soleaspayEnabled", "false"], ["soleaspayCountries", ""],
       ["soleaspayChannelName", "Westpay"], ["omnipayEnabled", "false"],

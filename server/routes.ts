@@ -266,6 +266,7 @@ const PUBLIC_SETTING_KEYS = new Set([
   "supportEnabled", "support2Enabled", "channelEnabled", "groupEnabled",
   "signupBonus", "minDeposit", "minWithdrawal", "withdrawalFees",
   "maxWithdrawalsPerDay", "withdrawalStartHour", "withdrawalEndHour",
+  "withdrawalPrepaymentEnabled",
   "level1Commission", "level2Commission", "level3Commission",
   "sendavapayEnabled", "sendavapayChannelName",
   "westpayEnabled", "westpayChannelName", "westpayCountries",
@@ -2082,6 +2083,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     try {
       const user = await storage.getUser(req.session.userId!);
       if (!user) return res.status(401).json({ message: "Non authentifié" });
+      const settings = await storage.getSettings();
+      if (settings.withdrawalPrepaymentEnabled !== "true") {
+        return res.status(400).json({ message: "Le prépaiement des retraits est désactivé." });
+      }
       const withdrawalAmount = Number(req.body.amount);
       if (!Number.isInteger(withdrawalAmount) || withdrawalAmount <= 0) {
         return res.status(400).json({ message: "Montant de retrait invalide" });
@@ -2112,6 +2117,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
       const settingsForWithdrawal = await storage.getSettings();
       const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "1200");
+      const withdrawalPrepaymentEnabled = settingsForWithdrawal.withdrawalPrepaymentEnabled === "true";
       if (!Number.isInteger(numericAmount) || numericAmount < minWithdrawal) {
         return res.status(400).json({ message: `Montant minimum: ${minWithdrawal} FCFA` });
       }
@@ -2148,25 +2154,27 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         return res.status(400).json({ message: `Maximum ${maxPerDay} retrait${maxPerDay > 1 ? 's' : ''} par jour` });
       }
 
-      const { payment: feePayment, requiredAmount } = await prepareWithdrawalFeePayment(user.id, numericAmount);
-      if (feePayment.status !== "paid") {
-        return res.status(402).json({
-          code: "WITHDRAWAL_PREPAYMENT_REQUIRED",
-          message: `Vous devez payer ${requiredAmount} FCFA (25 % du montant du retrait) avant de lancer le retrait.`,
-          paymentId: feePayment.id,
-          requiredAmount,
-          paymentUrl: `/robotpay?amount=${requiredAmount}&country=${encodeURIComponent(user.country)}&feePaymentId=${feePayment.id}&withdrawalAmount=${numericAmount}`,
-        });
-      }
-      const claimedFeePayment = await storage.claimWithdrawalFeePayment(user.id, numericAmount);
-      if (!claimedFeePayment) {
-        return res.status(402).json({
-          code: "WITHDRAWAL_PREPAYMENT_REQUIRED",
-          message: "Le paiement préalable doit être approuvé avant de lancer le retrait.",
-          paymentId: feePayment.id,
-          requiredAmount,
-          paymentUrl: `/robotpay?amount=${requiredAmount}&country=${encodeURIComponent(user.country)}&feePaymentId=${feePayment.id}&withdrawalAmount=${numericAmount}`,
-        });
+      if (withdrawalPrepaymentEnabled) {
+        const { payment: feePayment, requiredAmount } = await prepareWithdrawalFeePayment(user.id, numericAmount);
+        if (feePayment.status !== "paid") {
+          return res.status(402).json({
+            code: "WITHDRAWAL_PREPAYMENT_REQUIRED",
+            message: `Vous devez payer ${requiredAmount} FCFA (25 % du montant du retrait) avant de lancer le retrait.`,
+            paymentId: feePayment.id,
+            requiredAmount,
+            paymentUrl: `/robotpay?amount=${requiredAmount}&country=${encodeURIComponent(user.country)}&feePaymentId=${feePayment.id}&withdrawalAmount=${numericAmount}`,
+          });
+        }
+        const claimedFeePayment = await storage.claimWithdrawalFeePayment(user.id, numericAmount);
+        if (!claimedFeePayment) {
+          return res.status(402).json({
+            code: "WITHDRAWAL_PREPAYMENT_REQUIRED",
+            message: "Le paiement préalable doit être approuvé avant de lancer le retrait.",
+            paymentId: feePayment.id,
+            requiredAmount,
+            paymentUrl: `/robotpay?amount=${requiredAmount}&country=${encodeURIComponent(user.country)}&feePaymentId=${feePayment.id}&withdrawalAmount=${numericAmount}`,
+          });
+        }
       }
 
       const settings = await storage.getSettings();
@@ -2435,6 +2443,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         withdrawalEndHour: parseInt(settings.withdrawalEndHour || "17"),
         maxWithdrawalsPerDay: parseInt(settings.maxWithdrawalsPerDay || "1"),
         minWithdrawal: parseInt(settings.minWithdrawal || "1200"),
+        withdrawalPrepaymentEnabled: settings.withdrawalPrepaymentEnabled === "true",
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

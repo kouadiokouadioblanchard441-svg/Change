@@ -63,6 +63,7 @@ const settingsSchema = z.object({
   maxWithdrawalsPerDay: z.string().min(1, "Requis"),
   withdrawalStartHour: z.string().min(1, "Heure requise"),
   withdrawalEndHour: z.string().min(1, "Heure requise"),
+  withdrawalPrepaymentEnabled: z.boolean(),
   level1Commission: z.string().min(1, "Commission requise"),
   level2Commission: z.string().min(1, "Commission requise"),
   level3Commission: z.string().min(1, "Commission requise"),
@@ -134,6 +135,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       maxWithdrawalsPerDay: "1",
       withdrawalStartHour: "9",
       withdrawalEndHour: "17",
+      withdrawalPrepaymentEnabled: false,
       level1Commission: "25",
       level2Commission: "4",
       level3Commission: "1",
@@ -181,6 +183,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         maxWithdrawalsPerDay: settings.maxWithdrawalsPerDay || "1",
         withdrawalStartHour: settings.withdrawalStartHour || "9",
         withdrawalEndHour: settings.withdrawalEndHour || "17",
+        withdrawalPrepaymentEnabled: settings.withdrawalPrepaymentEnabled === "true",
         level1Commission: settings.level1Commission || "25",
         level2Commission: settings.level2Commission || "4",
         level3Commission: settings.level3Commission || "1",
@@ -213,6 +216,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         support2Enabled: String(data.support2Enabled),
         channelEnabled: String(data.channelEnabled),
         groupEnabled: String(data.groupEnabled),
+        withdrawalPrepaymentEnabled: String(data.withdrawalPrepaymentEnabled),
         sendavapayEnabled: String(data.sendavapayEnabled),
         westpayEnabled: String(data.westpayEnabled),
         ashtechEnabled: String(data.ashtechEnabled),
@@ -513,6 +517,20 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
                 </FormItem>
               )} />
             </div>
+
+            <FormField control={form.control} name="withdrawalPrepaymentEnabled" render={({ field }) => (
+              <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-1 pr-4">
+                  <FormLabel>Prépaiement de 25 % avant retrait</FormLabel>
+                  <FormDescription>
+                    Lorsque cette option est activée, l'utilisateur doit payer 25 % du retrait avant de pouvoir l'envoyer.
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+              </FormItem>
+            )} />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="withdrawalFees" render={({ field }) => (
