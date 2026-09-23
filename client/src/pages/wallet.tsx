@@ -257,18 +257,42 @@ const walletStyles = `
   }
   .wallet-list {
     display: grid;
-    gap: 10px;
+    gap: 16px;
     padding: 12px;
   }
+  .wallet-card-wrap {
+    display: grid;
+    gap: 8px;
+  }
   .wallet-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 13px;
-    border: 1px solid #eee4dd;
-    border-radius: 16px;
-    background: #ffffff;
-    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    position: relative;
+    min-height: 190px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 22px;
+    padding: 20px;
+    background: linear-gradient(125deg, #c94f00 0%, #f26b08 48%, #ff982e 100%);
+    box-shadow: 0 10px 20px rgba(184, 78, 0, .22);
+    color: #ffffff;
+    transition: box-shadow .15s ease, transform .15s ease;
+  }
+  .wallet-card::before {
+    position: absolute;
+    inset: -45% -20%;
+    background: repeating-linear-gradient(
+      68deg,
+      rgba(255, 255, 255, .16) 0,
+      rgba(255, 255, 255, .16) 24px,
+      transparent 24px,
+      transparent 72px
+    );
+    content: "";
+    transform: rotate(-4deg);
+    pointer-events: none;
+  }
+  .wallet-card > * {
+    position: relative;
+    z-index: 1;
   }
   .wallet-card.is-selectable {
     cursor: pointer;
@@ -277,65 +301,98 @@ const walletStyles = `
     transform: scale(.99);
   }
   .wallet-card.is-default {
-    border-color: #ffb77e;
-    box-shadow: 0 4px 12px rgba(255, 122, 20, .10);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .72), 0 10px 20px rgba(184, 78, 0, .22);
+  }
+  .wallet-card-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .wallet-card-icon {
     display: grid;
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     flex: none;
     place-items: center;
-    border-radius: 14px;
-    background: #fff0e5;
-    color: #c65100;
+    border: 1px solid rgba(255, 255, 255, .62);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .13);
+    color: #ffffff;
   }
   .wallet-card-copy {
+    display: flex;
     min-width: 0;
-    flex: 1;
+    height: 100%;
+    flex-direction: column;
   }
   .wallet-card-method {
     margin: 0;
-    color: #171717;
+    color: #ffffff;
     font-size: 14px;
     font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
   }
-  .wallet-card-name,
   .wallet-card-number {
-    margin: 3px 0 0;
+    margin: auto 0 18px;
     overflow: hidden;
-    color: #756b64;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-overflow: ellipsis;
+    white-space: normal;
+  }
+  .wallet-card-bottomline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .wallet-card-network {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    color: rgba(255, 255, 255, .86);
     font-size: 12px;
+    font-weight: 600;
+  }
+  .wallet-card-network span {
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .wallet-card-number {
-    color: #9a8f87;
-  }
-  .wallet-default {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 7px;
-    color: #c65100;
-    font-size: 11px;
-    font-weight: 800;
+  .wallet-card-chip {
+    width: 54px;
+    height: 38px;
+    flex: none;
+    border: 1px solid rgba(119, 85, 22, .25);
+    border-radius: 10px;
+    background:
+      linear-gradient(90deg, transparent 49%, rgba(119, 85, 22, .28) 50%, transparent 51%),
+      linear-gradient(0deg, transparent 49%, rgba(119, 85, 22, .28) 50%, transparent 51%),
+      linear-gradient(135deg, #fff0ae, #d7b85d);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, .65);
   }
   .wallet-card-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 5px;
-    flex: none;
   }
   .wallet-icon-action {
-    display: grid;
-    width: 34px;
-    height: 34px;
-    place-items: center;
-    border: 1px solid #f0e3da;
-    border-radius: 11px;
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #e9e3de;
+    border-radius: 18px;
+    padding: 0 12px;
     background: #ffffff;
-    color: #c65100;
+    color: #5e554e;
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
   }
   .wallet-icon-action:hover,
@@ -1000,25 +1057,31 @@ export default function WalletPage() {
                 ) : wallets && wallets.length > 0 ? (
                   <div className="wallet-list">
                     {wallets.map((wallet) => (
-                      <article
-                        key={wallet.id}
-                        onClick={() => selectMode && handleSelectWallet(wallet)}
-                        className={`wallet-card${selectMode ? " is-selectable" : ""}${wallet.isDefault ? " is-default" : ""}`}
-                        data-testid={`wallet-card-${wallet.id}`}
-                      >
-                        <div className="wallet-card-icon">
-                          <CreditCard size={20} />
-                        </div>
-                        <div className="wallet-card-copy">
-                          <p className="wallet-card-method">{wallet.paymentMethod}</p>
-                          <p className="wallet-card-name">{wallet.accountName}</p>
-                          <p className="wallet-card-number">{wallet.accountNumber}</p>
-                          {wallet.isDefault && (
-                            <span className="wallet-default">
-                              <Shield size={12} /> Compte par défaut
-                            </span>
-                          )}
-                        </div>
+                      <div key={wallet.id} className="wallet-card-wrap">
+                        <article
+                          onClick={() => selectMode && handleSelectWallet(wallet)}
+                          className={`wallet-card${selectMode ? " is-selectable" : ""}${wallet.isDefault ? " is-default" : ""}`}
+                          data-testid={`wallet-card-${wallet.id}`}
+                        >
+                          <div className="wallet-card-copy">
+                            <div className="wallet-card-brand">
+                              <div className="wallet-card-icon">
+                                <CreditCard size={18} />
+                              </div>
+                              <p className="wallet-card-method">{wallet.paymentMethod}</p>
+                            </div>
+                            <p className="wallet-card-number">{maskWalletNumber(wallet.accountNumber)}</p>
+                            <div className="wallet-card-bottomline">
+                              <span className="wallet-card-network">
+                                <Wifi size={15} />
+                                <span>{wallet.country || "Compte de retrait"} · {wallet.paymentMethod}</span>
+                              </span>
+                              <span className="wallet-card-chip" aria-hidden="true" />
+                            </div>
+                          </div>
+
+                          {selectMode && <ChevronRight size={18} className="text-white flex-shrink-0" />}
+                        </article>
 
                         {!selectMode && (
                           <div className="wallet-card-actions">
@@ -1031,6 +1094,7 @@ export default function WalletPage() {
                                 aria-label="Définir comme compte par défaut"
                               >
                                 <Check size={16} />
+                                Définir par défaut
                               </button>
                             )}
                             <button
@@ -1041,12 +1105,11 @@ export default function WalletPage() {
                               aria-label="Supprimer ce compte"
                             >
                               <Trash2 size={16} />
+                              Supprimer
                             </button>
                           </div>
                         )}
-
-                        {selectMode && <ChevronRight size={18} className="text-[#c65100] flex-shrink-0" />}
-                      </article>
+                      </div>
                     ))}
                   </div>
                 ) : (
