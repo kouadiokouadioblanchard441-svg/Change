@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import "./home.css";
 
 import noticeBell from "@/assets/notice-bell.png";
+import announcementStar from "@/assets/announcement-star.png";
 import depositIcon from "@/assets/home-actions/deposit.png";
 import withdrawalIcon from "@/assets/home-actions/withdrawal.png";
 import supportIcon from "@/assets/home-actions/support.png";
@@ -88,7 +89,10 @@ export default function HomePage() {
                 {[0, 1].map((copy) => (
                   <span className="cp-notice-group" key={copy}>
                     {homeAnnouncements.map((announcement, index) => (
-                      <span className="cp-notice-item" key={`${copy}-${index}`}>{announcement}</span>
+                      <span className="cp-notice-item" key={`${copy}-${index}`}>
+                        <span>{announcement}</span>
+                        <img src={announcementStar} alt="" aria-hidden="true" />
+                      </span>
                     ))}
                   </span>
                 ))}
