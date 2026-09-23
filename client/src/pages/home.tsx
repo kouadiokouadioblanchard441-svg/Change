@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,11 @@ import depositIcon from "@/assets/home-actions/deposit.png";
 import withdrawalIcon from "@/assets/home-actions/withdrawal.png";
 import supportIcon from "@/assets/home-actions/support.png";
 import checkinIcon from "@/assets/home-actions/checkin.png";
-import homeFlex from "@assets/ChargePoint-Home-Flex-50A-CPH50-app-1280px__29346__78945__7114_1790148214522.png";
+import chargingStationUser from "@assets/banner-filtered/charging-station-user.jpg";
+import electricBus from "@assets/banner-filtered/electric-bus.jpg";
+import homeCharging from "@assets/banner-filtered/home-charging.jpg";
+import publicCharger from "@assets/banner-filtered/public-charger.jpg";
+import chargerProduct from "@assets/banner-filtered/charger-product.jpg";
 import ct4000 from "@assets/CT4000-Top-main-with-energy-star_1790148214627.png";
 
 interface Withdrawal {
@@ -26,6 +30,14 @@ const quickActions = [
   { label: "Retrait", href: "/withdrawal", icon: withdrawalIcon },
   { label: "Aide", href: "/service", icon: supportIcon },
   { label: "Pointage", href: "/checkin", icon: checkinIcon },
+] as const;
+
+const bannerSlides = [
+  { image: chargingStationUser, alt: "Conducteur utilisant une borne de recharge" },
+  { image: electricBus, alt: "Bus électrique en charge" },
+  { image: homeCharging, alt: "Recharge d'un véhicule à domicile" },
+  { image: publicCharger, alt: "Bornes de recharge dans un espace public" },
+  { image: chargerProduct, alt: "Équipement de recharge ChargePoint" },
 ] as const;
 
 const announcementLibrary = [
@@ -49,6 +61,14 @@ export default function HomePage() {
   const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/settings"] });
   const { data: withdrawals } = useQuery<Withdrawal[]>({ queryKey: ["/api/withdrawals/history"], enabled: !!user });
   const [welcomePopupOpen, setWelcomePopupOpen] = useState(false);
+  const [bannerIndex, setBannerIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setBannerIndex((current) => (current + 1) % bannerSlides.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, []);
 
   if (!user) return null;
   const country = getCountryByCode(user.country);
@@ -65,15 +85,29 @@ export default function HomePage() {
       <main className="cp-home">
         <div className="cp-shell">
           <section className="cp-hero" aria-label="ChargePoint">
+            <div className="cp-hero-slides" style={{ transform: `translateX(-${bannerIndex * 100}%)` }}>
+              {bannerSlides.map(({ image, alt }, index) => (
+                <div className="cp-hero-slide" key={image} aria-hidden={index !== bannerIndex}>
+                  <img src={image} alt={alt} />
+                </div>
+              ))}
+            </div>
             <div className="cp-hero-copy">
               <span className="cp-kicker">CHARGEPOINT</span>
               <h1>L'énergie<br /><strong>en mouvement.</strong></h1>
               <p>Votre recharge, votre rythme.</p>
             </div>
-            <div className="cp-hero-art">
-              <div className="cp-orbit cp-orbit-one" />
-              <div className="cp-orbit cp-orbit-two" />
-              <img src={homeFlex} alt="ChargePoint Home Flex" />
+            <div className="cp-hero-dots" aria-label="Images de la bannière">
+              {bannerSlides.map((slide, index) => (
+                <button
+                  key={slide.image}
+                  type="button"
+                  className={index === bannerIndex ? "is-active" : ""}
+                  onClick={() => setBannerIndex(index)}
+                  aria-label={`Afficher l'image ${index + 1}`}
+                  aria-pressed={index === bannerIndex}
+                />
+              ))}
             </div>
           </section>
 
