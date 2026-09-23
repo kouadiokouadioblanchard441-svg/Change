@@ -69,6 +69,79 @@
   margin: 0;
 }
 
+.cp-about-lead {
+  color: #111827;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.65;
+}
+
+.cp-about-facts {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0 28px;
+  border: 2px solid #111827;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 4px 0 #111827;
+}
+
+.cp-about-facts div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(17, 24, 39, .16);
+  padding-bottom: 9px;
+}
+
+.cp-about-facts div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cp-about-facts span {
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.cp-about-facts strong {
+  color: #111827;
+  font-size: 14px;
+  text-align: right;
+}
+
+.cp-about-body h2 {
+  margin: 28px 0 10px;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.cp-about-body h2::before {
+  display: inline-block;
+  width: 5px;
+  height: 21px;
+  margin-right: 8px;
+  border-radius: 3px;
+  background: #ff7a14;
+  content: "";
+  vertical-align: -3px;
+}
+
+.cp-about-body ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 0 22px;
+}
+
+.cp-about-body li {
+  padding-left: 4px;
+}
+
 .cp-about-body p + p {
   margin-top: 20px;
   border-top: 2px solid rgba(255, 122, 20, .28);
