@@ -19,8 +19,8 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
   const withdrawalEndHour = settings?.withdrawalEndHour || "17";
   const maxWithdrawalsPerDay = settings?.maxWithdrawalsPerDay || "1";
-  const lv1 = settings?.level1Commission || "15";
-  const lv2 = settings?.level2Commission || "2";
+  const lv1 = settings?.level1Commission || "25";
+  const lv2 = settings?.level2Commission || "4";
   const lv3 = settings?.level3Commission || "1";
 
   return (
