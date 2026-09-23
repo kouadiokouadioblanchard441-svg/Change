@@ -5,8 +5,8 @@
   --cp-panel: #202226;
   min-height: 100dvh;
   padding-bottom: 14px;
-  background: var(--cp-ink);
-  color: #fff;
+  background: #fff;
+  color: var(--cp-ink);
   font-family: "DM Sans", Arial, sans-serif;
 }
 
@@ -15,12 +15,12 @@
   min-height: 100%;
   margin: 0 auto;
   overflow: hidden;
-  background: var(--cp-ink);
+  background: #fff;
 }
 
 .cp-account-header {
   padding: 24px 16px 18px;
-  background: var(--cp-ink);
+  background: #fff;
 }
 
 .cp-profile-row {
@@ -56,7 +56,7 @@
 
 .cp-account-phone {
   margin: 0 0 8px;
-  color: #fff;
+  color: var(--cp-ink);
   font-size: clamp(18px, 5.2vw, 24px);
   font-weight: 600;
   letter-spacing: -.03em;
@@ -87,7 +87,7 @@
   gap: 5px;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--cp-ink);
   font-size: 10px;
   cursor: pointer;
 }
@@ -97,7 +97,7 @@
   width: 30px;
   height: 30px;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) saturate(100%);
 }
 
 .cp-balance-card {
