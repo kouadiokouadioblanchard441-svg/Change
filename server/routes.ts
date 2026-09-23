@@ -2310,7 +2310,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     }
   });
 
-  // Daily bonus claim (50 FCFA every 24h)
+  // Daily bonus claim (random 20–50 FCFA every 24h)
   app.post("/api/claim-daily-bonus", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUser(req.session.userId!);
@@ -2333,8 +2333,9 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         }
       }
 
-      // Add 50 FCFA to balance
-      const newBalance = parseFloat(user.balance) + 50;
+      // Award a random whole amount between 20 and 50 FCFA, inclusive.
+      const bonusAmount = Math.floor(Math.random() * 31) + 20;
+      const newBalance = parseFloat(user.balance) + bonusAmount;
       await storage.updateUser(user.id, { 
         balance: newBalance.toString(),
         lastDailyBonusClaim: now
@@ -2344,11 +2345,15 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       await storage.createTransaction({
         userId: user.id,
         type: "bonus",
-        amount: "50",
+        amount: String(bonusAmount),
         description: "Bonus quotidien"
       });
 
-      res.json({ success: true, message: "Bonus de 50 FCFA ajoute!" });
+      res.json({
+        success: true,
+        amount: bonusAmount,
+        message: `Bonus de ${bonusAmount} FCFA ajoute!`,
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
