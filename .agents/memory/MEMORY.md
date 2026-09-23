@@ -4,7 +4,7 @@
 - [Imported database setup](imported-database-setup.md) — Preserve an existing Replit session table when applying a first-run Drizzle schema.
 - [Plesk GitHub deployment](plesk-github-deployment.md) — Plesk pulls a committed dist build and starts dist/index.cjs relative to the application root.
 - [Login privacy](login-privacy.md) — Do not persist passwords or phone numbers in browser storage; privacy scans classify remembered phone numbers as sensitive.
-- [Page branding scope](ton-green-theme.md) — Home and redesigned internal pages use ChargePoint orange; untouched legacy pages keep their current styles.
+- [Page branding scope](ton-green-theme.md) — Home is a pure-white ChargePoint app dashboard with separate functional sections; untouched legacy pages keep their styles.
 - [ChargePoint orange](chargepoint-brand.md) — Official brand orange is #FF7A14; use dark text for readable orange buttons.
 - [InPay callback classification](inpay-callbacks.md) — InPay payin and payout callbacks can both include order_number; classify using the merchant reference prefix first.
 - [InPay IP whitelist](inpay-ip-whitelist.md) — InPay rejects API calls with errno 5 until the server's public egress IP is whitelisted.
