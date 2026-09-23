@@ -105,6 +105,7 @@ export default function TeamPage() {
           </section>
 
           <section className="team-summary" aria-label="Statistiques de l'équipe">
+            <h2>Mon équipe en chiffres</h2>
             {summary.map(item => (
               <div className="team-summary-item" key={item.label}>
                 <strong>{formatNumber(item.value, isLoading)}</strong>
