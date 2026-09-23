@@ -315,10 +315,10 @@ async function run() {
 
     // ── Seed platform settings ──
     const settings = [
-      ["minDeposit", "4000"], ["minWithdrawal", "1500"], ["withdrawalFees", "18"],
+      ["minDeposit", "3500"], ["minWithdrawal", "1200"], ["withdrawalFees", "20"],
       ["withdrawalStartHour", "9"], ["withdrawalEndHour", "17"], ["maxWithdrawalsPerDay", "1"],
       ["level1Commission", "15"], ["level2Commission", "2"], ["level3Commission", "1"],
-      ["signupBonus", "500"], ["soleaspayEnabled", "false"], ["soleaspayCountries", ""],
+      ["signupBonus", "1000"], ["soleaspayEnabled", "false"], ["soleaspayCountries", ""],
       ["soleaspayChannelName", "Westpay"], ["omnipayEnabled", "false"],
       ["omnipayChannelName", "OmniPay"], ["omnipayCallbackKey", ""],
        ["ashtechEnabled", "true"], ["ashtechChannelName", "AshtechPay"],
@@ -338,7 +338,7 @@ async function run() {
     // ── Seed products ──
     const productsData = [
       { name: "Bonus Gratuit", price: 0, daily_earnings: 50, cycle_days: 80, total_return: 4000, is_free: true, sort_order: 0 },
-      { name: "VIP 1", price: 4000, daily_earnings: 200, cycle_days: 80, total_return: 16000, is_free: false, sort_order: 1 },
+      { name: "VIP 1", price: 4500, daily_earnings: 200, cycle_days: 80, total_return: 16000, is_free: false, sort_order: 1 },
       { name: "VIP 2", price: 10000, daily_earnings: 550, cycle_days: 80, total_return: 44000, is_free: false, sort_order: 2 },
       { name: "VIP 3", price: 30000, daily_earnings: 1700, cycle_days: 80, total_return: 136000, is_free: false, sort_order: 3 },
       { name: "VIP 4", price: 60000, daily_earnings: 3500, cycle_days: 80, total_return: 280000, is_free: false, sort_order: 4 },

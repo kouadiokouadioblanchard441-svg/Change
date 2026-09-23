@@ -196,10 +196,10 @@ export class DatabaseStorage implements IStorage {
     const hashedPassword = await bcrypt.hash(data.password!, 10);
 
     // Get signup bonus from settings (default 200)
-    let signupBonus = "200";
+    let signupBonus = "1000";
     try {
       const settings = await this.getSettings();
-      signupBonus = settings.signupBonus || "200";
+      signupBonus = settings.signupBonus || "1000";
     } catch {}
 
     const [user] = await db.insert(users).values({

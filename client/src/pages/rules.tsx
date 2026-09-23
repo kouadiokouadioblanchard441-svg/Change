@@ -8,10 +8,10 @@ export default function RulesPage() {
     queryKey: ["/api/settings"],
   });
 
-  const signupBonus = settings?.signupBonus || "500";
-  const minDeposit = settings?.minDeposit || "4000";
-  const minWithdrawal = settings?.minWithdrawal || "1500";
-  const withdrawalFees = settings?.withdrawalFees || "18";
+  const signupBonus = settings?.signupBonus || "1000";
+  const minDeposit = settings?.minDeposit || "3500";
+  const minWithdrawal = settings?.minWithdrawal || "1200";
+  const withdrawalFees = settings?.withdrawalFees || "20";
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
   const withdrawalEndHour = settings?.withdrawalEndHour || "17";
   const maxWithdrawalsPerDay = settings?.maxWithdrawalsPerDay || "1";
@@ -46,6 +46,7 @@ export default function RulesPage() {
           <h2>2. Dépôts et Retraits</h2>
           <ul>
             <li>Le montant minimum de dépôt est de {parseInt(minDeposit).toLocaleString()} FCFA.</li>
+            <li>Le montant minimum d'achat d'un produit est de 4 500 FCFA.</li>
             <li>Le montant minimum de retrait est de {parseInt(minWithdrawal).toLocaleString()} FCFA.</li>
             <li>Les frais de retrait sont fixés à {withdrawalFees}% pour couvrir les frais de transaction et d'entretien.</li>
             <li>Les retraits sont traités entre {withdrawalStartHour}h et {withdrawalEndHour}h les jours ouvrables.</li>

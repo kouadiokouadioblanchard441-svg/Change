@@ -67,6 +67,7 @@ import express from "express";
 const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
 const MAX_LOGIN_ATTEMPTS = 5;
 const BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const MIN_PRODUCT_PURCHASE = 4500;
 
 function getClientKey(req: Request): string {
   const forwarded = req.headers["x-forwarded-for"];
@@ -560,6 +561,12 @@ export async function registerRoutes(
       
       if (product.isFree) {
         return res.status(400).json({ message: "Utilisez /claim-free pour ce produit" });
+      }
+
+      if (product.price < MIN_PRODUCT_PURCHASE) {
+        return res.status(400).json({
+          message: `Le montant minimum d'achat est de ${MIN_PRODUCT_PURCHASE.toLocaleString()} FCFA`,
+        });
       }
 
       const userProduct = await storage.purchaseProduct(req.session.userId!, productId);
@@ -1385,7 +1392,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         return res.status(400).json({ message: "AshtechPay non activé" });
       }
       const numericAmount = Number(amount);
-      const minDeposit = parseInt(settings.minDeposit || "3000");
+      const minDeposit = parseInt(settings.minDeposit || "3500");
       if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
         return res.status(400).json({ message: "Montant invalide" });
       }
@@ -1641,7 +1648,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (settings.sendavapayEnabled !== "true") {
         return res.status(400).json({ message: "SendavaPay non activé" });
       }
-      const minDeposit = parseInt(settings.minDeposit || "3000");
+      const minDeposit = parseInt(settings.minDeposit || "3500");
       const numericAmount = Number(amount);
       if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
         return res.status(400).json({ message: "Montant invalide" });
@@ -2104,7 +2111,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
 
       const settingsForWithdrawal = await storage.getSettings();
-      const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "1000");
+      const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "1200");
       if (!Number.isInteger(numericAmount) || numericAmount < minWithdrawal) {
         return res.status(400).json({ message: `Montant minimum: ${minWithdrawal} FCFA` });
       }
@@ -2163,7 +2170,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
 
       const settings = await storage.getSettings();
-      const fees = parseFloat(settings.withdrawalFees || "18");
+      const fees = parseFloat(settings.withdrawalFees || "20");
       const feeAmount = Math.round(numericAmount * fees / 100);
       const netAmount = numericAmount - feeAmount;
 
@@ -2423,11 +2430,11 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     try {
       const settings = await storage.getSettings();
       res.json({
-        withdrawalFees: parseFloat(settings.withdrawalFees || "18"),
+        withdrawalFees: parseFloat(settings.withdrawalFees || "20"),
         withdrawalStartHour: parseInt(settings.withdrawalStartHour || "9"),
         withdrawalEndHour: parseInt(settings.withdrawalEndHour || "17"),
         maxWithdrawalsPerDay: parseInt(settings.maxWithdrawalsPerDay || "1"),
-        minWithdrawal: parseInt(settings.minWithdrawal || "1000"),
+        minWithdrawal: parseInt(settings.minWithdrawal || "1200"),
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

@@ -89,7 +89,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
 
   const balance = parseFloat(user.balance || "0");
   const defaultWallet = wallets?.find(w => w.isDefault);
-  const fees = withdrawalSettings?.withdrawalFees || 15;
+  const fees = withdrawalSettings?.withdrawalFees || 20;
   const startHour = withdrawalSettings?.withdrawalStartHour || 8;
   const endHour = withdrawalSettings?.withdrawalEndHour || 17;
   const country = getCountryByCode(user.country);

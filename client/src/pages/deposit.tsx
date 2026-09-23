@@ -101,7 +101,7 @@ export default function DepositPage() {
   const { data: platformSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
   });
-  const MIN_DEPOSIT = parseInt(platformSettings?.minDeposit || "4000");
+  const MIN_DEPOSIT = parseInt(platformSettings?.minDeposit || "3500");
   const sendavapayEnabled = platformSettings?.sendavapayEnabled === "true";
   const sendavapayChannelName = platformSettings?.sendavapayChannelName || "SendavaPay";
   const westpayEnabled = platformSettings?.westpayEnabled === "true";

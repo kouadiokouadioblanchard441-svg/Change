@@ -12,10 +12,10 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
     queryKey: ["/api/settings"],
   });
 
-  const signupBonus = settings?.signupBonus || "500";
-  const minDeposit = settings?.minDeposit || "4000";
-  const minWithdrawal = settings?.minWithdrawal || "1500";
-  const withdrawalFees = settings?.withdrawalFees || "18";
+  const signupBonus = settings?.signupBonus || "1000";
+  const minDeposit = settings?.minDeposit || "3500";
+  const minWithdrawal = settings?.minWithdrawal || "1200";
+  const withdrawalFees = settings?.withdrawalFees || "20";
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
   const withdrawalEndHour = settings?.withdrawalEndHour || "17";
   const maxWithdrawalsPerDay = settings?.maxWithdrawalsPerDay || "1";
@@ -56,6 +56,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
             <section>
               <h4 className="font-medium text-foreground mb-2">3. Produits</h4>
               <ul className="space-y-1">
+                <li>- Montant minimum d'achat : 4 500 FCFA</li>
                 <li>- Cycle standard : 80 jours</li>
                 <li>- Gains journaliers automatiques</li>
                 <li>- Les gains sont crédités 24h après l'achat</li>
