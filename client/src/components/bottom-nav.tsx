@@ -15,10 +15,11 @@ export default function BottomNav() {
   const [location, navigate] = useLocation();
   const isTeam = location === "/team" || location.startsWith("/team-details");
   const isHome = location === "/";
+  const isProducts = location === "/products";
   const isAccount = location === "/account";
   const isAbout = location === "/about";
   const isRules = location === "/rules";
-  const usesOrangeBrand = isTeam || isHome || isAccount || isAbout || isRules;
+  const usesOrangeBrand = isTeam || isHome || isProducts || isAccount || isAbout || isRules;
 
   return (
     <nav
