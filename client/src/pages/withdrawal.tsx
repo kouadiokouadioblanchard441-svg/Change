@@ -7,6 +7,8 @@ import { ChevronRight, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { getCountryByCode } from "@/lib/countries";
 import walletIcon from "@assets/téléchargement_(80)_1787363581764.png";
+import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
+import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 
 interface WalletData {
   id: number;
@@ -148,7 +150,7 @@ export default function WithdrawalPage() {
   if (walletsLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#00CC2C]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#FF7A14]" />
       </div>
     );
   }
@@ -162,277 +164,240 @@ export default function WithdrawalPage() {
     <main className="withdraw-reference min-h-screen bg-[#f7f4f2]">
       <style>{`
         .withdraw-reference {
-          color: #151515;
+          min-height: 100dvh;
+          background: #fff8f2;
+          color: #111827;
           font-family: Inter, Arial, sans-serif;
         }
         .withdraw-reference .withdraw-screen {
           width: 100%;
-          max-width: 500px;
-          min-height: 100vh;
+          max-width: 512px;
+          min-height: 100dvh;
           margin: 0 auto;
           overflow: hidden;
-          background: #f7f4f2;
+          background: #fff8f2;
         }
         .withdraw-reference .withdraw-hero {
           position: relative;
-          height: min(70.7vw, 354px);
-          min-height: 283px;
-          background: #ffca2b;
+          box-sizing: border-box;
+          min-height: 430px;
+          padding: 0 16px 20px;
+          background: #fff8f2;
+          border-bottom: 2px solid #111827;
         }
-        .withdraw-reference .history-button {
+        .withdraw-reference .history-button,
+        .withdraw-reference .withdraw-back {
           position: absolute;
           z-index: 3;
-          top: 14px;
-          right: 16px;
+          top: 16px;
           display: grid;
-          width: 44px;
-          height: 44px;
+          width: 42px;
+          height: 42px;
           place-items: center;
-          border: 0;
-          border-radius: 12px;
-          background: rgba(255,255,255,.24);
+          border: 2px solid #111827;
+          border-radius: 11px;
+          padding: 0;
+          background: #fff;
+          box-shadow: 0 3px 0 #111827;
+        }
+        .withdraw-reference .history-button {
+          right: 16px;
+        }
+        .withdraw-reference .withdraw-back {
+          left: 16px;
+        }
+        .withdraw-reference .history-button:active,
+        .withdraw-reference .withdraw-back:active {
+          transform: translateY(2px);
+          box-shadow: 0 1px 0 #111827;
         }
         .withdraw-reference .history-icon {
           position: relative;
-          width: 30px;
-          height: 30px;
-          border: 2px solid #3174d1;
+          width: 22px;
+          height: 25px;
+          border: 2px solid #111827;
           border-radius: 4px;
           background: transparent;
         }
         .withdraw-reference .history-icon::before {
           position: absolute;
-          top: 6px;
-          left: 5px;
-          width: 16px;
+          top: 5px;
+          left: 4px;
+          width: 11px;
           height: 2px;
           content: "";
-          background: #3174d1;
-          box-shadow: 0 6px 0 #3174d1;
+          background: #ff7a14;
+          box-shadow: 0 6px 0 #ff7a14;
         }
         .withdraw-reference .history-icon::after {
           position: absolute;
           right: -7px;
-          bottom: -7px;
-          width: 11px;
-          height: 11px;
-          border: 2px solid #3174d1;
+          bottom: -6px;
+          width: 10px;
+          height: 10px;
+          border: 2px solid #111827;
           border-radius: 50%;
           content: "";
-          background: #ffcf3e;
+          background: #fff;
+        }
+        .withdraw-reference .withdraw-back::before {
+          width: 13px;
+          height: 13px;
+          border-bottom: 3px solid #111827;
+          border-left: 3px solid #111827;
+          content: "";
+          transform: rotate(45deg) translate(2px, -2px);
         }
         .withdraw-reference .hero-art {
           position: relative;
           width: 100%;
-          height: min(36.65vw, 183px);
+          height: 176px;
           overflow: hidden;
+          margin-top: 76px;
+          border: 2px solid #111827;
+          border-radius: 13px;
+          background: #fff;
+          background-image: url("${chargepointPromo}");
+          background-position: center;
+          background-size: cover;
+          box-shadow: 0 4px 0 #111827;
         }
-        .withdraw-reference .hero-art::before,
-        .withdraw-reference .hero-art::after {
-          position: absolute;
-          content: "";
-          border-radius: 42% 58% 52% 48%;
-          background: #fdb900;
-          transform: rotate(-12deg);
-        }
-        .withdraw-reference .hero-art::before {
-          top: -24px;
-          left: -25px;
-          width: 168px;
-          height: 128px;
-          box-shadow:
-            84px 23px 0 -20px #fdb900,
-            330px 18px 0 5px rgba(255,255,255,.14);
-        }
-        .withdraw-reference .hero-art::after {
-          top: 33px;
-          right: 58px;
-          width: 121px;
-          height: 92px;
-          background: rgba(255,255,255,.16);
-          transform: rotate(18deg);
-        }
-        .withdraw-reference .hero-pattern {
-          position: absolute;
-          top: 10px;
-          right: -24px;
-          width: 205px;
-          height: 145px;
-          border-radius: 50%;
-          background: rgba(255,255,255,.12);
-          transform: rotate(-18deg);
+        .withdraw-reference .hero-pattern,
+        .withdraw-reference .receipt-icon {
+          display: none;
         }
         .withdraw-reference .withdraw-title {
           position: absolute;
           z-index: 2;
-          top: 82px;
-          right: 0;
-          left: 0;
+          top: 21px;
+          right: 70px;
+          left: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
           margin: 0;
-          color: #111;
-          font-size: 28px;
-          font-weight: 500;
-          line-height: 1;
+          color: #111827;
+          font-size: 20px;
+          font-weight: 800;
+          line-height: 1.2;
           text-align: center;
         }
-        .withdraw-reference .receipt-icon {
-          position: absolute;
-          z-index: 2;
-          top: 15px;
-          right: 25px;
-          width: 25px;
-          height: 31px;
-          border: 3px solid #40b9cf;
-          border-radius: 4px;
-          transform: rotate(2deg);
-        }
-        .withdraw-reference .receipt-icon::before,
-        .withdraw-reference .receipt-icon::after {
-          position: absolute;
-          left: 5px;
-          content: "";
-          width: 10px;
-          height: 3px;
-          border-radius: 3px;
-          background: #40b9cf;
-        }
-        .withdraw-reference .receipt-icon::before {
-          top: 8px;
-          box-shadow: 0 7px 0 #40b9cf;
-        }
-        .withdraw-reference .receipt-icon::after {
-          top: 20px;
-          left: 12px;
-          width: 6px;
-          height: 6px;
-          border: 2px solid #40b9cf;
+        .withdraw-reference .withdraw-title-logo {
+          width: 38px;
+          height: 38px;
+          border: 2px solid #111827;
           border-radius: 50%;
-          background: transparent;
-        }
-        .withdraw-reference .withdraw-back {
-          position: absolute;
-          z-index: 3;
-          top: 85px;
-          left: 24px;
-          width: 40px;
-          height: 40px;
-          border: 0;
-          background: transparent;
-        }
-        .withdraw-reference .withdraw-back::before {
-          position: absolute;
-          top: 14px;
-          left: 9px;
-          width: 14px;
-          height: 14px;
-          border-bottom: 3px solid #111;
-          border-left: 3px solid #111;
-          content: "";
-          transform: rotate(45deg);
+          object-fit: cover;
         }
         .withdraw-reference .balance-card {
-          position: absolute;
-          top: min(36.45vw, 182px);
-          right: 16px;
-          left: 16px;
-          height: 160px;
+          position: relative;
+          height: 116px;
           overflow: hidden;
-          border: 2px solid rgba(255,255,255,.88);
-          border-radius: 10px;
-          background: linear-gradient(110deg, #ffd45d 0%, #ffe69a 100%);
-          box-shadow: 0 1px 2px rgba(202,151,0,.1);
+          margin-top: 16px;
+          border: 2px solid #111827;
+          border-radius: 13px;
+          background: #ff7a14;
+          box-shadow: 0 4px 0 #111827;
         }
         .withdraw-reference .balance-label {
-          margin: 29px 0 0 15px;
-          color: #eb7123;
-          font-size: 23px;
+          margin: 20px 0 0 17px;
+          color: #111827;
+          font-size: 15px;
           font-weight: 800;
           line-height: 1;
         }
         .withdraw-reference .balance-value {
-          margin: 20px 0 0 15px;
-          color: #f36d17;
-          font-size: 43px;
+          margin: 16px 0 0 17px;
+          color: #111827;
+          font-size: 32px;
           font-weight: 800;
           line-height: .9;
         }
         .withdraw-reference .balance-value span {
-          margin-left: 3px;
-          font-size: 28px;
+          margin-left: 5px;
+          font-size: 20px;
         }
         .withdraw-reference .wallet-mark {
           position: absolute;
-          top: 14px;
-          right: 14px;
+          top: 15px;
+          right: 16px;
           display: grid;
-          width: 109px;
-          height: 109px;
+          width: 84px;
+          height: 84px;
           place-items: center;
+          border: 2px solid #111827;
           border-radius: 50%;
-          background: white;
+          background: #fff;
         }
         .withdraw-reference .wallet-mark img {
-          width: 67px;
-          height: 67px;
-          object-fit: contain;
+          width: 62px;
+          height: 62px;
+          object-fit: cover;
         }
         .withdraw-reference .amount-panel {
+          box-sizing: border-box;
           min-height: 154px;
-          padding: 25px 35px 16px;
-          background: white;
+          padding: 20px 16px 18px;
+          background: #fff;
+          border-bottom: 2px solid #111827;
         }
         .withdraw-reference .amount-label {
-          margin: 0 0 7px 9px;
-          color: #c98e41;
+          margin: 0 0 9px;
+          color: #111827;
           font-size: 16px;
-          font-weight: 400;
+          font-weight: 800;
         }
         .withdraw-reference .amount-field {
           display: flex;
           height: 54px;
           align-items: center;
           overflow: hidden;
+          border: 2px solid #111827;
           border-radius: 12px;
-          background: #f3f0ee;
+          background: #fff;
         }
         .withdraw-reference .amount-field input {
           width: 100%;
           min-width: 0;
           height: 100%;
-          padding: 0 21px;
+          padding: 0 16px;
           border: 0;
           outline: 0;
           background: transparent;
-          color: #656565;
+          color: #111827;
           font-size: 19px;
         }
-        .withdraw-reference .amount-field input::placeholder { color: #777; opacity: 1; }
+        .withdraw-reference .amount-field input::placeholder { color: #6b7280; opacity: 1; }
         .withdraw-reference .amount-currency {
-          padding-right: 20px;
-          color: #767676;
-          font-size: 24px;
+          padding-right: 16px;
+          color: #111827;
+          font-size: 18px;
+          font-weight: 800;
         }
         .withdraw-reference .amount-details {
           display: flex;
           justify-content: space-between;
-          margin-top: 14px;
-          color: #191919;
-          font-size: 14px;
+          gap: 12px;
+          margin-top: 12px;
+          color: #4b5563;
+          font-size: 13px;
+          font-weight: 700;
         }
         .withdraw-reference .prepayment-notice {
           display: grid;
           gap: 7px;
           margin-top: 16px;
           padding: 14px;
-          border: 1px solid #f0b44b;
+          border: 2px solid #111827;
           border-radius: 12px;
-          background: #fff7e6;
-          color: #765116;
+          background: #fff1e6;
+          color: #4b5563;
           font-size: 13px;
           line-height: 1.45;
         }
         .withdraw-reference .prepayment-notice strong {
-          color: #8a4b00;
+          color: #111827;
           font-size: 14px;
         }
         .withdraw-reference .pay-prepayment {
@@ -441,25 +406,35 @@ export default function WithdrawalPage() {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          border: 0;
-          border-radius: 20px;
-          background: #f29b16;
-          color: white;
-          font-weight: 700;
+          border: 2px solid #111827;
+          border-radius: 10px;
+          background: #ff7a14;
+          color: #111827;
+          font-weight: 800;
+          box-shadow: 0 2px 0 #111827;
+        }
+        .withdraw-reference .pay-prepayment:active:not(:disabled) {
+          transform: translateY(2px);
+          box-shadow: none;
         }
         .withdraw-reference .pay-prepayment:disabled { opacity: .55; }
         .withdraw-reference .wallet-choice {
           display: flex;
           width: calc(100% - 32px);
-          height: 53px;
+          min-height: 62px;
           align-items: center;
-          margin: 12px 16px 0;
-          padding: 0 17px;
-          border-radius: 5px;
-          background: linear-gradient(112deg, #00CC2C 0%, #009d22 100%);
-          color: white;
+          margin: 16px 16px 0;
+          padding: 0 14px;
+          border: 2px solid #111827;
+          border-radius: 12px;
+          background: #fff;
+          color: #111827;
           text-align: left;
-          box-shadow: 0 1px 2px rgba(214,153,0,.15);
+          box-shadow: 0 3px 0 #111827;
+        }
+        .withdraw-reference .wallet-choice:active {
+          transform: translateY(2px);
+          box-shadow: 0 1px 0 #111827;
         }
         .withdraw-reference .wallet-choice img {
           width: 34px;
@@ -471,64 +446,83 @@ export default function WithdrawalPage() {
           width: 22px;
           height: 22px;
           margin-left: auto;
+          color: #ff7a14;
         }
         .withdraw-reference .wallet-copy {
           overflow: hidden;
-          font-size: 16px;
-          font-weight: 400;
+          font-size: 15px;
+          font-weight: 800;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
         .withdraw-reference .instructions {
-          padding: 28px 9px 20px;
+          margin-top: 18px;
+          padding: 22px 16px 24px;
+          border-top: 2px solid #111827;
+          background: #fff;
         }
         .withdraw-reference .instructions-title {
-          margin-bottom: 29px;
-          font-size: 17px;
+          margin: 0 0 18px;
+          color: #111827;
+          font-size: 18px;
           font-weight: 800;
         }
         .withdraw-reference .instructions-title::before {
-          content: "💸";
+          content: "•";
           margin-right: 8px;
-          font-size: 17px;
+          color: #ff7a14;
+          font-size: 24px;
+          line-height: 0;
         }
         .withdraw-reference .instruction {
           position: relative;
-          margin: 0 0 26px 28px;
-          font-size: 17px;
+          margin: 0 0 14px 20px;
+          color: #4b5563;
+          font-size: 14px;
           font-weight: 500;
-          line-height: 1.65;
+          line-height: 1.55;
         }
         .withdraw-reference .instruction::before {
-          content: "◆";
           position: absolute;
-          top: 2px;
-          left: -19px;
-          color: #579ad8;
-          font-size: 9px;
+          top: 7px;
+          left: -15px;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          content: "";
+          background: #ff7a14;
         }
-        .withdraw-reference .instruction strong { font-weight: 800; }
+        .withdraw-reference .instruction strong { color: #111827; font-weight: 800; }
         .withdraw-reference .submit {
           display: flex;
-          width: calc(100% - 48px);
+          width: calc(100% - 32px);
           min-height: 57px;
           align-items: center;
           justify-content: center;
-          margin: 4px 24px 35px;
-          border-radius: 29px;
-          background: linear-gradient(112deg, #00CC2C 0%, #009d22 100%);
-          color: white;
-          font-size: 17px;
-          font-weight: 600;
+          margin: 18px 16px 0;
+          border: 2px solid #111827;
+          border-radius: 12px;
+          background: #ff7a14;
+          color: #111827;
+          font-size: 16px;
+          font-weight: 800;
+          box-shadow: 0 4px 0 #111827;
+        }
+        .withdraw-reference .submit:active:not(:disabled) {
+          transform: translateY(3px);
+          box-shadow: 0 1px 0 #111827;
         }
         .withdraw-reference .submit:disabled { opacity: .6; }
         @media (max-width: 360px) {
-          .withdraw-reference .balance-card { right: 10px; left: 10px; }
-          .withdraw-reference .wallet-mark { transform: scale(.82); transform-origin: top right; }
-          .withdraw-reference .balance-label { font-size: 20px; }
-          .withdraw-reference .balance-value { font-size: 37px; }
-          .withdraw-reference .amount-panel { padding-right: 25px; padding-left: 25px; }
-          .withdraw-reference .instruction { font-size: 15px; }
+          .withdraw-reference .withdraw-hero { min-height: 414px; padding-right: 12px; padding-left: 12px; }
+          .withdraw-reference .history-button { right: 12px; }
+          .withdraw-reference .withdraw-back { left: 12px; }
+          .withdraw-reference .hero-art { height: 154px; }
+          .withdraw-reference .balance-card { margin-top: 14px; }
+          .withdraw-reference .wallet-mark { transform: scale(.86); transform-origin: top right; }
+          .withdraw-reference .balance-value { font-size: 28px; }
+          .withdraw-reference .amount-details { font-size: 12px; }
+          .withdraw-reference .instruction { font-size: 13px; }
         }
       `}</style>
 
@@ -538,7 +532,10 @@ export default function WithdrawalPage() {
             <div className="hero-pattern" />
             <span className="receipt-icon" />
           </div>
-          <h1 className="withdraw-title">Retrait</h1>
+          <h1 className="withdraw-title">
+            <img className="withdraw-title-logo" src={chargepointLogo} alt="" />
+            <span>Retrait</span>
+          </h1>
           <Link href="/history">
             <button className="history-button" aria-label="Historique des transactions">
               <span className="history-icon" aria-hidden="true" />
@@ -550,7 +547,7 @@ export default function WithdrawalPage() {
           <div className="balance-card">
             <p className="balance-label">Solde du compte</p>
             <p className="balance-value" data-testid="text-balance">{Math.round(balance).toLocaleString("fr-FR")}<span>{currency}</span></p>
-            <div className="wallet-mark" aria-hidden="true"><img src={walletIcon} alt="" /></div>
+            <div className="wallet-mark" aria-hidden="true"><img src={chargepointLogo} alt="" /></div>
           </div>
         </section>
 
