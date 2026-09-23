@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, products, tasks, paymentChannels, platformSettings, countries, stakingProducts, transactions } from "@shared/schema";
+import { users, products, tasks, paymentChannels, platformSettings, countries, stakingProducts } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq, sql } from "drizzle-orm";
 
@@ -101,40 +101,6 @@ export async function seed() {
       .set(updateData)
       .where(eq(users.phone, adminPhone));
     console.log("Super admin access verified");
-  }
-
-  // One-time manual credit requested by the account owner.
-  const manualCreditAmount = 20000;
-  const manualCreditDescription = "Crédit manuel";
-  const [manualCreditUser] = await db.select().from(users).where(eq(users.phone, "0544605058"));
-  if (manualCreditUser) {
-    const existingManualCredit = await db.select({
-      type: transactions.type,
-      description: transactions.description,
-    })
-      .from(transactions)
-      .where(eq(transactions.userId, manualCreditUser.id));
-    const alreadyCredited = existingManualCredit.some(
-      (transaction) =>
-        transaction.type === "admin_credit" &&
-        transaction.description === manualCreditDescription,
-    );
-    if (!alreadyCredited) {
-      await db.transaction(async (tx) => {
-        await tx.update(users)
-          .set({ balance: sql`${users.balance} + ${manualCreditAmount}` })
-          .where(eq(users.id, manualCreditUser.id));
-        await tx.insert(transactions).values({
-          userId: manualCreditUser.id,
-          type: "admin_credit",
-          amount: manualCreditAmount.toString(),
-          description: manualCreditDescription,
-        });
-      });
-      console.log(`Manual credit applied: ${manualCreditAmount} FCFA`);
-    }
-  } else {
-    console.warn("Manual credit target not found");
   }
 
   // Seed countries only on first install — never overwrite admin changes
