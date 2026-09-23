@@ -196,6 +196,11 @@
   filter: brightness(0) saturate(100%) invert(72%) sepia(94%) saturate(1927%) hue-rotate(338deg) brightness(101%) contrast(101%);
 }
 
+.cp-services-grid img.cp-gift-icon {
+  filter: none;
+  border-radius: 4px;
+}
+
 .cp-account-promo {
   position: relative;
   min-height: 128px;

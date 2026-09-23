@@ -28,6 +28,7 @@ import checkinIcon from "@/assets/home-actions/checkin.png";
 import downloadIcon from "@assets/mine-mod-download-B1teb57W_1784762231070.png";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
+import giftIcon from "@assets/IMG_20260829_070918_659_1790162584399.jpg";
 import "./account.css";
 
 const tonGreen = "#00CC2C";
@@ -79,7 +80,7 @@ export default function AccountPage() {
     { label: "Télécharger", image: downloadIcon, action: "download" as const },
     { label: "Lier une carte\nbancaire", image: walletIcon, href: "/wallet" },
     { label: "Changer le mot\nde passe", image: passwordIcon, href: "/change-password" },
-    { label: "Échanger un\ncadeau", image: taskIcon, href: "/gift-code" },
+    { label: "Échanger un\ncadeau", image: giftIcon, href: "/gift-code", className: "cp-gift-icon" },
   ];
 
   const handleLogout = async () => {
@@ -426,7 +427,7 @@ export default function AccountPage() {
                   navigate(item.href);
                 }}
               >
-                <img src={item.image} alt="" />
+                <img className={item.className} src={item.image} alt="" />
                 <span>{item.label}</span>
               </button>
             ))}
