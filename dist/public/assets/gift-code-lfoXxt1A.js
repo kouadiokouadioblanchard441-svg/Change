@@ -1,51 +1,4 @@
-import { useState } from "react";
-import { useAuth } from "@/lib/auth";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { Link } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
-import telegramIcon from "@assets/tg-1_1787390593655.png";
-
-export default function GiftCodePage() {
-  const { refreshUser } = useAuth();
-  const { toast } = useToast();
-  const [code, setCode] = useState("");
-  const { data: settings } = useQuery<Record<string, string>>({
-    queryKey: ["/api/settings"],
-  });
-
-  const claimMutation = useMutation({
-    mutationFn: async (giftCode: string) => {
-      const response = await apiRequest("POST", "/api/gift-codes/claim", { code: giftCode });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Erreur");
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      refreshUser();
-      setCode("");
-      toast({ title: "Félicitations !", description: data.message });
-    },
-    onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const handleSubmit = () => {
-    if (!code.trim()) {
-      toast({ title: "Erreur", description: "Veuillez saisir un code", variant: "destructive" });
-      return;
-    }
-    claimMutation.mutate(code.trim());
-  };
-
-  return (
-    <main className="gift-reference">
-      <style>{`
+import{a as c,b as p,r as l,j as e,e as x,L as h,f as u}from"./index-DqYlS7xZ.js";import{u as m}from"./useQuery-DYrgNIzM.js";import{u as b}from"./useMutation-Cyr4_MoD.js";import{c as w}from"./auth-chargepoint-combined-BcpHOCAm.js";import{C as j}from"./chevron-right-CLgooIxq.js";const k="/assets/tg-1_1787367952311-7lN49whF.png";function E(){const{refreshUser:f}=c(),{toast:i}=p(),[r,n]=l.useState(""),{data:s}=m({queryKey:["/api/settings"]}),o=b({mutationFn:async t=>{const a=await u("POST","/api/gift-codes/claim",{code:t});if(!a.ok){const g=await a.json();throw new Error(g.message||"Erreur")}return a.json()},onSuccess:t=>{f(),n(""),i({title:"Félicitations !",description:t.message})},onError:t=>{i({title:"Erreur",description:t.message,variant:"destructive"})}}),d=()=>{if(!r.trim()){i({title:"Erreur",description:"Veuillez saisir un code",variant:"destructive"});return}o.mutate(r.trim())};return e.jsxs("main",{className:"gift-reference",children:[e.jsx("style",{children:`
         .gift-reference { width: 100%; min-height: 100dvh; overflow-x: hidden; background: #ffffff; color: #111827; font-family: Arial, sans-serif; }
         .gift-reference *, .gift-reference *::before, .gift-reference *::after { box-sizing: border-box; }
         .gift-reference .gift-screen { width: 100%; max-width: 512px; min-height: 100dvh; margin: 0 auto; padding-bottom: 28px; background: #ffffff; }
@@ -75,37 +28,4 @@ export default function GiftCodePage() {
           .gift-reference .gift-description { font-size: 14px; }
           .gift-reference .gift-title h1 { font-size: 19px; }
         }
-      `}</style>
-      <div className="gift-screen">
-        <header className="gift-title">
-          <Link href="/account" aria-label="Retour">‹</Link>
-          <h1>Échanger un cadeau</h1>
-        </header>
-        <div className="gift-banner">
-          <img className="gift-hero" src={chargepointPromo} alt="Plateforme ChargePoint et borne de recharge" data-testid="img-gift-banner" />
-        </div>
-        <p className="gift-description">Vous pouvez obtenir un code cadeau dans le groupe</p>
-        <a className="gift-telegram" href={settings?.groupLink || "https://t.me/sybotx"} target="_blank" rel="noreferrer">
-          <img src={telegramIcon} alt="" />
-          <strong>Groupe officiel</strong>
-          <ChevronRight aria-hidden="true" />
-        </a>
-        <form className="gift-form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-          <label className="gift-label" htmlFor="gift-code-input"><span>* </span>Code cadeau</label>
-          <input
-            id="gift-code-input"
-            className="gift-input"
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="Veuillez saisir le code cadeau"
-            data-testid="input-gift-code"
-          />
-          <button className="gift-submit" type="submit" disabled={claimMutation.isPending} data-testid="button-submit-code">
-            {claimMutation.isPending ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : "Confirmer"}
-          </button>
-        </form>
-      </div>
-    </main>
-  );
-}
+      `}),e.jsxs("div",{className:"gift-screen",children:[e.jsxs("header",{className:"gift-title",children:[e.jsx(x,{href:"/account","aria-label":"Retour",children:"‹"}),e.jsx("h1",{children:"Échanger un cadeau"})]}),e.jsx("div",{className:"gift-banner",children:e.jsx("img",{className:"gift-hero",src:w,alt:"Plateforme ChargePoint et borne de recharge","data-testid":"img-gift-banner"})}),e.jsx("p",{className:"gift-description",children:"Vous pouvez obtenir un code cadeau dans le groupe"}),e.jsxs("a",{className:"gift-telegram",href:s?.groupLink||"https://t.me/sybotx",target:"_blank",rel:"noreferrer",children:[e.jsx("img",{src:k,alt:""}),e.jsx("strong",{children:"Groupe officiel"}),e.jsx(j,{"aria-hidden":"true"})]}),e.jsxs("form",{className:"gift-form",onSubmit:t=>{t.preventDefault(),d()},children:[e.jsxs("label",{className:"gift-label",htmlFor:"gift-code-input",children:[e.jsx("span",{children:"* "}),"Code cadeau"]}),e.jsx("input",{id:"gift-code-input",className:"gift-input",type:"text",value:r,onChange:t=>n(t.target.value.toUpperCase()),placeholder:"Veuillez saisir le code cadeau","data-testid":"input-gift-code"}),e.jsx("button",{className:"gift-submit",type:"submit",disabled:o.isPending,"data-testid":"button-submit-code",children:o.isPending?e.jsx(h,{className:"mx-auto h-5 w-5 animate-spin"}):"Confirmer"})]})]})]})}export{E as default};
