@@ -40,7 +40,7 @@
 .cp-notice:hover .cp-notice-track,.cp-notice:focus-visible .cp-notice-track { animation-play-state:paused; }
 @keyframes cp-notice-scroll { to { transform:translateX(-50%); } }
 @media (prefers-reduced-motion:reduce) { .cp-notice-track { animation:none; }.cp-notice-group:not(:first-child),.cp-notice-item:not(:first-child) { display:none; } }
-.cp-overview { margin:16px 12px 0; padding:0 16px 16px; border:1px solid #dfe1e4; border-radius:17px; background:#fff; overflow:hidden; box-shadow:0 3px 12px rgba(17,24,39,.05); }
+.cp-overview { margin:16px 12px 0; padding:0 16px 16px; border:2px solid #111827; border-radius:12px; background:#ffffff; overflow:hidden; box-shadow:0 4px 0 #111827, 0 7px 14px rgba(17,24,39,.18); }
 .cp-section-heading { display:flex; align-items:center; margin:0 -16px 18px; padding:10px 17px; background:var(--cp-orange); }
 .cp-section-heading h2 { margin:0; font:500 23px/28px "Space Grotesk"; letter-spacing:-.04em; }
 .cp-metrics { display:grid; grid-template-columns:1.4fr 1fr; gap:10px; }
