@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { FALLBACK_COUNTRIES, type ApiCountry } from "@/lib/countries";
 import { CountrySelector } from "@/components/country-selector";
 import { ChevronDown, Code2, Loader2, LockKeyhole, Square } from "lucide-react";
+import registerIllustration from "@assets/images_(59)_1787397485505.jpeg";
 
 const registerSchema = z.object({
   phone: z.string().min(8, "Numéro de téléphone invalide"),
@@ -121,6 +122,7 @@ export default function RegisterPage() {
         .auth-reference .auth-submit:active { transform: scale(.98); background: #f5fff6; }
         .auth-reference .auth-submit:disabled { opacity: .68; }
         .auth-reference .auth-error { margin: -13px 0 -7px 4px; color: #fff; font-size: 12px; }
+         .auth-reference .auth-illustration { display: block; width: 100%; max-width: 600px; height: auto; margin: 4px auto 28px; object-fit: contain; }
         @media (max-width: 370px) {
           .auth-register .auth-panel { padding-right: 22px; padding-left: 22px; }
           .auth-reference .auth-field { height: 64px; }
@@ -134,6 +136,7 @@ export default function RegisterPage() {
       <div className="auth-screen">
         <section className="auth-panel">
           <h1 className="auth-title">REGISTER</h1>
+          <img className="auth-illustration" src={registerIllustration} alt="Terminaux de paiement TON" />
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <input type="hidden" {...form.register("country")} />
 
