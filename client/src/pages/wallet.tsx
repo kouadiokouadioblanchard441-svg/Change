@@ -403,35 +403,39 @@ const walletStyles = `
     opacity: .55;
   }
   .wallet-form-page {
-    background: #fff8f2;
+    background: #ffffff;
   }
   .wallet-form-topbar {
-    border-bottom: 0;
-    background: #ff7a14;
+    border-bottom: 1px solid #eee8e3;
+    background: #ffffff;
   }
   .wallet-form-topbar .wallet-back {
-    border-color: rgba(255, 255, 255, .38);
-    background: rgba(255, 255, 255, .16);
-    color: #ffffff;
+    border-color: #ffd7bc;
+    background: #fff8f2;
+    color: #c65100;
   }
-  .wallet-form-topbar .wallet-eyebrow,
+  .wallet-form-topbar .wallet-eyebrow {
+    color: #c65100;
+  }
   .wallet-form-topbar .wallet-title {
-    color: #ffffff;
+    color: #171717;
   }
   .wallet-form-content {
+    min-height: calc(100vh - 73px);
     padding-top: 20px;
-    background: #fff8f2;
+    background: #ffffff;
   }
   .wallet-reference-card {
     overflow: hidden;
-    border: 1px solid #f0e1d5;
+    border: 1px solid #e7e2de;
     border-radius: 16px;
     background: #ffffff;
-    box-shadow: 0 8px 20px rgba(104, 57, 24, .08);
+    box-shadow: 0 8px 24px rgba(23, 23, 23, .06);
   }
   .wallet-reference-card h2 {
     margin: 0;
-    padding: 20px 20px 14px;
+    border-bottom: 1px solid #ece8e5;
+    padding: 18px 20px 15px;
     color: #171717;
     font-size: 19px;
     font-weight: 800;
@@ -441,6 +445,7 @@ const walletStyles = `
     width: 100%;
     align-items: center;
     gap: 14px;
+    min-height: 62px;
     padding: 15px 20px;
     border: 0;
     background: #ffffff;
@@ -454,10 +459,11 @@ const walletStyles = `
     outline: none;
   }
   .wallet-reference-label {
-    width: 72px;
+    width: 84px;
     flex: none;
     color: #4e4742;
     font-size: 15px;
+    font-weight: 700;
   }
   .wallet-reference-value {
     min-width: 0;
@@ -480,16 +486,19 @@ const walletStyles = `
   .wallet-reference-divider {
     height: 1px;
     margin: 0 20px;
-    background: #eadfd7;
+    background: #e5e1de;
   }
   .wallet-reference-address {
+    min-height: 104px;
     padding: 18px 20px 22px;
+    background: #ffffff;
   }
   .wallet-reference-address label {
     display: block;
     margin-bottom: 8px;
     color: #4e4742;
     font-size: 15px;
+    font-weight: 700;
   }
   .wallet-reference-address .wallet-input {
     border-bottom-color: #d9cec5;
