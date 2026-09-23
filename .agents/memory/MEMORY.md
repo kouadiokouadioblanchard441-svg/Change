@@ -14,3 +14,4 @@
 - [Dev workflow port conflict](workflow-port-conflict.md) — a failed restart can leave a prior server child listening on port 5000; inspect the listener before retrying.
 - [Application database target](application-database-target.md) — this app reads and writes Supabase through SUPABASE_DATABASE_URL, not the default Replit database target.
 - [Withdrawal balance policy](withdrawal-balance-policy.md) — deposits remain protected; only earnings, commissions, bonuses, and other non-deposit funds are withdrawable.
+- [VIP duration](vip-duration.md) — VIP products use a 200-day cycle and their total return is daily earnings multiplied by 200.
