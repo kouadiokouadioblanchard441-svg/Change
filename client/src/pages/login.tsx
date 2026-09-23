@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { FALLBACK_COUNTRIES, type ApiCountry } from "@/lib/countries";
 import { CountrySelector } from "@/components/country-selector";
 import { ChevronRight, Loader2, LockKeyhole, Square } from "lucide-react";
-import loginIllustration from "@assets/images_(59)_1787397485505.jpeg";
+import loginIllustration from "@/assets/auth-chargepoint-combined.png";
 
 const loginSchema = z.object({
   phone: z.string().min(8, "Numéro de téléphone invalide"),
@@ -121,7 +121,7 @@ export default function LoginPage() {
       <div className="auth-screen">
         <section className="auth-panel">
           <h1 className="auth-brand">ChargePoint</h1>
-          <img className="auth-illustration" src={loginIllustration} alt="Terminaux de paiement TON" />
+          <img className="auth-illustration" src={loginIllustration} alt="Borne domestique et station de recharge ChargePoint" />
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <input type="hidden" {...form.register("country")} />
 
