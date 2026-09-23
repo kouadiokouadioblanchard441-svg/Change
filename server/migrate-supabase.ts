@@ -344,8 +344,8 @@ async function run() {
       { name: "VIP 3", price: 15000, daily_earnings: 3550, cycle_days: 200, total_return: 710000, is_free: false, sort_order: 3 },
       { name: "VIP 4", price: 30000, daily_earnings: 5783, cycle_days: 200, total_return: 1156600, is_free: false, sort_order: 4 },
       { name: "VIP 5", price: 60000, daily_earnings: 9362, cycle_days: 200, total_return: 1872400, is_free: false, sort_order: 5 },
-      { name: "VIP 6", price: 200000, daily_earnings: 13000, cycle_days: 200, total_return: 2600000, is_free: false, sort_order: 6 },
-      { name: "VIP 7", price: 500000, daily_earnings: 35000, cycle_days: 200, total_return: 7000000, is_free: false, sort_order: 7 },
+      { name: "VIP 6", price: 120000, daily_earnings: 45500, cycle_days: 200, total_return: 9100000, is_free: false, sort_order: 6 },
+      { name: "VIP 7", price: 300000, daily_earnings: 80000, cycle_days: 200, total_return: 16000000, is_free: false, sort_order: 7 },
     ];
     for (const p of productsData) {
       await client.query(

@@ -158,8 +158,8 @@ export async function seed() {
       { name: "VIP 3", price: 15000, dailyEarnings: 3550, cycleDays: 200, totalReturn: 710000, sortOrder: 3 },
       { name: "VIP 4", price: 30000, dailyEarnings: 5783, cycleDays: 200, totalReturn: 1156600, sortOrder: 4 },
       { name: "VIP 5", price: 60000, dailyEarnings: 9362, cycleDays: 200, totalReturn: 1872400, sortOrder: 5 },
-      { name: "VIP 6", price: 100000, dailyEarnings: 10000, cycleDays: 200, totalReturn: 2000000, sortOrder: 6 },
-      { name: "VIP 7", price: 250000, dailyEarnings: 30000, cycleDays: 200, totalReturn: 6000000, sortOrder: 7 },
+      { name: "VIP 6", price: 120000, dailyEarnings: 45500, cycleDays: 200, totalReturn: 9100000, sortOrder: 6 },
+      { name: "VIP 7", price: 300000, dailyEarnings: 80000, cycleDays: 200, totalReturn: 16000000, sortOrder: 7 },
     ];
     await db.insert(products).values(defaultProducts);
     console.log("Products seeded (first install)");
@@ -228,6 +228,32 @@ export async function seed() {
           })
           .where(eq(products.id, product.id));
         console.log("VIP 5 updated: 60000 FCFA -> 9362 FCFA/day");
+        continue;
+      }
+
+      if (product.name === "VIP 6") {
+        await db.update(products)
+          .set({
+            price: 120000,
+            dailyEarnings: 45500,
+            cycleDays: 200,
+            totalReturn: 9100000,
+          })
+          .where(eq(products.id, product.id));
+        console.log("VIP 6 updated: 120000 FCFA -> 45500 FCFA/day");
+        continue;
+      }
+
+      if (product.name === "VIP 7") {
+        await db.update(products)
+          .set({
+            price: 300000,
+            dailyEarnings: 80000,
+            cycleDays: 200,
+            totalReturn: 16000000,
+          })
+          .where(eq(products.id, product.id));
+        console.log("VIP 7 updated: 300000 FCFA -> 80000 FCFA/day");
         continue;
       }
 
