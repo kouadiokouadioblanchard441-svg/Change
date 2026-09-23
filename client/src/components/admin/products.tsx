@@ -281,6 +281,8 @@ export default function AdminProducts() {
                   <Switch
                     checked={product.isActive}
                     onCheckedChange={(checked) => toggleMutation.mutate({ id: product.id, isActive: checked })}
+                    aria-label={product.isActive ? `Bloquer ${product.name}` : `Débloquer ${product.name}`}
+                    title={product.isActive ? "Bloquer ce produit" : "Débloquer ce produit"}
                     data-testid={`switch-product-${product.id}`}
                   />
                   <Button size="icon" variant="ghost" onClick={() => openEdit(product)} data-testid={`button-edit-product-${product.id}`}>

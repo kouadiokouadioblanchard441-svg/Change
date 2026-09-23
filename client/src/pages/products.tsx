@@ -148,6 +148,8 @@ export default function ProductsPage() {
           gap: 14px; padding: 15px; border: 2px solid #111827;
           border-radius: 14px; background: #ffffff; box-shadow: 0 4px 0 #111827;
         }
+        .cp-product-card.is-unavailable { border-color: #9ca3af; box-shadow: 0 4px 0 #9ca3af; }
+        .cp-product-card.is-unavailable .cp-product-image { border-color: #9ca3af; filter: grayscale(.35); }
         .cp-product-image {
           width: 118px; height: 118px; overflow: hidden; border: 2px solid #ff7a14;
           border-radius: 11px; background: #fff8f2;
@@ -171,6 +173,10 @@ export default function ProductsPage() {
           box-shadow: 0 3px 0 #111827, 0 7px 14px rgba(17,24,39,.14);
         }
         .cp-product-buy:active { transform: translateY(1px); }
+        .cp-product-buy.is-unavailable {
+          border-color: #9ca3af; background: #e5e7eb; color: #6b7280;
+          box-shadow: 0 3px 0 #9ca3af; cursor: not-allowed;
+        }
         .cp-products-empty {
           display: flex; min-height: 260px; flex-direction: column; align-items: center;
           justify-content: center; gap: 8px; border: 2px solid #111827; border-radius: 14px;
@@ -249,17 +255,26 @@ export default function ProductsPage() {
               <p>Aucun produit disponible pour le moment</p>
             </div>
           ) : availableProducts.map((product, index) => (
-            <article className="cp-product-card" key={product.id} data-testid={`product-card-${product.id}`}>
+            <article className={`cp-product-card${product.isActive ? "" : " is-unavailable"}`} key={product.id} data-testid={`product-card-${product.id}`}>
               <div className="cp-product-image"><img src={product.imageUrl || PRODUCT_IMAGES[index % PRODUCT_IMAGES.length]} alt={product.name} /></div>
               <div className="cp-product-info">
-                <h3 className="cp-product-name">{product.name}</h3>
+                <h3 className="cp-product-name">
+                  {product.name}
+                  {!product.isActive && <span className="ml-2 text-xs font-bold uppercase text-gray-500">Indisponible</span>}
+                </h3>
                 <div className="cp-product-line"><span>Prix :</span><strong>{formatAmount(Number(product.price))}</strong></div>
                 <div className="cp-product-line revenue"><span>Revenu quotidien :</span><strong>{formatAmount(Number(product.dailyEarnings))}</strong></div>
                 <div className="cp-product-line revenue"><span>Revenu total :</span><strong>{formatAmount(Number(product.totalReturn))}</strong></div>
                 <div className="cp-product-line"><span>Cycle :</span><strong>{product.cycleDays} jours</strong></div>
               </div>
-              <button className="cp-product-buy" onClick={() => setSelectedProduct(product)} data-testid={`button-purchase-${product.id}`}>
-                Acheter <ChevronRight aria-hidden="true" size={16} />
+              <button
+                className={`cp-product-buy${product.isActive ? "" : " is-unavailable"}`}
+                onClick={() => product.isActive && setSelectedProduct(product)}
+                disabled={!product.isActive}
+                aria-disabled={!product.isActive}
+                data-testid={`button-purchase-${product.id}`}
+              >
+                {product.isActive ? <>Acheter <ChevronRight aria-hidden="true" size={16} /></> : "Indisponible"}
               </button>
             </article>
           ))}

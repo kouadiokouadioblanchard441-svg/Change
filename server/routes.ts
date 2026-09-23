@@ -522,7 +522,7 @@ export async function registerRoutes(
   // Products
   app.get("/api/products", requireAuth, async (req, res) => {
     try {
-      const products = await storage.getProducts();
+      const products = await storage.getProducts(true);
       const userProductsList = await storage.getUserProducts(req.session.userId!);
       const user = await storage.getUser(req.session.userId!);
       
@@ -584,6 +584,9 @@ export async function registerRoutes(
       
       if (!product || !product.isFree) {
         return res.status(400).json({ message: "Produit non valide" });
+      }
+      if (!product.isActive) {
+        return res.status(400).json({ message: "Produit indisponible" });
       }
 
       const user = await storage.getUser(req.session.userId!);
@@ -2855,7 +2858,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.get("/api/admin/products/all", requireAdmin, async (req, res) => {
     try {
-      const allProducts = await storage.getProducts();
+      const allProducts = await storage.getProducts(true);
       res.json(allProducts);
     } catch (error: any) {
       res.status(500).json({ message: error.message });

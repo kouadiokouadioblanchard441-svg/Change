@@ -45,7 +45,7 @@ export interface IStorage {
   getAllUsers(filter?: string, limit?: number, offset?: number): Promise<{ users: User[], total: number }>;
   
   // Products
-  getProducts(): Promise<Product[]>;
+  getProducts(includeInactive?: boolean): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   createProduct(data: Partial<Product>): Promise<Product>;
   updateProduct(id: number, data: Partial<Product>): Promise<Product>;
@@ -282,8 +282,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Products
-  async getProducts(): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.isActive, true)).orderBy(products.sortOrder);
+  async getProducts(includeInactive = false): Promise<Product[]> {
+    if (includeInactive) {
+      return await db.select().from(products).orderBy(products.sortOrder);
+    }
+    return await db.select().from(products)
+      .where(eq(products.isActive, true))
+      .orderBy(products.sortOrder);
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
@@ -335,6 +340,7 @@ export class DatabaseStorage implements IStorage {
   async purchaseProduct(userId: number, productId: number, assignedByAdmin = false): Promise<UserProduct> {
     const product = await this.getProduct(productId);
     if (!product) throw new Error("Produit non trouvé");
+    if (!product.isActive && !assignedByAdmin) throw new Error("Produit indisponible");
 
     const user = await this.getUser(userId);
     if (!user) throw new Error("Utilisateur non trouvé");
