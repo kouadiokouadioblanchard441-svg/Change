@@ -152,18 +152,222 @@ export default function MyProductsPage() {
            .products-reference .product-line { margin-top: 9px; font-size: 13px; }
            .products-reference .buy { right: 5px; width: 112px; height: 52px; font-size: 14px; }
         }
+         .products-reference {
+           min-height: 100dvh;
+           background: #fff8f2;
+           color: #111827;
+         }
+         .products-reference .products-screen {
+           max-width: 512px;
+           background: #fff8f2;
+         }
+         .products-reference .products-header {
+           display: flex;
+           min-height: 72px;
+           align-items: center;
+           justify-content: center;
+           gap: 9px;
+           padding: 12px 16px;
+           border-bottom: 2px solid #111827;
+           background: #fff8f2;
+         }
+         .products-reference .products-header img {
+           width: 38px;
+           height: 38px;
+           border: 2px solid #111827;
+           border-radius: 50%;
+           background: #fff;
+           object-fit: cover;
+         }
+         .products-reference .products-header strong {
+           color: #111827;
+           font-size: 20px;
+           font-weight: 900;
+         }
+         .products-reference .products-hero {
+           height: 238px;
+           min-height: 0;
+           border-bottom: 2px solid #111827;
+           background: #111827;
+         }
+         .products-reference .products-hero::after {
+           position: absolute;
+           z-index: 0;
+           inset: 0;
+           background: linear-gradient(180deg, rgba(17,24,39,.05), rgba(17,24,39,.62));
+           content: "";
+         }
+         .products-reference .products-hero img {
+           position: relative;
+           z-index: 0;
+           object-position: center;
+         }
+         .products-reference .hero-copy {
+           position: absolute;
+           z-index: 3;
+           top: 18px;
+           right: 18px;
+           left: 18px;
+           color: #fff;
+           text-align: center;
+           text-shadow: 0 2px 4px rgba(0,0,0,.35);
+         }
+         .products-reference .hero-copy strong {
+           display: block;
+           font-size: 27px;
+           font-weight: 900;
+           line-height: 1;
+         }
+         .products-reference .hero-copy span {
+           display: block;
+           margin-top: 5px;
+           font-size: 12px;
+           font-weight: 700;
+         }
+         .products-reference .stat-panel {
+           top: auto;
+           bottom: 14px;
+           height: 72px;
+           border: 2px solid #111827;
+           border-radius: 12px;
+           background: #fff;
+           color: #111827;
+           box-shadow: 0 3px 0 #111827;
+         }
+         .products-reference .stat-panel.active {
+           background: #ff7a14;
+         }
+         .products-reference .stat-panel.our,
+         .products-reference .stat-toggle.our { left: 16px; width: calc(50% - 22px); }
+         .products-reference .stat-panel.my,
+         .products-reference .stat-toggle.my { right: 16px; width: calc(50% - 22px); }
+         .products-reference .stat-toggle {
+           top: auto;
+           bottom: 14px;
+           height: 72px;
+         }
+         .products-reference .stat-value {
+           font-size: clamp(18px, 4.8vw, 25px);
+           font-weight: 900;
+         }
+         .products-reference .stat-label {
+           font-size: 12px;
+           font-weight: 800;
+         }
+         .products-reference .product-list {
+           padding: 18px 16px 28px;
+           background: #fff8f2;
+         }
+         .products-reference .product-card {
+           display: grid;
+           min-height: 236px;
+           grid-template-columns: minmax(0, 1fr) 124px;
+           grid-template-rows: minmax(0, 1fr) 53px;
+           gap: 12px;
+           margin-bottom: 16px;
+           padding: 14px;
+           overflow: hidden;
+           border: 2px solid #111827;
+           border-radius: 14px;
+           background: #fff;
+           box-shadow: 0 4px 0 #111827;
+         }
+         .products-reference .product-picture {
+           position: static;
+           grid-column: 2;
+           grid-row: 1;
+           width: 100%;
+           height: 116px;
+           border: 2px solid #ff7a14;
+           border-radius: 10px;
+         }
+         .products-reference .product-details,
+         .products-reference .my-card .product-details {
+           position: static;
+           grid-column: 1;
+           grid-row: 1 / span 2;
+           min-width: 0;
+           overflow: hidden;
+         }
+         .products-reference .product-name {
+           color: #e85d00;
+           font-size: 19px;
+           font-weight: 900;
+           white-space: normal;
+         }
+         .products-reference .product-price {
+           margin-top: 12px;
+           color: #111827;
+           font-size: 16px;
+           font-weight: 900;
+         }
+         .products-reference .product-line {
+           margin-top: 8px;
+           color: #4b5563;
+           font-size: 13px;
+         }
+         .products-reference .product-line strong {
+           display: block;
+           margin: 2px 0 0;
+           color: #111827;
+           font-weight: 800;
+         }
+         .products-reference .buy {
+           position: static;
+           grid-column: 2;
+           grid-row: 2;
+           width: 100%;
+           height: auto;
+           border: 2px solid #111827;
+           border-radius: 11px;
+           background: #ff7a14;
+           color: #111827;
+           font-size: 13px;
+           font-weight: 900;
+           box-shadow: 0 3px 0 #111827;
+         }
+         .products-reference .my-card {
+           min-height: 255px;
+           grid-template-rows: 1fr;
+         }
+         .products-reference .my-card .product-picture { grid-row: 1; }
+         .products-reference .empty {
+           min-height: 280px;
+           border: 2px solid #111827;
+           border-radius: 14px;
+           background: #fff;
+         }
+         .products-reference .empty img { width: 120px; height: 120px; }
+         @media (max-width: 360px) {
+           .products-reference .products-hero { height: 228px; }
+           .products-reference .product-list { padding-right: 12px; padding-left: 12px; }
+           .products-reference .product-card {
+             grid-template-columns: minmax(0, 1fr) 104px;
+             gap: 9px;
+             padding: 11px;
+           }
+           .products-reference .product-picture { height: 100px; }
+           .products-reference .product-name { font-size: 16px; }
+           .products-reference .product-line { font-size: 12px; }
+           .products-reference .buy { font-size: 11px; }
+         }
       `}</style>
 
       <div className="products-screen">
+        <header className="products-header">
+          <img src={chargepointLogo} alt="ChargePoint" />
+          <strong>Mes produits</strong>
+        </header>
         <section className="products-hero" aria-label="Produits">
-          <img src={productsReference} alt="" />
-          <div className="stat-panel our" aria-label={`${activeProductCount} produit${activeProductCount === 1 ? "" : "s"} actif${activeProductCount === 1 ? "" : "s"}`}>
+          <img src={chargepointPromo} alt="Solutions de recharge ChargePoint" />
+          <div className="hero-copy"><strong>ChargePoint</strong><span>Gérez vos produits et vos revenus</span></div>
+          <div className={`stat-panel our ${activeTab === "our" ? "active" : ""}`} aria-label={`${activeProductCount} produit${activeProductCount === 1 ? "" : "s"} actif${activeProductCount === 1 ? "" : "s"}`}>
             <span className="stat-value">{activeProductCount}</span>
-            <span className="stat-label">Mes produits</span>
+            <span className="stat-label">Catalogue</span>
           </div>
-          <div className="stat-panel my" aria-label={`Revenus : ${formatStatAmount(totalUserEarnings)}`}>
+          <div className={`stat-panel my ${activeTab === "my" ? "active" : ""}`} aria-label={`Revenus : ${formatStatAmount(totalUserEarnings)}`}>
             <span className="stat-value">{formatStatAmount(totalUserEarnings)}</span>
-            <span className="stat-label">Mes revenus</span>
+            <span className="stat-label">Produits achetés</span>
           </div>
           <button className="stat-toggle our" onClick={() => setActiveTab("our")} data-testid="tab-our-products" aria-label="Mes produits disponibles" />
           <button className="stat-toggle my" onClick={() => setActiveTab("my")} data-testid="tab-my-product" aria-label="Mes revenus et produits achetés" />
@@ -176,7 +380,7 @@ export default function MyProductsPage() {
           <div>
             {loadingProducts ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-[#00CC2C]" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#FF7A14]" />
               </div>
             ) : paidProducts.length === 0 ? (
               <div className="empty">
@@ -216,12 +420,12 @@ export default function MyProductsPage() {
             <div>
               {loadingUserProducts ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#00CC2C]" />
+                  <Loader2 className="w-8 h-8 animate-spin text-[#FF7A14]" />
                 </div>
               ) : allUserProducts.length === 0 ? (
                 <div className="empty">
                   <img src={emptyIllustration} alt="Vide" />
-                  <p>Aucun produit Stone by ton</p>
+                  <p>Aucun produit ChargePoint acheté</p>
                   <p className="text-sm text-gray-400">Achetez des produits pour commencer à gagner</p>
                 </div>
               ) : (
@@ -296,7 +500,7 @@ export default function MyProductsPage() {
                 onClick={() => purchaseMutation.mutate(confirmProduct.id)}
                 disabled={purchaseMutation.isPending}
                 className="flex-1 py-4 font-bold text-base text-white flex items-center justify-center gap-1.5 active:opacity-90 transition-opacity disabled:opacity-60"
-                style={{ background: "#00CC2C" }}
+                style={{ background: "#FF7A14", color: "#111827", border: "2px solid #111827" }}
                 data-testid="button-confirm-purchase"
               >
                 {purchaseMutation.isPending
