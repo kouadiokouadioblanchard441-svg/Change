@@ -45,6 +45,7 @@ type ActiveTab = "balance" | "deposits" | "withdrawals";
 
 const CARD_ORANGE = "#ff7a14";
 const CARD_DARK = "#111827";
+const CARD_SUCCESS = "#16a34a";
 const CARD_BACKGROUND = "#fff8f2";
 
 const makeRef = (prefix: "D" | "W", id: number, date: string) => {
@@ -93,7 +94,7 @@ const getStatusInfo = (status: string) => {
   switch (status) {
     case "completed":
     case "approved":
-      return { label: "Paiement réussi", color: CARD_DARK };
+      return { label: "Réussi", color: CARD_SUCCESS };
     case "rejected":
       return { label: "Paiement échoué", color: "#b42318" };
     case "processing":
@@ -501,7 +502,7 @@ export default function HistoryPage() {
                           </p>
                            <p className="history-card-label">{transaction.type === "deposit" ? "Dépôt" : transaction.description}</p>
                         </div>
-                           <Status label="Paiement réussi" color={CARD_DARK} />
+                           <Status label="Réussi" color={CARD_SUCCESS} />
                       </div>
                       <div className="history-divider" />
                       <Row label="Type :" value={isRegistration ? "Inscription" : getBalanceTypeLabel(transaction)} />
