@@ -157,7 +157,7 @@ export async function seed() {
       { name: "VIP 2", price: 8000, dailyEarnings: 1850, cycleDays: 200, totalReturn: 370000, sortOrder: 2 },
       { name: "VIP 3", price: 15000, dailyEarnings: 3550, cycleDays: 200, totalReturn: 710000, sortOrder: 3 },
       { name: "VIP 4", price: 30000, dailyEarnings: 5783, cycleDays: 200, totalReturn: 1156600, sortOrder: 4 },
-      { name: "VIP 5", price: 60000, dailyEarnings: 10000, cycleDays: 200, totalReturn: 2000000, sortOrder: 5 },
+      { name: "VIP 5", price: 60000, dailyEarnings: 9362, cycleDays: 200, totalReturn: 1872400, sortOrder: 5 },
       { name: "VIP 6", price: 100000, dailyEarnings: 10000, cycleDays: 200, totalReturn: 2000000, sortOrder: 6 },
       { name: "VIP 7", price: 250000, dailyEarnings: 30000, cycleDays: 200, totalReturn: 6000000, sortOrder: 7 },
     ];
@@ -222,12 +222,12 @@ export async function seed() {
         await db.update(products)
           .set({
             price: 60000,
-            dailyEarnings: 10000,
+            dailyEarnings: 9362,
             cycleDays: 200,
-            totalReturn: 2000000,
+            totalReturn: 1872400,
           })
           .where(eq(products.id, product.id));
-        console.log("VIP 5 updated: 60000 FCFA -> 10000 FCFA/day");
+        console.log("VIP 5 updated: 60000 FCFA -> 9362 FCFA/day");
         continue;
       }
 
