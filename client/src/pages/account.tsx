@@ -3,13 +3,13 @@ import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getCountryByCode } from "@/lib/countries";
+import { getCountryByCode, type ApiCountry } from "@/lib/countries";
 import {
   Loader2,
   Shield,
 } from "lucide-react";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_PATH } from "@/lib/admin-path";
@@ -39,6 +39,9 @@ export default function AccountPage() {
   const [, navigate] = useLocation();
   const [showPinModal, setShowPinModal] = useState(false);
   const [adminPin, setAdminPin] = useState("");
+  const { data: apiCountries } = useQuery<ApiCountry[]>({
+    queryKey: ["/api/countries"],
+  });
 
   const verifyPinMutation = useMutation({
     mutationFn: async (pin: string) => {
@@ -59,7 +62,7 @@ export default function AccountPage() {
 
   if (!user) return null;
 
-  const country = getCountryByCode(user.country);
+  const country = getCountryByCode(user.country, apiCountries);
   const currency = country?.currency || "XOF";
   const balance = Number.parseFloat(user.balance || "0");
   const earnings = Number.parseFloat(user.totalEarnings || "0");
