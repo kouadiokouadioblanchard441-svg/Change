@@ -13,6 +13,7 @@ interface TeamStats {
   level1Count: number;
   level2Count: number;
   level3Count: number;
+  demoMemberCount: number;
   totalDepositAmount: number;
   totalWithdrawalAmount: number;
   todayNewMembers: number;
@@ -114,6 +115,11 @@ export default function TeamPage() {
               </div>
             ))}
           </section>
+          {!!stats?.demoMemberCount && (
+            <p className="team-demo-note">
+              {stats.demoMemberCount} filleuls « Démo » sont inclus dans le nombre de membres. Les montants affichés ici restent les montants réels, sans les exemples fictifs.
+            </p>
+          )}
           {isError && <p className="team-error" role="alert">Impossible de charger les statistiques de l'équipe.</p>}
 
           <section className="team-levels" aria-label="Niveaux d'équipe">

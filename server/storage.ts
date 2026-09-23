@@ -11,11 +11,13 @@ import {
 import { db } from "./db";
 import { eq, and, desc, sql, gte, lte, or, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import { getDemoReferralPreview } from "./demo-referrals";
 
 type TeamStats = {
   level1Count: number;
   level2Count: number;
   level3Count: number;
+  demoMemberCount: number;
   totalCommission: number;
   level1Commission: number;
   level2Commission: number;
@@ -1031,6 +1033,7 @@ export class DatabaseStorage implements IStorage {
       level1Count: level1.length,
       level2Count: level2.length,
       level3Count: level3.length,
+      demoMemberCount: [...level1, ...level2, ...level3].filter(member => member.phone.startsWith("DEMO-")).length,
       totalCommission,
       level1Commission: await getCommissionByLevel(1),
       level2Commission: await getCommissionByLevel(2),
@@ -1113,6 +1116,7 @@ export class DatabaseStorage implements IStorage {
         fullName: user.fullName,
         phone: user.phone,
         isDemo: user.phone.startsWith("DEMO-"),
+        demoPreview: getDemoReferralPreview(user.phone),
         phonePrefix: prefixByCountry.get(user.country) || null,
         country: user.country,
         balance: user.balance,

@@ -134,6 +134,21 @@
   overflow-wrap: anywhere;
 }
 
+.team-details-stats small {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.team-details-demo-notice {
+  margin: 0;
+  padding: 11px 13px;
+  border-left: 4px solid #ff7a14;
+  background: #fff4e9;
+  color: #374151;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .team-details-members h2 {
   display: flex;
   min-height: 53px;

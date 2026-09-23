@@ -12,6 +12,12 @@ interface TeamMember {
   id: number;
   phone: string;
   isDemo: boolean;
+  demoPreview: {
+    maskedPhone: string;
+    vipLevel: number;
+    totalInvested: number;
+    totalReferralRevenue: number;
+  } | null;
   phonePrefix: string | null;
   country: string;
   totalReferralRevenue: number;
@@ -66,6 +72,8 @@ export default function TeamDetailsPage() {
     { num: 3 as const, name: "C", members: team?.level3 || [], totalInvested: team?.totalLevel3Invested || 0 },
   ];
   const selected = levels[activeLevel - 1];
+  const demoInvested = selected.members.reduce((total, member) => total + (member.demoPreview?.totalInvested || 0), 0);
+  const hasDemoMembers = selected.members.some(member => member.isDemo);
   const message = activeLevel === 1
     ? "Bonjour ! Je suis votre parrain sur ChargePoint. Je voulais m'assurer que tout se passe bien pour vous. Si vous avez des questions sur l'inscription, les produits ou l'utilisation de l'application, dites-moi ce qui n'est pas clair. Je prendrai le temps de vous expliquer et de vous accompagner étape par étape. N'hésitez pas à m'écrire ici !"
     : "Bonjour ! Je fais partie de votre équipe de parrainage sur ChargePoint. Je voulais m'assurer que tout se passe bien pour vous. Si vous avez des questions sur l'inscription, les produits ou l'utilisation de l'application, dites-moi ce qui n'est pas clair. Je prendrai le temps de vous expliquer et de vous accompagner étape par étape. N'hésitez pas à m'écrire ici !";
@@ -97,6 +105,12 @@ export default function TeamDetailsPage() {
             ))}
           </nav>
 
+          {hasDemoMembers && (
+            <p className="team-details-demo-notice">
+              Aperçu Démo : les achats, niveaux VIP et bonus ci-dessous sont des exemples fictifs. Ils ne modifient ni votre solde ni vos opérations réelles.
+            </p>
+          )}
+
           <section className="team-details-stats" aria-label={`Résumé de l'équipe ${selected.name}`}>
             <div>
               <span>Membres de l'équipe</span>
@@ -104,14 +118,15 @@ export default function TeamDetailsPage() {
             </div>
             <div>
               <span>Achats de l'équipe</span>
-              <strong data-testid="text-total-invested">{isLoading ? "…" : `${Number(selected.totalInvested).toLocaleString("fr-FR")} ${currency}`}</strong>
+              <strong data-testid="text-total-invested">{isLoading ? "…" : `${(Number(selected.totalInvested) + demoInvested).toLocaleString("fr-FR")} ${currency}`}</strong>
+              {demoInvested > 0 && <small>dont {demoInvested.toLocaleString("fr-FR")} {currency} fictifs</small>}
             </div>
           </section>
 
           <section className="team-details-members" aria-label={`Filleuls de l'équipe ${selected.name}`}>
             <h2>Filleuls · Équipe {selected.name}</h2>
             <p className="team-details-explanation">
-              Le revenu total correspond aux bonus de parrainage que vous avez reçus grâce à chaque membre.
+              Pour les vrais filleuls, le revenu total correspond aux bonus de parrainage reçus. Pour les filleuls « Démo », il s'agit d'un exemple.
             </p>
             <div className="team-details-columns" aria-hidden="true">
               <span>Utilisateur</span><span>Revenu total</span><span>VIP</span><span>Contact</span>
@@ -130,8 +145,11 @@ export default function TeamDetailsPage() {
                 <span>Invitez des proches pour développer votre équipe.</span>
               </div>
             ) : selected.members.map(member => {
-              const phone = maskPhone(member.phone, member.phonePrefix);
+              const phone = member.demoPreview?.maskedPhone || maskPhone(member.phone, member.phonePrefix);
               const number = member.isDemo ? null : whatsAppNumber(member.phone, member.phonePrefix);
+              const whatsappHref = member.isDemo
+                ? `https://wa.me/?text=${encodeURIComponent(message)}`
+                : number ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : null;
               return (
                 <div className="team-details-row" key={member.id} data-testid={`team-member-${member.id}`}>
                   <strong data-testid={`text-member-phone-${member.id}`}>
@@ -139,19 +157,20 @@ export default function TeamDetailsPage() {
                     {member.isDemo && <small className="team-details-demo">Démo</small>}
                   </strong>
                   <span className="team-details-revenue" data-testid={`text-member-revenue-${member.id}`}>
-                    {Number(member.totalReferralRevenue).toLocaleString("fr-FR")}
+                    {Number(member.demoPreview?.totalReferralRevenue ?? member.totalReferralRevenue).toLocaleString("fr-FR")}
                     <small>{currency}</small>
                   </span>
                   <span className="team-details-vip" data-testid={`text-member-vip-${member.id}`}>
-                    {member.vipLevel ? `VIP ${member.vipLevel}` : "—"}
+                    {(member.demoPreview?.vipLevel ?? member.vipLevel) ? `VIP ${member.demoPreview?.vipLevel ?? member.vipLevel}` : "—"}
                   </span>
-                  {number ? (
+                  {whatsappHref ? (
                     <a
                       className="team-details-whatsapp"
-                      href={`https://wa.me/${number}?text=${encodeURIComponent(message)}`}
+                      href={whatsappHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={`Écrire à ${phone} sur WhatsApp`}
+                      aria-label={member.isDemo ? "Aperçu du message WhatsApp sans destinataire" : `Écrire à ${phone} sur WhatsApp`}
+                      title={member.isDemo ? "Démo : message sans destinataire" : undefined}
                       data-testid={`whatsapp-member-${member.id}`}
                     >
                       <img src={whatsappIcon} alt="" />
