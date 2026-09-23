@@ -205,7 +205,9 @@ function Router() {
       </Route>
       <Route path="/team">
         <ProtectedRoute>
-          <TeamPage />
+          <AppLayout>
+            <TeamPage />
+          </AppLayout>
         </ProtectedRoute>
       </Route>
       <Route path="/my-products">

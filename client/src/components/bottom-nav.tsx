@@ -13,12 +13,13 @@ const navItems = [
 
 export default function BottomNav() {
   const [location, navigate] = useLocation();
-  const isDashboard = location === "/";
+  const isTeam = location === "/team";
 
   return (
     <nav
       className="bottom-nav fixed bottom-0 left-0 right-0 z-50 border-t bg-white shadow-[0_-1px_2px_rgba(0,0,0,.05)]"
-      style={{ borderColor: "rgba(0, 204, 44, 0.2)" }}
+      style={{ borderColor: isTeam ? "rgba(255, 122, 20, 0.3)" : "rgba(0, 204, 44, 0.2)" }}
+      aria-label="Navigation principale"
     >
       <div className="mx-auto flex h-[59px] max-w-[500px] items-center justify-around pb-1">
         {navItems.map((item) => {
@@ -35,19 +36,20 @@ export default function BottomNav() {
               }}
               className="flex h-full flex-1 flex-col items-center justify-center gap-[2px]"
               data-testid={`nav-${item.label.toLowerCase()}`}
+              aria-current={isActive ? "page" : undefined}
             >
               <span
                 aria-hidden="true"
                 className="bottom-nav-icon h-[32px] w-[32px]"
                 style={{
-                  backgroundColor: isActive ? "#00cc2c" : "#8f969b",
+                  backgroundColor: isActive ? (isTeam ? "#ff7a14" : "#00cc2c") : "#8f969b",
                   WebkitMaskImage: `url("${item.icon}")`,
                   maskImage: `url("${item.icon}")`,
                 }}
               />
               <span
                 className="text-[11px] font-medium leading-none"
-                style={{ color: isActive ? "#00cc2c" : "#55565a" }}
+                style={{ color: isActive ? (isTeam ? "#9e4100" : "#00cc2c") : "#55565a" }}
               >
                 {item.label}
               </span>
