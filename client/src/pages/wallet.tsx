@@ -20,6 +20,400 @@ const walletSchema = z.object({
 
 type WalletForm = z.infer<typeof walletSchema>;
 
+const walletStyles = `
+  .wallet-page {
+    min-height: 100%;
+    background: #ffffff;
+    color: #171717;
+    font-family: Inter, Arial, sans-serif;
+  }
+  .wallet-shell {
+    width: 100%;
+    max-width: 540px;
+    min-height: 100%;
+    margin: 0 auto;
+    background: #ffffff;
+  }
+  .wallet-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid #f3e6dc;
+    background: #ffffff;
+  }
+  .wallet-back,
+  .wallet-top-action {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    place-items: center;
+    border: 1px solid #ffd7bc;
+    border-radius: 14px;
+    background: #fff8f2;
+    color: #c65100;
+    cursor: pointer;
+  }
+  .wallet-top-action {
+    background: #ff7a14;
+    border-color: #ff7a14;
+    color: #ffffff;
+  }
+  .wallet-heading {
+    min-width: 0;
+    flex: 1;
+  }
+  .wallet-eyebrow {
+    display: block;
+    margin-bottom: 2px;
+    color: #c65100;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+  .wallet-title {
+    margin: 0;
+    color: #171717;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+  .wallet-content {
+    padding: 16px 16px 116px;
+  }
+  .wallet-hero {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+    border: 1px solid #ffe0ca;
+    border-radius: 20px;
+    background: #fff8f2;
+  }
+  .wallet-hero-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    place-items: center;
+    border-radius: 15px;
+    background: #ff7a14;
+    color: #ffffff;
+  }
+  .wallet-hero h2 {
+    margin: 0 0 4px;
+    color: #171717;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .wallet-hero p {
+    margin: 0;
+    color: #6b625d;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .wallet-section {
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid #eee4dd;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(42, 25, 14, .04);
+  }
+  .wallet-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 16px 12px;
+    border-bottom: 1px solid #f2ebe5;
+  }
+  .wallet-section-title {
+    margin: 0;
+    color: #171717;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .wallet-section-caption {
+    margin: 3px 0 0;
+    color: #857b74;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .wallet-step {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    place-items: center;
+    border-radius: 9px;
+    background: #fff0e5;
+    color: #c65100;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .wallet-selector {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+    border: 0;
+    background: #ffffff;
+    color: #171717;
+    text-align: left;
+    cursor: pointer;
+  }
+  .wallet-selector:hover,
+  .wallet-selector:focus-visible {
+    background: #fffaf6;
+    outline: none;
+  }
+  .wallet-selector-copy {
+    min-width: 0;
+    flex: 1;
+  }
+  .wallet-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #857b74;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+  }
+  .wallet-value {
+    display: block;
+    overflow: hidden;
+    color: #171717;
+    font-size: 14px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wallet-value.is-empty {
+    color: #a69c95;
+    font-weight: 500;
+  }
+  .wallet-selector svg {
+    flex: none;
+    color: #c65100;
+  }
+  .wallet-field {
+    padding: 15px 16px 16px;
+  }
+  .wallet-field + .wallet-field {
+    border-top: 1px solid #f2ebe5;
+  }
+  .wallet-input {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid #d9cec5;
+    padding: 3px 0 9px;
+    outline: none;
+    background: transparent;
+    color: #171717;
+    font-size: 15px;
+  }
+  .wallet-input:focus {
+    border-color: #ff7a14;
+    box-shadow: 0 1px 0 #ff7a14;
+  }
+  .wallet-input::placeholder {
+    color: #b8aea7;
+  }
+  .wallet-error {
+    margin: 6px 0 0;
+    color: #c03900;
+    font-size: 12px;
+  }
+  .wallet-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 14px 2px 0;
+    color: #756b64;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .wallet-note svg {
+    flex: none;
+    margin-top: 1px;
+    color: #ff7a14;
+  }
+  .wallet-list-section {
+    margin-bottom: 0;
+  }
+  .wallet-list {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+  }
+  .wallet-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px;
+    border: 1px solid #eee4dd;
+    border-radius: 16px;
+    background: #ffffff;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  }
+  .wallet-card.is-selectable {
+    cursor: pointer;
+  }
+  .wallet-card.is-selectable:active {
+    transform: scale(.99);
+  }
+  .wallet-card.is-default {
+    border-color: #ffb77e;
+    box-shadow: 0 4px 12px rgba(255, 122, 20, .10);
+  }
+  .wallet-card-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    place-items: center;
+    border-radius: 14px;
+    background: #fff0e5;
+    color: #c65100;
+  }
+  .wallet-card-copy {
+    min-width: 0;
+    flex: 1;
+  }
+  .wallet-card-method {
+    margin: 0;
+    color: #171717;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .wallet-card-name,
+  .wallet-card-number {
+    margin: 3px 0 0;
+    overflow: hidden;
+    color: #756b64;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wallet-card-number {
+    color: #9a8f87;
+  }
+  .wallet-default {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 7px;
+    color: #c65100;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .wallet-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: none;
+  }
+  .wallet-icon-action {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid #f0e3da;
+    border-radius: 11px;
+    background: #ffffff;
+    color: #c65100;
+    cursor: pointer;
+  }
+  .wallet-icon-action:hover,
+  .wallet-icon-action:focus-visible {
+    border-color: #ffb77e;
+    background: #fff8f2;
+    outline: none;
+  }
+  .wallet-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 16px 24px;
+    text-align: center;
+  }
+  .wallet-empty img {
+    width: 136px;
+    height: 136px;
+    object-fit: contain;
+    opacity: .88;
+  }
+  .wallet-empty p {
+    margin: 6px 0 0;
+    color: #6b625d;
+    font-size: 13px;
+  }
+  .wallet-empty p + p {
+    margin-top: 4px;
+    color: #9a8f87;
+    font-size: 12px;
+  }
+  .wallet-footer {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    padding: 12px 16px 20px;
+    border-top: 1px solid #f0e5dc;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 -6px 18px rgba(42, 25, 14, .06);
+  }
+  .wallet-footer-inner {
+    width: 100%;
+    max-width: 508px;
+    margin: 0 auto;
+  }
+  .wallet-primary {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 15px;
+    background: #ff7a14;
+    box-shadow: 0 7px 14px rgba(255, 122, 20, .22);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .wallet-primary:hover,
+  .wallet-primary:focus-visible {
+    background: #e96808;
+    outline: 3px solid rgba(255, 122, 20, .20);
+    outline-offset: 2px;
+  }
+  .wallet-primary:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+  }
+  @media (min-width: 700px) {
+    .wallet-footer {
+      position: static;
+      padding: 0 16px 24px;
+      border-top: 0;
+      background: #ffffff;
+      box-shadow: none;
+    }
+  }
+`;
+
 export default function WalletPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -127,107 +521,145 @@ export default function WalletPage() {
   const paymentMethods = getPaymentMethodsForCountry(user.country, apiCountries);
   const backLink = selectMode ? "/withdrawal" : "/account";
 
-  /* ─── ADD FORM VIEW ─── */
   if (showForm) {
     return (
-      <div className="flex flex-col min-h-full bg-gray-50">
-
-        {/* Header */}
-        <div
-          className="flex items-center px-4 py-4"
-           style={{ background: "linear-gradient(112deg, #55c9e5 0%, #3174d1 100%)" }}
-        >
+      <div className="wallet-page">
+        <style>{walletStyles}</style>
+        <div className="wallet-shell">
+          <header className="wallet-topbar">
           <button
             onClick={() => { setShowForm(false); form.reset(); setSelectedMethod(""); }}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-white/20"
+            className="wallet-back"
             data-testid="button-back-form"
+            aria-label="Retour"
           >
-            <ChevronLeft className="w-5 h-5 text-white" />
+            <ChevronLeft size={19} />
           </button>
-          <h1 className="flex-1 text-center text-white font-bold text-base mr-9">
-            Ajouter un compte bancaire
-          </h1>
-        </div>
+          <div className="wallet-heading">
+            <span className="wallet-eyebrow">Compte de retrait</span>
+            <h1 className="wallet-title">Lier une carte bancaire</h1>
+          </div>
+          <div className="w-10" aria-hidden="true" />
+        </header>
 
-        {/* Form sections */}
-        <div className="flex-1 bg-white mt-3 mx-4 rounded-2xl shadow-sm overflow-hidden">
-
-          {/* Bank selector */}
-          <button
-            type="button"
-            onClick={() => setShowBankSheet(true)}
-            className="w-full px-5 py-4 flex items-center justify-between border-b border-gray-100"
-            data-testid="button-select-bank"
-          >
-            <div className="text-left">
-              <p className="text-xs text-gray-400 mb-0.5">Banque</p>
-              <p className={`text-sm font-medium ${selectedMethod ? "text-gray-800" : "text-gray-400"}`}>
-                {selectedMethod || "Sélectionner une banque"}
-              </p>
+        <main className="wallet-content">
+          <section className="wallet-hero">
+            <div className="wallet-hero-icon"><Shield size={21} /></div>
+            <div>
+              <h2>Ajoutez un moyen de retrait</h2>
+              <p>Renseignez les informations exactes du compte qui recevra vos retraits.</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          </button>
+          </section>
 
-          {/* Account name */}
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-xs text-gray-400 mb-1">Titulaire</p>
-            <input
-              {...form.register("accountName")}
-              placeholder="Nom du titulaire"
-              className="w-full text-sm text-gray-800 bg-transparent outline-none placeholder:text-gray-300"
-              data-testid="input-wallet-name"
-            />
-            {form.formState.errors.accountName && (
-              <p className="text-xs text-[#FF4500] mt-1">{form.formState.errors.accountName.message}</p>
-            )}
-          </div>
-
-          {/* Account number */}
-          <div className="px-5 py-4">
-            <p className="text-xs text-gray-400 mb-1">Numéro de compte</p>
-            <input
-              {...form.register("accountNumber")}
-              type="tel"
-              placeholder="Numéro de compte"
-              className="w-full text-sm text-gray-800 bg-transparent outline-none placeholder:text-gray-300"
-              data-testid="input-wallet-number"
-            />
-            {form.formState.errors.accountNumber && (
-              <p className="text-xs text-[#FF4500] mt-1">{form.formState.errors.accountNumber.message}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Confirm button */}
-        <div className="px-4 py-6 mt-auto">
-          <button
-            onClick={handleSubmit}
-            disabled={addMutation.isPending}
-            className="w-full py-4 rounded-full text-white font-bold text-base disabled:opacity-40 shadow-md"
-             style={{ background: "linear-gradient(112deg, #55c9e5 0%, #3174d1 100%)" }}
-            data-testid="button-confirm-wallet"
-          >
-            {addMutation.isPending ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Enregistrement...
+          <section className="wallet-section">
+            <div className="wallet-section-header">
+              <div>
+                <h2 className="wallet-section-title">Moyen de paiement</h2>
+                <p className="wallet-section-caption">Choisissez votre opérateur</p>
+              </div>
+              <span className="wallet-step">1</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowBankSheet(true)}
+              className="wallet-selector"
+              data-testid="button-select-bank"
+            >
+              <span className="wallet-selector-copy">
+                <span className="wallet-label">Opérateur</span>
+                <span className={`wallet-value${selectedMethod ? "" : " is-empty"}`}>
+                  {selectedMethod || "Sélectionner un opérateur"}
+                </span>
               </span>
-            ) : (
-              "Confirmer"
-            )}
-          </button>
-        </div>
+              <ChevronRight size={18} />
+            </button>
+          </section>
 
-        {/* Bank bottom sheet */}
+          <section className="wallet-section">
+            <div className="wallet-section-header">
+              <div>
+                <h2 className="wallet-section-title">Titulaire du compte</h2>
+                <p className="wallet-section-caption">Comme indiqué sur votre compte</p>
+              </div>
+              <span className="wallet-step">2</span>
+            </div>
+            <div className="wallet-field">
+              <label className="wallet-label" htmlFor="wallet-account-name">Nom complet</label>
+              <input
+                id="wallet-account-name"
+                {...form.register("accountName")}
+                placeholder="Ex. Kouadio Blanche"
+                className="wallet-input"
+                data-testid="input-wallet-name"
+              />
+              {form.formState.errors.accountName && (
+                <p className="wallet-error">{form.formState.errors.accountName.message}</p>
+              )}
+            </div>
+          </section>
+
+          <section className="wallet-section">
+            <div className="wallet-section-header">
+              <div>
+                <h2 className="wallet-section-title">Numéro du compte</h2>
+                <p className="wallet-section-caption">Le numéro associé à l’opérateur choisi</p>
+              </div>
+              <span className="wallet-step">3</span>
+            </div>
+            <div className="wallet-field">
+              <label className="wallet-label" htmlFor="wallet-account-number">Numéro de téléphone ou de compte</label>
+              <input
+                id="wallet-account-number"
+                {...form.register("accountNumber")}
+                type="tel"
+                placeholder="Ex. 07 00 00 00 00"
+                className="wallet-input"
+                data-testid="input-wallet-number"
+              />
+              {form.formState.errors.accountNumber && (
+                <p className="wallet-error">{form.formState.errors.accountNumber.message}</p>
+              )}
+            </div>
+          </section>
+
+          <p className="wallet-note">
+            <Shield size={15} />
+            Vérifiez chaque information avant de confirmer. Elle sera utilisée pour traiter vos retraits.
+          </p>
+        </main>
+
+        <footer className="wallet-footer">
+          <div className="wallet-footer-inner">
+            <button
+              onClick={handleSubmit}
+              disabled={addMutation.isPending}
+              className="wallet-primary"
+              data-testid="button-confirm-wallet"
+            >
+              {addMutation.isPending ? (
+                <>
+                  <Loader2 size={17} className="animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                "Enregistrer ce compte"
+              )}
+            </button>
+          </div>
+        </footer>
+
         {showBankSheet && (
           <div className="country-picker-overlay" onClick={() => { setBankSearch(""); setShowBankSheet(false); }}>
             <section
               className="country-picker"
               role="dialog"
               aria-modal="true"
-              aria-label="Choisir un opérateur"
+              aria-label="Choisir un opérateur de paiement"
               onClick={(e) => e.stopPropagation()}
             >
+              <div className="country-picker-header">
+                <h2>Choisir un opérateur</h2>
+              </div>
               <button
                 className="country-picker-close"
                 onClick={() => { setBankSearch(""); setShowBankSheet(false); }}
@@ -241,7 +673,7 @@ export default function WalletPage() {
                   autoFocus
                   value={bankSearch}
                   onChange={(e) => setBankSearch(e.target.value)}
-                  placeholder="Search"
+                  placeholder="Rechercher"
                   aria-label="Rechercher un opérateur"
                 />
               </div>
@@ -269,121 +701,142 @@ export default function WalletPage() {
           </div>
         )}
       </div>
+      </div>
     );
   }
 
-  /* ─── LIST VIEW ─── */
   return (
-    <div className="flex flex-col min-h-full bg-gray-50">
-
-      {/* Header */}
-      <div
-        className="flex items-center px-4 py-4"
-        style={{ background: "linear-gradient(112deg, #55c9e5 0%, #3174d1 100%)" }}
-      >
-        <Link href={backLink}>
-          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-white/20" data-testid="button-back">
-            <ChevronLeft className="w-5 h-5 text-white" />
-          </button>
-        </Link>
-        <h1 className="flex-1 text-center text-white font-bold text-base">
-          {selectMode ? "Sélectionner un compte" : "Liste des comptes bancaires"}
-        </h1>
-        {!selectMode ? (
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-white/20"
-            data-testid="button-add-wallet-icon"
-          >
-            <Plus className="w-5 h-5 text-white" />
-          </button>
-        ) : (
-          <div className="w-9" />
-        )}
-      </div>
-
-      {/* Wallet list */}
-      <div className="flex-1 px-4 pt-4 pb-28 space-y-3">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[#3174d1]" />
+    <div className="wallet-page">
+      <style>{walletStyles}</style>
+      <div className="wallet-shell">
+        <header className="wallet-topbar">
+          <Link href={backLink}>
+            <button className="wallet-back" data-testid="button-back" aria-label="Retour">
+              <ChevronLeft size={19} />
+            </button>
+          </Link>
+          <div className="wallet-heading">
+            <span className="wallet-eyebrow">{selectMode ? "Retrait" : "Sécurité du compte"}</span>
+            <h1 className="wallet-title">
+              {selectMode ? "Sélectionner un compte" : "Mes cartes bancaires"}
+            </h1>
           </div>
-        ) : wallets && wallets.length > 0 ? (
-          wallets.map((wallet) => (
-            <div
-              key={wallet.id}
-              onClick={() => selectMode && handleSelectWallet(wallet)}
-              className={`bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 ${
-                selectMode ? "cursor-pointer active:opacity-80" : ""
-              } ${wallet.isDefault ? "border-l-4 border-[#3174d1]" : ""}`}
-              data-testid={`wallet-card-${wallet.id}`}
+          {!selectMode ? (
+            <button
+              onClick={() => setShowForm(true)}
+              className="wallet-top-action"
+              data-testid="button-add-wallet-icon"
+              aria-label="Ajouter une carte"
             >
-              {/* Icon */}
-              <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                <CreditCard className="w-5 h-5 text-gray-500" />
-              </div>
+              <Plus size={19} />
+            </button>
+          ) : (
+            <div className="w-10" aria-hidden="true" />
+          )}
+        </header>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-800 text-sm">{wallet.paymentMethod}</p>
-                <p className="text-xs text-gray-500 mt-0.5 truncate">{wallet.accountName}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{wallet.accountNumber}</p>
-                {wallet.isDefault && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <Shield className="w-3 h-3 text-[#3174d1]" />
-                    <span className="text-xs text-[#3174d1] font-medium">Par défaut</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              {!selectMode && (
-                <div className="flex items-center gap-1">
-                  {!wallet.isDefault && (
-                    <button
-                      onClick={() => setDefaultMutation.mutate(wallet.id)}
-                      disabled={setDefaultMutation.isPending}
-                      className="p-2"
-                      data-testid={`button-set-default-${wallet.id}`}
-                    >
-                      <Check className="w-4 h-4 text-green-500" />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteMutation.mutate(wallet.id)}
-                    disabled={deleteMutation.isPending}
-                    className="p-2"
-                    data-testid={`button-delete-wallet-${wallet.id}`}
-                  >
-                    <Trash2 className="w-4 h-4 text-[#3174d1]" />
-                  </button>
-                </div>
-              )}
-
-              {selectMode && (
-                <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-              )}
+        <main className="wallet-content">
+          <section className="wallet-hero">
+            <div className="wallet-hero-icon"><CreditCard size={21} /></div>
+            <div>
+              <h2>{selectMode ? "Choisissez le compte à utiliser" : "Retraits simples et sécurisés"}</h2>
+              <p>
+                {selectMode
+                  ? "Sélectionnez un compte enregistré pour continuer votre retrait."
+                  : "Ajoutez et gérez les comptes utilisés pour recevoir vos retraits."}
+              </p>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-10 flex flex-col items-center gap-2">
-            <img src={emptyIllustration} alt="Vide" className="w-40 h-40 object-contain opacity-90" />
-            <p className="text-gray-500 text-sm">Aucun compte bancaire enregistré</p>
-            <p className="text-gray-400 text-xs mt-1">Ajoutez un compte pour effectuer des retraits</p>
-          </div>
-        )}
-      </div>
+          </section>
 
-      {/* Bottom add button */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 bg-gray-50">
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full py-4 rounded-full text-white font-bold text-base shadow-md"
-           style={{ background: "linear-gradient(112deg, #55c9e5 0%, #3174d1 100%)" }}
-          data-testid="button-add-wallet"
-        >
-          Ajouter une carte
-        </button>
+          <section className="wallet-section wallet-list-section">
+            <div className="wallet-section-header">
+              <div>
+                <h2 className="wallet-section-title">Comptes enregistrés</h2>
+                <p className="wallet-section-caption">
+                  {wallets?.length ? `${wallets.length} compte${wallets.length > 1 ? "s" : ""} disponible${wallets.length > 1 ? "s" : ""}` : "Aucun compte ajouté"}
+                </p>
+              </div>
+              <span className="wallet-step"><CreditCard size={13} /></span>
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-[#FF7A14]" />
+              </div>
+            ) : wallets && wallets.length > 0 ? (
+              <div className="wallet-list">
+                {wallets.map((wallet) => (
+                  <article
+                    key={wallet.id}
+                    onClick={() => selectMode && handleSelectWallet(wallet)}
+                    className={`wallet-card${selectMode ? " is-selectable" : ""}${wallet.isDefault ? " is-default" : ""}`}
+                    data-testid={`wallet-card-${wallet.id}`}
+                  >
+                    <div className="wallet-card-icon">
+                      <CreditCard size={20} />
+                    </div>
+                    <div className="wallet-card-copy">
+                      <p className="wallet-card-method">{wallet.paymentMethod}</p>
+                      <p className="wallet-card-name">{wallet.accountName}</p>
+                      <p className="wallet-card-number">{wallet.accountNumber}</p>
+                      {wallet.isDefault && (
+                        <span className="wallet-default">
+                          <Shield size={12} /> Compte par défaut
+                        </span>
+                      )}
+                    </div>
+
+                    {!selectMode && (
+                      <div className="wallet-card-actions">
+                        {!wallet.isDefault && (
+                          <button
+                            onClick={() => setDefaultMutation.mutate(wallet.id)}
+                            disabled={setDefaultMutation.isPending}
+                            className="wallet-icon-action"
+                            data-testid={`button-set-default-${wallet.id}`}
+                            aria-label="Définir comme compte par défaut"
+                          >
+                            <Check size={16} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteMutation.mutate(wallet.id)}
+                          disabled={deleteMutation.isPending}
+                          className="wallet-icon-action"
+                          data-testid={`button-delete-wallet-${wallet.id}`}
+                          aria-label="Supprimer ce compte"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+
+                    {selectMode && <ChevronRight size={18} className="text-[#c65100] flex-shrink-0" />}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="wallet-empty">
+                <img src={emptyIllustration} alt="" />
+                <p>Aucun compte bancaire enregistré</p>
+                <p>Ajoutez un compte pour effectuer vos retraits.</p>
+              </div>
+            )}
+          </section>
+        </main>
+
+        <footer className="wallet-footer">
+          <div className="wallet-footer-inner">
+            <button
+              onClick={() => setShowForm(true)}
+              className="wallet-primary"
+              data-testid="button-add-wallet"
+            >
+              <Plus size={18} />
+              Ajouter un compte
+            </button>
+          </div>
+        </footer>
       </div>
     </div>
   );
