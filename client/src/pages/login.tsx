@@ -104,7 +104,7 @@ export default function LoginPage() {
         .auth-reference .auth-submit:active { transform: scale(.98); background: #f5fff6; }
         .auth-reference .auth-submit:disabled { opacity: .68; }
         .auth-reference .auth-error { margin: -13px 0 -7px 4px; color: #fff; font-size: 12px; }
-         .auth-reference .auth-illustration { display: block; width: 100%; max-width: 600px; height: auto; margin: clamp(28px, 7vh, 56px) auto 0; object-fit: contain; }
+         .auth-reference .auth-illustration { display: block; width: 100%; max-width: 600px; height: auto; margin: 4px auto 28px; object-fit: contain; }
         @media (max-width: 370px) {
           .auth-login .auth-panel { padding-right: 22px; padding-left: 22px; }
           .auth-reference .auth-field { height: 64px; }
@@ -118,6 +118,7 @@ export default function LoginPage() {
       <div className="auth-screen">
         <section className="auth-panel">
           <h1 className="auth-brand">Stone by ton</h1>
+          <img className="auth-illustration" src={loginIllustration} alt="Terminaux de paiement TON" />
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <input type="hidden" {...form.register("country")} />
 
@@ -144,7 +145,6 @@ export default function LoginPage() {
               {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Se connecter"}
             </button>
           </form>
-          <img className="auth-illustration" src={loginIllustration} alt="Terminaux de paiement TON" />
         </section>
       </div>
 
