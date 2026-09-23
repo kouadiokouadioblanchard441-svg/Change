@@ -691,6 +691,7 @@ export default function WalletPage() {
     .filter((country) => country.isActive)
     .sort((first, second) => first.name.localeCompare(second.name, "fr"));
   const backLink = selectMode ? "/withdrawal" : "/account";
+  const showWalletOverview = selectMode || wallets === undefined || wallets.length > 0;
 
   if (showForm) {
     return (
@@ -905,7 +906,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="wallet-page">
+    <div className="wallet-page wallet-scene-page">
       <style>{walletStyles}</style>
       <div className="wallet-shell">
         <header className="wallet-topbar">
@@ -935,93 +936,97 @@ export default function WalletPage() {
         </header>
 
         <main className="wallet-content">
-          <section className="wallet-hero">
-            <div className="wallet-hero-icon"><CreditCard size={21} /></div>
-            <div>
-              <h2>{selectMode ? "Choisissez le compte à utiliser" : "Retraits simples et sécurisés"}</h2>
-              <p>
-                {selectMode
-                  ? "Sélectionnez un compte enregistré pour continuer votre retrait."
-                  : "Ajoutez et gérez les comptes utilisés pour recevoir vos retraits."}
-              </p>
-            </div>
-          </section>
+          {showWalletOverview && (
+            <>
+              <section className="wallet-hero">
+                <div className="wallet-hero-icon"><CreditCard size={21} /></div>
+                <div>
+                  <h2>{selectMode ? "Choisissez le compte à utiliser" : "Retraits simples et sécurisés"}</h2>
+                  <p>
+                    {selectMode
+                      ? "Sélectionnez un compte enregistré pour continuer votre retrait."
+                      : "Ajoutez et gérez les comptes utilisés pour recevoir vos retraits."}
+                  </p>
+                </div>
+              </section>
 
-          <section className="wallet-section wallet-list-section">
-            <div className="wallet-section-header">
-              <div>
-                <h2 className="wallet-section-title">Comptes enregistrés</h2>
-                <p className="wallet-section-caption">
-                  {wallets?.length ? `${wallets.length} compte${wallets.length > 1 ? "s" : ""} disponible${wallets.length > 1 ? "s" : ""}` : "Aucun compte ajouté"}
-                </p>
-              </div>
-              <span className="wallet-step"><CreditCard size={13} /></span>
-            </div>
+              <section className="wallet-section wallet-list-section">
+                <div className="wallet-section-header">
+                  <div>
+                    <h2 className="wallet-section-title">Comptes enregistrés</h2>
+                    <p className="wallet-section-caption">
+                      {wallets?.length ? `${wallets.length} compte${wallets.length > 1 ? "s" : ""} disponible${wallets.length > 1 ? "s" : ""}` : "Aucun compte ajouté"}
+                    </p>
+                  </div>
+                  <span className="wallet-step"><CreditCard size={13} /></span>
+                </div>
 
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-[#FF7A14]" />
-              </div>
-            ) : wallets && wallets.length > 0 ? (
-              <div className="wallet-list">
-                {wallets.map((wallet) => (
-                  <article
-                    key={wallet.id}
-                    onClick={() => selectMode && handleSelectWallet(wallet)}
-                    className={`wallet-card${selectMode ? " is-selectable" : ""}${wallet.isDefault ? " is-default" : ""}`}
-                    data-testid={`wallet-card-${wallet.id}`}
-                  >
-                    <div className="wallet-card-icon">
-                      <CreditCard size={20} />
-                    </div>
-                    <div className="wallet-card-copy">
-                      <p className="wallet-card-method">{wallet.paymentMethod}</p>
-                      <p className="wallet-card-name">{wallet.accountName}</p>
-                      <p className="wallet-card-number">{wallet.accountNumber}</p>
-                      {wallet.isDefault && (
-                        <span className="wallet-default">
-                          <Shield size={12} /> Compte par défaut
-                        </span>
-                      )}
-                    </div>
+                {isLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#FF7A14]" />
+                  </div>
+                ) : wallets && wallets.length > 0 ? (
+                  <div className="wallet-list">
+                    {wallets.map((wallet) => (
+                      <article
+                        key={wallet.id}
+                        onClick={() => selectMode && handleSelectWallet(wallet)}
+                        className={`wallet-card${selectMode ? " is-selectable" : ""}${wallet.isDefault ? " is-default" : ""}`}
+                        data-testid={`wallet-card-${wallet.id}`}
+                      >
+                        <div className="wallet-card-icon">
+                          <CreditCard size={20} />
+                        </div>
+                        <div className="wallet-card-copy">
+                          <p className="wallet-card-method">{wallet.paymentMethod}</p>
+                          <p className="wallet-card-name">{wallet.accountName}</p>
+                          <p className="wallet-card-number">{wallet.accountNumber}</p>
+                          {wallet.isDefault && (
+                            <span className="wallet-default">
+                              <Shield size={12} /> Compte par défaut
+                            </span>
+                          )}
+                        </div>
 
-                    {!selectMode && (
-                      <div className="wallet-card-actions">
-                        {!wallet.isDefault && (
-                          <button
-                            onClick={() => setDefaultMutation.mutate(wallet.id)}
-                            disabled={setDefaultMutation.isPending}
-                            className="wallet-icon-action"
-                            data-testid={`button-set-default-${wallet.id}`}
-                            aria-label="Définir comme compte par défaut"
-                          >
-                            <Check size={16} />
-                          </button>
+                        {!selectMode && (
+                          <div className="wallet-card-actions">
+                            {!wallet.isDefault && (
+                              <button
+                                onClick={() => setDefaultMutation.mutate(wallet.id)}
+                                disabled={setDefaultMutation.isPending}
+                                className="wallet-icon-action"
+                                data-testid={`button-set-default-${wallet.id}`}
+                                aria-label="Définir comme compte par défaut"
+                              >
+                                <Check size={16} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteMutation.mutate(wallet.id)}
+                              disabled={deleteMutation.isPending}
+                              className="wallet-icon-action"
+                              data-testid={`button-delete-wallet-${wallet.id}`}
+                              aria-label="Supprimer ce compte"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         )}
-                        <button
-                          onClick={() => deleteMutation.mutate(wallet.id)}
-                          disabled={deleteMutation.isPending}
-                          className="wallet-icon-action"
-                          data-testid={`button-delete-wallet-${wallet.id}`}
-                          aria-label="Supprimer ce compte"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    )}
 
-                    {selectMode && <ChevronRight size={18} className="text-[#c65100] flex-shrink-0" />}
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="wallet-empty">
-                <img src={emptyIllustration} alt="" />
-                <p>Aucun compte bancaire enregistré</p>
-                <p>Ajoutez un compte pour effectuer vos retraits.</p>
-              </div>
-            )}
-          </section>
+                        {selectMode && <ChevronRight size={18} className="text-[#c65100] flex-shrink-0" />}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="wallet-empty">
+                    <img src={emptyIllustration} alt="" />
+                    <p>Aucun compte bancaire enregistré</p>
+                    <p>Ajoutez un compte pour effectuer vos retraits.</p>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
         </main>
 
         <footer className="wallet-footer">
