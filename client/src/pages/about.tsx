@@ -21,24 +21,9 @@ export default function AboutPage() {
             ChargePoint est une plateforme numérique créée en 2024 pour rendre les solutions de recharge, les produits connectés et les services associés plus simples, plus accessibles et plus transparents pour tous.
           </p>
 
-          <div className="cp-about-facts" aria-label="Informations sur ChargePoint">
-            <div>
-              <span>Nom</span>
-              <strong>ChargePoint</strong>
-            </div>
-            <div>
-              <span>Année de création</span>
-              <strong>2024</strong>
-            </div>
-            <div>
-              <span>Activité</span>
-              <strong>Plateforme numérique et solutions de recharge</strong>
-            </div>
-            <div>
-              <span>Public concerné</span>
-              <strong>Particuliers, professionnels et partenaires</strong>
-            </div>
-          </div>
+          <p>
+            Créée en 2024, ChargePoint s’adresse aux particuliers, aux professionnels et aux partenaires qui souhaitent accéder à une plateforme moderne, suivre leurs activités et découvrir des produits conçus pour générer une valeur progressive dans le temps.
+          </p>
 
           <h2>Notre histoire</h2>
           <p>
@@ -54,6 +39,30 @@ export default function AboutPage() {
           </p>
           <p>
             Nous travaillons pour que la technologie ne soit pas une source de complexité. Les parcours sont conçus avec des étapes simples, des indications visibles et des informations présentées dans un langage accessible, quel que soit le niveau d’expérience numérique de l’utilisateur.
+          </p>
+
+          <h2>Notre vision pour les investisseurs africains</h2>
+          <p>
+            ChargePoint souhaite contribuer à un accès plus simple aux opportunités numériques pour les investisseurs africains. Notre vision est de créer une plateforme pensée pour les réalités locales, avec des parcours adaptés au téléphone, des moyens de paiement accessibles et des informations compréhensibles avant chaque décision.
+          </p>
+          <p>
+            Nous voulons donner à chaque membre la possibilité de commencer progressivement, de suivre son activité et de mieux comprendre la manière dont un produit fonctionne. L’objectif n’est pas de promettre une richesse immédiate, mais de construire une expérience structurée dans laquelle l’utilisateur peut avancer avec des informations claires et une visibilité sur ses opérations.
+          </p>
+
+          <h2>Que se passe-t-il lorsqu’un produit est acheté ?</h2>
+          <p>
+            Lorsqu’un investisseur achète un produit ChargePoint, l’achat est enregistré dans son espace personnel. Il peut ensuite retrouver le produit dans la section <strong>Mes produits achetés</strong>, avec les informations importantes : le prix du produit, la durée du cycle, le revenu quotidien prévu, le revenu total prévu, la date d’achat et l’évolution de son activité.
+          </p>
+          <p>
+            Chaque produit possède ses propres conditions. Une fois le produit activé, les revenus associés sont calculés selon le produit choisi, sa durée et les règles présentées au moment de l’achat. Les gains sont ensuite suivis dans l’espace personnel afin que l’investisseur puisse consulter l’évolution de ses revenus et l’état de son produit.
+          </p>
+
+          <h2>Les gains que l’investisseur peut recevoir</h2>
+          <p>
+            Selon le produit sélectionné, l’investisseur peut recevoir un revenu quotidien pendant la durée prévue du cycle. Le montant total dépend du produit acheté et des conditions qui lui sont associées. La plateforme affiche ces informations avant la confirmation afin que l’utilisateur puisse connaître le prix, le revenu quotidien prévu, la durée et le revenu total prévu.
+          </p>
+          <p>
+            Les gains affichés correspondent aux conditions du produit et ne doivent pas être interprétés comme une promesse de rendement automatique ou sans risque. Avant tout achat, chaque investisseur doit lire les informations disponibles, vérifier qu’il comprend le fonctionnement du produit et n’engager que des fonds qu’il peut se permettre d’utiliser.
           </p>
 
           <h2>Ce que nous proposons</h2>
