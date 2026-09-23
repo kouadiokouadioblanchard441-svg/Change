@@ -437,6 +437,9 @@ const walletStyles = `
     background-repeat: no-repeat;
     background-size: 100% auto;
   }
+  .wallet-scene-page .wallet-shell {
+    background-position: center 190px;
+  }
   .wallet-reference-card {
     overflow: hidden;
     border: 1px solid #e7e2de;
@@ -538,7 +541,10 @@ const walletStyles = `
     background: transparent;
   }
   .wallet-scene-add {
-    padding: 42px 16px 0;
+    position: relative;
+    z-index: 1;
+    padding: 42px 16px 18px;
+    background: #ffffff;
   }
   .wallet-scene-add .wallet-primary {
     min-height: 56px;
