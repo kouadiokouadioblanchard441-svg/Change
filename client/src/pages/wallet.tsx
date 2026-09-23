@@ -1027,18 +1027,6 @@ export default function WalletPage() {
         <main className="wallet-content">
           {showWalletOverview && (
             <>
-              <section className="wallet-hero">
-                <div className="wallet-hero-icon"><CreditCard size={21} /></div>
-                <div>
-                  <h2>{selectMode ? "Choisissez le compte à utiliser" : "Retraits simples et sécurisés"}</h2>
-                  <p>
-                    {selectMode
-                      ? "Sélectionnez un compte enregistré pour continuer votre retrait."
-                      : "Ajoutez et gérez les comptes utilisés pour recevoir vos retraits."}
-                  </p>
-                </div>
-              </section>
-
               <section className="wallet-section wallet-list-section">
                 <div className="wallet-section-header">
                   <div>
