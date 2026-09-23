@@ -92,11 +92,6 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-            <div className="cp-hero-copy">
-              <span className="cp-kicker">CHARGEPOINT</span>
-              <h1>L'énergie<br /><strong>en mouvement.</strong></h1>
-              <p>Votre recharge, votre rythme.</p>
-            </div>
             <div className="cp-hero-dots" aria-label="Images de la bannière">
               {bannerSlides.map((slide, index) => (
                 <button
