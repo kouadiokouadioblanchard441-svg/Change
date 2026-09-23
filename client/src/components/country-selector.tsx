@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ApiCountry } from "@/lib/countries";
 import { Check, Loader2, Search, X } from "lucide-react";
@@ -17,7 +17,21 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
     enabled: open,
   });
 
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [open, onClose]);
+
   if (!open) return null;
+
+  const closePicker = () => {
+    setSearch("");
+    onClose();
+  };
 
   const countries = (apiCountries || [])
     .filter(c => c.isActive)
@@ -28,24 +42,27 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
     });
 
   return (
-    <div className="country-picker-overlay" onClick={onClose}>
+    <div className="country-picker-overlay" onClick={closePicker}>
       <section
         className="country-picker"
         role="dialog"
         aria-modal="true"
-        aria-label="Choisir un pays"
+        aria-labelledby="country-picker-heading"
         onClick={(event) => event.stopPropagation()}
       >
-        <button className="country-picker-close" onClick={onClose} aria-label="Fermer">
-          <X aria-hidden="true" />
-        </button>
+        <div className="country-picker-header">
+          <h2 id="country-picker-heading">Choisir un pays</h2>
+          <button type="button" className="country-picker-close" onClick={closePicker} aria-label="Fermer">
+            <X aria-hidden="true" />
+          </button>
+        </div>
         <div className="country-picker-search">
           <Search aria-hidden="true" />
           <input
             autoFocus
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search"
+            placeholder="Rechercher un pays"
             aria-label="Rechercher un pays"
           />
         </div>
@@ -61,13 +78,15 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
             const selected = country.code === selectedCountryCode;
             return (
               <button
+                type="button"
                 key={country.code}
                 className={`country-picker-row${selected ? " is-selected" : ""}`}
-                onClick={() => { onSelect(country.code); setSearch(""); onClose(); }}
+                onClick={() => { onSelect(country.code); closePicker(); }}
                 data-testid={`country-option-${country.code}`}
               >
-                <span>{country.name} (+{country.phonePrefix})</span>
-                {selected && <span className="country-picker-check"><Check aria-hidden="true" /></span>}
+                <span className="country-picker-name">{country.name}</span>
+                <span className="country-picker-prefix">+{country.phonePrefix}</span>
+                {selected && <Check className="country-picker-check" aria-hidden="true" />}
               </button>
             );
           })}
