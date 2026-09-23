@@ -11,6 +11,7 @@ import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDo
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
 import { Link, useLocation, useSearch } from "wouter";
 import type { WithdrawalWallet } from "@shared/schema";
+import withdrawalMethodBackground from "@assets/generated_images/withdrawal-method-background.jpg";
 
 const walletSchema = z.object({
   accountNumber: z.string().min(8, "Numéro requis"),
@@ -406,16 +407,16 @@ const walletStyles = `
     background: #ffffff;
   }
   .wallet-form-topbar {
-    border-bottom: 1px solid #eee8e3;
-    background: #ffffff;
+    border-bottom: 0;
+    background: transparent;
   }
   .wallet-form-topbar .wallet-back {
-    border-color: #ffd7bc;
-    background: #fff8f2;
-    color: #c65100;
+    border-color: rgba(23, 23, 23, .18);
+    background: rgba(255, 255, 255, .5);
+    color: #171717;
   }
   .wallet-form-topbar .wallet-eyebrow {
-    color: #c65100;
+    color: #171717;
   }
   .wallet-form-topbar .wallet-title {
     color: #171717;
@@ -423,7 +424,16 @@ const walletStyles = `
   .wallet-form-content {
     min-height: calc(100vh - 73px);
     padding-top: 20px;
-    background: #ffffff;
+    background: transparent;
+  }
+  .wallet-form-page .wallet-shell,
+  .wallet-scene-page .wallet-shell {
+    min-height: 100vh;
+    background-color: #ffffff;
+    background-image: url("${withdrawalMethodBackground}");
+    background-position: top center;
+    background-repeat: no-repeat;
+    background-size: 100% auto;
   }
   .wallet-reference-card {
     overflow: hidden;
@@ -512,6 +522,27 @@ const walletStyles = `
     font-size: 12px;
     line-height: 1.45;
     text-align: center;
+  }
+  .wallet-form-page .wallet-footer {
+    border-top: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .wallet-scene-page .wallet-topbar {
+    border-bottom: 0;
+    background: transparent;
+  }
+  .wallet-scene-page .wallet-content {
+    background: transparent;
+  }
+  .wallet-scene-page .wallet-footer {
+    border-top: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .wallet-scene-page .wallet-primary {
+    min-height: 56px;
+    border-radius: 30px;
   }
   @media (min-width: 700px) {
     .wallet-footer {
