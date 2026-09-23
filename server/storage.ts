@@ -1020,7 +1020,7 @@ export class DatabaseStorage implements IStorage {
     const countRecharged = async (userList: User[]) => {
       let count = 0;
       for (const u of userList) {
-        const userDeposits = await db.select().from(deposits)
+        const userDeposits = await db.select({ id: deposits.id }).from(deposits)
           .where(and(eq(deposits.userId, u.id), eq(deposits.status, "approved")));
         if (userDeposits.length > 0) count++;
       }
@@ -1112,6 +1112,7 @@ export class DatabaseStorage implements IStorage {
         id: user.id,
         fullName: user.fullName,
         phone: user.phone,
+        isDemo: user.phone.startsWith("DEMO-"),
         phonePrefix: prefixByCountry.get(user.country) || null,
         country: user.country,
         balance: user.balance,

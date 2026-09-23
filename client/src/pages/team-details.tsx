@@ -11,6 +11,7 @@ import "./team-details.css";
 interface TeamMember {
   id: number;
   phone: string;
+  isDemo: boolean;
   phonePrefix: string | null;
   country: string;
   totalReferralRevenue: number;
@@ -130,10 +131,13 @@ export default function TeamDetailsPage() {
               </div>
             ) : selected.members.map(member => {
               const phone = maskPhone(member.phone, member.phonePrefix);
-              const number = whatsAppNumber(member.phone, member.phonePrefix);
+              const number = member.isDemo ? null : whatsAppNumber(member.phone, member.phonePrefix);
               return (
                 <div className="team-details-row" key={member.id} data-testid={`team-member-${member.id}`}>
-                  <strong data-testid={`text-member-phone-${member.id}`}>{phone}</strong>
+                  <strong data-testid={`text-member-phone-${member.id}`}>
+                    {phone}
+                    {member.isDemo && <small className="team-details-demo">Démo</small>}
+                  </strong>
                   <span className="team-details-revenue" data-testid={`text-member-revenue-${member.id}`}>
                     {Number(member.totalReferralRevenue).toLocaleString("fr-FR")}
                     <small>{currency}</small>
@@ -153,7 +157,7 @@ export default function TeamDetailsPage() {
                       <img src={whatsappIcon} alt="" />
                     </a>
                   ) : (
-                    <span className="team-details-contact-unavailable" title="Numéro WhatsApp indisponible" aria-label="Numéro WhatsApp indisponible">—</span>
+                    <span className="team-details-contact-unavailable" title={member.isDemo ? "Filleul fictif : contact indisponible" : "Numéro WhatsApp indisponible"} aria-label="Numéro WhatsApp indisponible">—</span>
                   )}
                 </div>
               );

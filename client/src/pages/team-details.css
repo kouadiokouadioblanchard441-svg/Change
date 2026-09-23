@@ -193,6 +193,14 @@
   overflow-wrap: anywhere;
 }
 
+.team-details-demo {
+  display: block;
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 600;
+}
+
 .team-details-revenue {
   min-width: 0;
   color: #9e4100;

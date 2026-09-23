@@ -10,3 +10,4 @@
 - [InPay IP whitelist](inpay-ip-whitelist.md) — InPay rejects API calls with errno 5 until the server's public egress IP is whitelisted.
 - [AshtechPay Burkina flow](ashtechpay-burkina.md) — BF uses exact operator names and requires the returned reference on OTP retries.
 - [Country availability](country-availability.md) — retire countries by deactivating them, not deleting historical records; confirm existing-account impact first.
+- [Demo referrals](demo-referrals.md) — persistent fictitious filleuls are explicitly labeled and financially inert; their counts still appear in team statistics.
