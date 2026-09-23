@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
-import { ChevronLeft, Loader2, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
@@ -43,8 +43,9 @@ interface Transaction {
 
 type ActiveTab = "balance" | "deposits" | "withdrawals";
 
-const CARD_GREEN = "#43cf18";
-const CARD_BACKGROUND = "#f8f8ff";
+const CARD_ORANGE = "#ff7a14";
+const CARD_DARK = "#111827";
+const CARD_BACKGROUND = "#fff8f2";
 
 const makeRef = (prefix: "D" | "W", id: number, date: string) => {
   const d = new Date(date);
@@ -92,13 +93,13 @@ const getStatusInfo = (status: string) => {
   switch (status) {
     case "completed":
     case "approved":
-      return { label: "Paiement réussi", color: CARD_GREEN };
+      return { label: "Paiement réussi", color: CARD_DARK };
     case "rejected":
-      return { label: "Paiement échoué", color: "#e33d3d" };
+      return { label: "Paiement échoué", color: "#b42318" };
     case "processing":
-      return { label: "En traitement", color: "#d98208" };
+      return { label: "En traitement", color: "#d97706" };
     default:
-      return { label: "En attente...", color: "#d98208" };
+      return { label: "En attente...", color: "#d97706" };
   }
 };
 
@@ -220,7 +221,7 @@ export default function HistoryPage() {
           min-height: 100dvh;
           overflow-x: hidden;
           background: #fff;
-          color: #101010;
+          color: #111827;
           font-family: Arial, sans-serif;
         }
         .history-page *,
@@ -230,7 +231,7 @@ export default function HistoryPage() {
         }
         .history-screen {
           width: 100%;
-          max-width: 500px;
+          max-width: 512px;
           min-height: 100dvh;
           margin: 0 auto;
           background: #fff;
@@ -238,96 +239,100 @@ export default function HistoryPage() {
         .history-header {
           position: relative;
           display: flex;
-          height: 66px;
+          min-height: 78px;
           align-items: center;
-          padding: 8px 20px 0;
+          padding: 17px 16px;
+          border-bottom: 2px solid #111827;
         }
         .history-back {
           display: grid;
-          width: 32px;
-          height: 32px;
+          width: 42px;
+          height: 42px;
           place-items: center;
-          border: 0;
+          border: 2px solid #111827;
+          border-radius: 11px;
           padding: 0;
-          background: transparent;
-          color: #171717;
+          background: #fff;
+          box-shadow: 0 3px 0 #111827;
+          color: #111827;
+          cursor: pointer;
         }
         .history-back svg {
-          width: 25px;
-          height: 25px;
-          stroke-width: 1.9;
+          width: 22px;
+          height: 22px;
+          stroke-width: 2.5;
         }
         .history-title {
           position: absolute;
-          right: 55px;
-          left: 55px;
+          right: 70px;
+          left: 70px;
           margin: 0;
-          color: #111;
+          color: #111827;
           font-size: 20px;
-          font-weight: 700;
-          line-height: 1;
+          font-weight: 800;
+          line-height: 1.2;
           text-align: center;
         }
         .history-tabs {
           display: grid;
           grid-template-columns: 1fr 1fr 1.12fr;
-          gap: 4px;
+          gap: 8px;
           align-items: center;
-          min-height: 61px;
-          padding: 4px 9px 13px;
+          min-height: 78px;
+          padding: 12px 16px 16px;
+          border-bottom: 2px solid #111827;
         }
         .history-tab {
           display: flex;
           min-width: 0;
-          height: 42px;
+          height: 46px;
           align-items: center;
           justify-content: center;
-          gap: 7px;
-          border: 0;
-          border-radius: 6px;
-          padding: 0 7px;
-          background: transparent;
-          color: #333;
-          font-size: 16px;
-          font-weight: 400;
+          gap: 5px;
+          border: 2px solid #111827;
+          border-radius: 11px;
+          padding: 0 8px;
+          background: #ffffff;
+          box-shadow: 0 3px 0 #111827;
+          color: #111827;
+          font-size: 14px;
+          font-weight: 700;
           line-height: 1;
           white-space: nowrap;
+          cursor: pointer;
         }
         .history-tab.active {
-          background: #242625;
-          color: #fff;
+          background: #ff7a14;
+          color: #111827;
           font-weight: 700;
         }
         .history-tab-arrow {
-          width: 0;
-          height: 0;
-          border-top: 6px solid transparent;
-          border-bottom: 6px solid transparent;
-          border-left: 7px solid #111;
-        }
-        .history-tab-arrow.right {
-          border-left-color: #e12626;
+          width: 17px;
+          height: 17px;
+          color: #111827;
+          stroke-width: 2.8;
         }
         .history-tab-arrow.left {
           transform: rotate(180deg);
         }
         .history-content {
-          min-height: calc(100dvh - 127px);
-          padding: 9px 16px 40px;
-          background: #fff;
+          min-height: calc(100dvh - 156px);
+          padding: 18px 16px 40px;
+          background: #fff8f2;
         }
         .history-list {
           display: grid;
-          gap: 20px;
+          gap: 16px;
         }
         .history-card {
           width: 100%;
-          min-height: 146px;
+          min-height: 154px;
           overflow: hidden;
-          border-radius: 7px;
-          padding: 10px 18px 11px;
+          border: 2px solid #111827;
+          border-radius: 12px;
+          padding: 16px;
           background: ${CARD_BACKGROUND};
-          box-shadow: 0 1px 5px rgba(42, 44, 88, .045);
+          box-shadow: 0 4px 0 #111827, 0 8px 16px rgba(17, 24, 39, .12);
         }
         .history-card-top {
           display: flex;
@@ -338,34 +343,36 @@ export default function HistoryPage() {
         }
         .history-amount {
           margin: 0;
-          color: #111;
-          font-size: 18px;
-          font-weight: 700;
+          color: #c65100;
+          font-size: 19px;
+          font-weight: 800;
           line-height: 1.15;
         }
         .history-card-label {
-          margin: 7px 0 0;
-          color: #111;
+          margin: 6px 0 0;
+          color: #111827;
           font-size: 16px;
+          font-weight: 700;
           line-height: 1.15;
         }
         .history-status {
           display: inline-flex;
-          min-height: 31px;
+          min-height: 34px;
           align-items: center;
           flex: 0 0 auto;
-          border-radius: 17px;
-          padding: 0 10px;
+          border: 2px solid #111827;
+          border-radius: 11px;
+          padding: 0 11px;
           color: #fff;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           line-height: 1;
           white-space: nowrap;
         }
         .history-divider {
-          height: 1px;
-          margin: 13px 0 5px;
-          background: #8d8d8d;
+          height: 2px;
+          margin: 15px 0 8px;
+          background: #111827;
         }
         .history-row {
           display: flex;
@@ -373,9 +380,13 @@ export default function HistoryPage() {
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          color: #111;
+          color: #111827;
           font-size: 14px;
           line-height: 1.2;
+        }
+        .history-row > span:first-child {
+          color: #4b5563;
+          font-weight: 700;
         }
         .history-row > span:last-child {
           text-align: right;
@@ -383,12 +394,16 @@ export default function HistoryPage() {
         }
         .history-empty {
           display: flex;
-          min-height: 280px;
+          min-height: 320px;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          color: #999;
+          gap: 12px;
+          border: 2px solid #111827;
+          border-radius: 12px;
+          background: #ffffff;
+          box-shadow: 0 4px 0 #111827;
+          color: #4b5563;
           font-size: 14px;
         }
         .history-empty img {
@@ -399,14 +414,18 @@ export default function HistoryPage() {
         .history-verify {
           width: 100%;
           margin-top: 10px;
-          border: 0;
-          border-radius: 18px;
+          min-height: 44px;
+          border: 2px solid #111827;
+          border-radius: 11px;
           padding: 9px 12px;
-          background: ${CARD_GREEN};
-          color: #fff;
-          font-size: 12px;
-          font-weight: 700;
+          background: ${CARD_ORANGE};
+          box-shadow: 0 3px 0 #111827;
+          color: #111827;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
         }
+        .history-verify:disabled { cursor: wait; opacity: .7; }
         @media (max-width: 370px) {
           .history-header { height: 62px; padding-top: 6px; }
           .history-title { font-size: 19px; }
@@ -437,7 +456,7 @@ export default function HistoryPage() {
             data-testid="tab-balance"
           >
             <span>Solde</span>
-            <span className={`history-tab-arrow ${activeTab === "balance" ? "right" : "left"}`} aria-hidden="true" />
+            <ChevronRight className={`history-tab-arrow ${activeTab === "balance" ? "right" : "left"}`} aria-hidden="true" />
           </button>
           <button
             className={`history-tab ${activeTab === "deposits" ? "active" : ""}`}
@@ -445,7 +464,7 @@ export default function HistoryPage() {
             data-testid="tab-deposits"
           >
             <span>Dépôt</span>
-            <span className={`history-tab-arrow ${activeTab === "deposits" ? "right" : "left"}`} aria-hidden="true" />
+            <ChevronRight className={`history-tab-arrow ${activeTab === "deposits" ? "right" : "left"}`} aria-hidden="true" />
           </button>
           <button
             className={`history-tab ${activeTab === "withdrawals" ? "active" : ""}`}
@@ -453,7 +472,7 @@ export default function HistoryPage() {
             data-testid="tab-withdrawals"
           >
             <span>Retrait</span>
-            <span className="history-tab-arrow right" aria-hidden="true" />
+            <ChevronRight className="history-tab-arrow right" aria-hidden="true" />
           </button>
         </nav>
 
@@ -477,7 +496,7 @@ export default function HistoryPage() {
                           </p>
                            <p className="history-card-label">{transaction.type === "deposit" ? "Dépôt" : transaction.description}</p>
                         </div>
-                        <Status label="Paiement réussi" color={CARD_GREEN} />
+                           <Status label="Paiement réussi" color={CARD_DARK} />
                       </div>
                       <div className="history-divider" />
                       <Row label="Type :" value={isRegistration ? "Inscription" : getBalanceTypeLabel(transaction)} />
