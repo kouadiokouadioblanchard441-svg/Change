@@ -537,6 +537,13 @@ const walletStyles = `
   .wallet-scene-page .wallet-content {
     background: transparent;
   }
+  .wallet-scene-add {
+    padding: 42px 16px 0;
+  }
+  .wallet-scene-add .wallet-primary {
+    min-height: 56px;
+    border-radius: 30px;
+  }
   .wallet-scene-page .wallet-footer {
     border-top: 0;
     background: transparent;
@@ -937,6 +944,17 @@ export default function WalletPage() {
           )}
         </header>
 
+        <div className="wallet-scene-add">
+          <button
+            onClick={() => setShowForm(true)}
+            className="wallet-primary"
+            data-testid="button-add-wallet"
+          >
+            <Plus size={18} />
+            Ajouter un compte
+          </button>
+        </div>
+
         <main className="wallet-content">
           {showWalletOverview && (
             <>
@@ -1031,18 +1049,6 @@ export default function WalletPage() {
           )}
         </main>
 
-        <footer className="wallet-footer">
-          <div className="wallet-footer-inner">
-            <button
-              onClick={() => setShowForm(true)}
-              className="wallet-primary"
-              data-testid="button-add-wallet"
-            >
-              <Plus size={18} />
-              Ajouter un compte
-            </button>
-          </div>
-        </footer>
       </div>
     </div>
   );
