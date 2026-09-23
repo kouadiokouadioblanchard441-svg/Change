@@ -23,10 +23,13 @@
 .cp-orbit { position:absolute; border:1px solid rgba(255,122,20,.45); border-radius:50%; transform:rotate(-18deg); }
 .cp-orbit-one { width:320px;height:110px; right:-17px; bottom:50px; }
 .cp-orbit-two { width:280px;height:85px; right:2px; bottom:65px; border-color:rgba(32,34,37,.16); }
-.cp-actions { display:grid; grid-template-columns:repeat(4,1fr); padding:10px 12px 14px; gap:5px; }
+.cp-actions { display:grid; grid-template-columns:repeat(4,1fr); padding:8px 12px 12px; gap:5px; }
 .cp-action { border:0; background:none; color:#383b3e; display:flex; flex-direction:column; align-items:center; gap:6px; font:500 13px "DM Sans"; cursor:pointer; }
-.cp-action-icon { display:grid; place-items:center; width:42px;height:32px; color:var(--cp-orange); transition:transform .2s, color .2s; }
-.cp-action:hover .cp-action-icon { transform:translateY(-3px); color:#a74600; }
+.cp-action-icon { display:grid; place-items:center; width:58px; height:52px; transition:transform .2s; }
+.cp-action-icon img { display:block; width:52px; height:48px; object-fit:contain; }
+.cp-action-icon-dark { border-radius:10px; background:#242729; }
+.cp-action-icon-dark img { width:46px; height:44px; }
+.cp-action:hover .cp-action-icon { transform:translateY(-3px); }
 .cp-notice { display:flex; align-items:center; gap:10px; width:calc(100% - 24px); margin:0 12px; min-height:48px; padding:9px 12px; border:1px solid #dededc; border-radius:10px; background:#fff; text-align:left; color:#52565a; font-size:12px; overflow:hidden; cursor:pointer; }
 .cp-notice-icon { flex:none; color:var(--cp-orange); display:grid; place-items:center; width:27px;height:27px; border-radius:8px; background:#fff1e6; }
 .cp-notice span:last-child { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }

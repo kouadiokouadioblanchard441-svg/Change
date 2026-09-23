@@ -3,10 +3,14 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
-import { Bell, CreditCard, Headphones, PlugZap, ReceiptText, WalletCards } from "lucide-react";
+import { Bell, PlugZap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "./home.css";
 
+import depositIcon from "@/assets/home-actions/deposit.png";
+import withdrawalIcon from "@/assets/home-actions/withdrawal.png";
+import supportIcon from "@/assets/home-actions/support.png";
+import checkinIcon from "@/assets/home-actions/checkin.png";
 import homeFlex from "@assets/ChargePoint-Home-Flex-50A-CPH50-app-1280px__29346__78945__7114_1790148214522.png";
 import ct4000 from "@assets/CT4000-Top-main-with-energy-star_1790148214627.png";
 
@@ -16,10 +20,10 @@ interface Withdrawal {
 }
 
 const quickActions = [
-  { label: "Recharger", href: "/deposit", icon: CreditCard },
-  { label: "Retrait", href: "/withdrawal", icon: WalletCards },
-  { label: "Aide", href: "/service", icon: Headphones },
-  { label: "Pointage", href: "/checkin", icon: ReceiptText },
+  { label: "Dépôt", href: "/deposit", icon: depositIcon },
+  { label: "Retrait", href: "/withdrawal", icon: withdrawalIcon },
+  { label: "Aide", href: "/service", icon: supportIcon },
+  { label: "Pointage", href: "/checkin", icon: checkinIcon },
 ];
 
 export default function HomePage() {
@@ -60,9 +64,11 @@ export default function HomePage() {
           </section>
 
           <section className="cp-actions" aria-label="Actions rapides">
-            {quickActions.map(({ label, href, icon: Icon }) => (
+            {quickActions.map(({ label, href, icon }) => (
               <button key={label} className="cp-action" onClick={() => navigate(href)}>
-                <span className="cp-action-icon"><Icon size={27} strokeWidth={1.9} /></span>
+                <span className={`cp-action-icon${href === "/withdrawal" ? " cp-action-icon-dark" : ""}`}>
+                  <img src={icon} alt="" />
+                </span>
                 <span>{label}</span>
               </button>
             ))}
