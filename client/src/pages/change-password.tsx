@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff, ChevronLeft } from "lucide-react";
 import { useLocation } from "wouter";
+import "./change-password.css";
 
 export default function ChangePasswordPage() {
   const { toast } = useToast();
@@ -53,120 +54,107 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
+    <main className="cp-password-page">
+      <div className="cp-password-screen">
+        <header className="cp-password-header">
+          <button
+            onClick={() => navigate("/account")}
+            className="cp-password-back"
+            data-testid="button-back"
+          >
+            <ChevronLeft aria-hidden="true" />
+            <span>Retour</span>
+          </button>
+          <h1>Changer le mot de passe</h1>
+        </header>
 
-      {/* ── Blue header ── */}
-      <header
-        className="flex items-center px-4 py-4"
-        style={{ background: "linear-gradient(112deg, #55c9e5 0%, #3174d1 100%)" }}
-      >
-        <button
-          onClick={() => navigate("/account")}
-          className="flex items-center gap-1 text-white mr-4"
-          data-testid="button-back"
+        <form
+          className="cp-password-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
         >
-          <ChevronLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Retour</span>
-        </button>
-        <h1 className="flex-1 text-center text-white font-bold text-base pr-16">
-          Changer le mot de passe
-        </h1>
-      </header>
-
-      {/* ── White form card ── */}
-      <div className="flex-1 px-4 pt-6">
-        <div className="bg-white rounded-2xl shadow-sm px-5 py-6 space-y-5">
-
-          {/* Ancien mot de passe */}
-          <div>
-            <label className="block text-sm text-gray-700 mb-2">
-              Ancien mot de passe
-            </label>
-            <div className="relative">
+          <div className="cp-password-group">
+            <label htmlFor="current-password">Ancien mot de passe</label>
+            <div className="cp-password-field">
               <input
+                id="current-password"
                 type={showCurrent ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-4 text-sm text-gray-800 outline-none focus:border-[#55c9e5] bg-white pr-11"
                 data-testid="input-current-password"
               />
               <button
                 type="button"
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                className="cp-password-visibility"
                 onClick={() => setShowCurrent(!showCurrent)}
+                aria-label={showCurrent ? "Masquer l'ancien mot de passe" : "Afficher l'ancien mot de passe"}
               >
-                {showCurrent ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showCurrent ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
               </button>
             </div>
           </div>
 
-          {/* Nouveau mot de passe */}
-          <div>
-            <label className="block text-sm text-gray-700 mb-2">
-              Nouveau mot de passe
-            </label>
-            <div className="relative">
+          <div className="cp-password-group">
+            <label htmlFor="new-password">Nouveau mot de passe</label>
+            <div className="cp-password-field">
               <input
+                id="new-password"
                 type={showNew ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-4 text-sm text-gray-800 outline-none focus:border-[#55c9e5] bg-white pr-11"
                 data-testid="input-new-password"
               />
               <button
                 type="button"
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                className="cp-password-visibility"
                 onClick={() => setShowNew(!showNew)}
+                aria-label={showNew ? "Masquer le nouveau mot de passe" : "Afficher le nouveau mot de passe"}
               >
-                {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showNew ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
               </button>
             </div>
           </div>
 
-          {/* Re-mot de passe */}
-          <div>
-            <label className="block text-sm text-gray-700 mb-2">
-              Re-mot de passe
-            </label>
-            <div className="relative">
+          <div className="cp-password-group">
+            <label htmlFor="confirm-password">Confirmer le mot de passe</label>
+            <div className="cp-password-field">
               <input
+                id="confirm-password"
                 type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-4 text-sm text-gray-800 outline-none focus:border-[#55c9e5] bg-white pr-11"
                 data-testid="input-confirm-password"
               />
               <button
                 type="button"
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                className="cp-password-visibility"
                 onClick={() => setShowConfirm(!showConfirm)}
+                aria-label={showConfirm ? "Masquer la confirmation" : "Afficher la confirmation"}
               >
-                {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showConfirm ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
               </button>
             </div>
           </div>
 
-          {/* Confirmer button */}
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={changePasswordMutation.isPending}
-            className="w-full py-4 rounded-xl text-white font-bold text-base disabled:opacity-50 mt-2"
-            style={{ background: "linear-gradient(112deg, #55c9e5 0%, #3174d1 100%)" }}
+            className="cp-password-submit"
             data-testid="button-change-password-submit"
           >
             {changePasswordMutation.isPending ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="cp-password-loading">
+                <Loader2 aria-hidden="true" />
                 Modification...
               </span>
             ) : (
               "Confirmer"
             )}
           </button>
-
-        </div>
+        </form>
       </div>
-
-    </div>
+    </main>
   );
 }
