@@ -7,9 +7,10 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getPaymentMethodsForCountry, type ApiCountry } from "@/lib/countries";
-import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X, Wifi } from "lucide-react";
+import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X } from "lucide-react";
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
+import walletCardIcon from "@/assets/account-wallet.png";
 import { Link, useLocation, useSearch } from "wouter";
 import type { WithdrawalWallet } from "@shared/schema";
 
@@ -24,6 +25,17 @@ function maskWalletNumber(accountNumber: string) {
   const compactNumber = accountNumber.replace(/\s+/g, "");
   if (compactNumber.length <= 6) return accountNumber;
   return `${compactNumber.slice(0, 2)}••••••${compactNumber.slice(-4)}`;
+}
+
+function getWalletOperatorIcon(paymentMethod: string) {
+  const method = paymentMethod.toLowerCase();
+  if (method.includes("orange")) return "/operators/orange.png";
+  if (method.includes("mtn")) return "/operators/mtn.png";
+  if (method.includes("moov")) return "/operators/moov.jpg";
+  if (method.includes("airtel")) return "/operators/airtel.png";
+  if (method.includes("wave")) return "/operators/wave.png";
+  if (method.includes("tmoney") || method.includes("t-money")) return "/operators/tmoney.png";
+  return "/chargepoint-icon-512.png";
 }
 
 const walletStyles = `
@@ -317,7 +329,9 @@ const walletStyles = `
     border: 1px solid rgba(255, 255, 255, .62);
     border-radius: 8px;
     background: rgba(255, 255, 255, .13);
-    color: #ffffff;
+    padding: 5px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
   }
   .wallet-card-copy {
     display: flex;
@@ -358,22 +372,19 @@ const walletStyles = `
     font-size: 12px;
     font-weight: 600;
   }
+  .wallet-card-network-icon {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    border: 1px solid rgba(255, 255, 255, .62);
+    border-radius: 5px;
+    background: #ffffff;
+    object-fit: cover;
+  }
   .wallet-card-network span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .wallet-card-chip {
-    width: 54px;
-    height: 38px;
-    flex: none;
-    border: 1px solid rgba(119, 85, 22, .25);
-    border-radius: 10px;
-    background:
-      linear-gradient(90deg, transparent 49%, rgba(119, 85, 22, .28) 50%, transparent 51%),
-      linear-gradient(0deg, transparent 49%, rgba(119, 85, 22, .28) 50%, transparent 51%),
-      linear-gradient(135deg, #fff0ae, #d7b85d);
-    box-shadow: inset 0 1px 2px rgba(255, 255, 255, .65);
   }
   .wallet-card-actions {
     display: flex;
@@ -1053,18 +1064,20 @@ export default function WalletPage() {
                         >
                           <div className="wallet-card-copy">
                             <div className="wallet-card-brand">
-                              <div className="wallet-card-icon">
-                                <CreditCard size={18} />
-                              </div>
+                              <img className="wallet-card-icon" src={walletCardIcon} alt="" aria-hidden="true" />
                               <p className="wallet-card-method">{wallet.paymentMethod}</p>
                             </div>
                             <p className="wallet-card-number">{maskWalletNumber(wallet.accountNumber)}</p>
                             <div className="wallet-card-bottomline">
                               <span className="wallet-card-network">
-                                <Wifi size={15} />
+                                <img
+                                  className="wallet-card-network-icon"
+                                  src={getWalletOperatorIcon(wallet.paymentMethod)}
+                                  alt=""
+                                  aria-hidden="true"
+                                />
                                 <span>{wallet.country || "Compte de retrait"} · {wallet.paymentMethod}</span>
                               </span>
-                              <span className="wallet-card-chip" aria-hidden="true" />
                             </div>
                           </div>
 
