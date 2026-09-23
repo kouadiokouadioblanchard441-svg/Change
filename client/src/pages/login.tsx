@@ -85,21 +85,21 @@ export default function LoginPage() {
   return (
     <main className="auth-reference auth-login">
       <style>{`
-        .auth-reference { width: 100%; min-height: 100dvh; overflow-x: hidden; background: #0d150f; color: #00c926; font-family: Arial, sans-serif; }
+         .auth-reference { width: 100%; min-height: 100dvh; overflow-x: hidden; background: #ffffff; color: #00c926; font-family: Arial, sans-serif; }
         .auth-reference *, .auth-reference *::before, .auth-reference *::after { box-sizing: border-box; }
-        .auth-reference .auth-screen { width: 100%; max-width: 512px; min-height: 100dvh; margin: 0 auto; overflow: hidden; background: #111a13; }
-        .auth-reference .auth-panel { min-height: 100dvh; box-sizing: border-box; background: #111a13; }
+         .auth-reference .auth-screen { width: 100%; max-width: 512px; min-height: 100dvh; margin: 0 auto; overflow: hidden; background: #ffffff; }
+         .auth-reference .auth-panel { min-height: 100dvh; box-sizing: border-box; background: #ffffff; }
          .auth-login .auth-panel { width: 100%; padding: 18px clamp(16px, 6.05vw, 31px) 18px; }
-         .auth-reference .auth-brand { margin: 0 0 22px; color: #fff; font-size: clamp(39px, 10.55vw, 54px); font-weight: 400; line-height: 60px; text-align: left; }
+         .auth-reference .auth-brand { margin: 0 0 22px; color: #111a13; font-size: clamp(39px, 10.55vw, 54px); font-weight: 400; line-height: 60px; text-align: left; }
         .auth-reference form { width: 100%; min-width: 0; }
         .auth-reference .auth-fields { display: grid; gap: 20px; }
-        .auth-reference .auth-field { display: flex; width: 100%; min-width: 0; height: 67px; align-items: center; overflow: hidden; border-radius: 11px; padding: 0 clamp(12px, 3.9vw, 20px); background: #fff; box-shadow: 0 1px 2px rgba(0, 128, 30, .12); }
+         .auth-reference .auth-field { display: flex; width: 100%; min-width: 0; height: 67px; align-items: center; overflow: hidden; border: 1px solid #e3e8e4; border-radius: 11px; padding: 0 clamp(12px, 3.9vw, 20px); background: #fff; box-shadow: 0 1px 2px rgba(0, 128, 30, .12); }
         .auth-reference .auth-field input { width: 0; min-width: 0; flex: 1 1 auto; overflow: hidden; border: 0; outline: 0; background: transparent; color: #1cc33a; font-size: clamp(15px, 3.9vw, 20px); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
         .auth-reference .auth-field input::placeholder { color: #19bd37; opacity: 1; }
         .auth-reference .auth-prefix { display: flex; flex: 0 1 auto; min-width: 0; align-items: center; gap: clamp(6px, 2.15vw, 11px); margin-right: clamp(8px, 3.32vw, 17px); border: 0; padding: 0; background: transparent; color: #25c943; font-size: clamp(20px, 5.47vw, 28px); line-height: 1; white-space: nowrap; }
         .auth-reference .auth-prefix svg { width: clamp(25px, 6.25vw, 32px); height: clamp(25px, 6.25vw, 32px); flex: none; stroke-width: 2.7; }
         .auth-reference .auth-field-icon { width: clamp(27px, 6.64vw, 34px); height: clamp(27px, 6.64vw, 34px); flex: none; margin-right: clamp(7px, 1.95vw, 10px); color: #19c83a; stroke-width: 2.9; }
-        .auth-reference .auth-switch { display: block; max-width: 100%; width: fit-content; margin: 20px 0 0 auto; border: 0; padding: 0; background: transparent; color: #fff; font-size: clamp(16px, 3.9vw, 20px); font-weight: 400; line-height: 31px; text-align: right; text-decoration: underline; text-underline-offset: 2px; }
+         .auth-reference .auth-switch { display: block; max-width: 100%; width: fit-content; margin: 20px 0 0 auto; border: 0; padding: 0; background: transparent; color: #111a13; font-size: clamp(16px, 3.9vw, 20px); font-weight: 400; line-height: 31px; text-align: right; text-decoration: underline; text-underline-offset: 2px; }
         .auth-reference .auth-submit { display: grid; width: 100%; height: 64px; place-items: center; margin-top: 20px; border: 0; border-radius: 11px; background: #fff; color: #00ca26; font-size: clamp(23px, 5.66vw, 29px); font-weight: 700; line-height: 1; box-shadow: 0 1px 2px rgba(0, 128, 30, .15); transition: transform .12s ease, background-color .12s ease; }
         .auth-reference .auth-submit:active { transform: scale(.98); background: #f5fff6; }
         .auth-reference .auth-submit:disabled { opacity: .68; }
