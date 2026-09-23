@@ -153,7 +153,7 @@ export async function seed() {
   if (existingProducts.length === 0) {
     const defaultProducts = [
       { name: "Bonus Gratuit", price: 0, dailyEarnings: 50, cycleDays: 1, totalReturn: 50, isFree: true, sortOrder: 0 },
-      { name: "VIP 1", price: 4500, dailyEarnings: 300, cycleDays: 200, totalReturn: 60000, sortOrder: 1 },
+      { name: "VIP 1", price: 4500, dailyEarnings: 380, cycleDays: 200, totalReturn: 76000, sortOrder: 1 },
       { name: "VIP 2", price: 10000, dailyEarnings: 800, cycleDays: 200, totalReturn: 160000, sortOrder: 2 },
       { name: "VIP 3", price: 15000, dailyEarnings: 1500, cycleDays: 200, totalReturn: 300000, sortOrder: 3 },
       { name: "VIP 4", price: 25000, dailyEarnings: 2000, cycleDays: 200, totalReturn: 400000, sortOrder: 4 },
@@ -168,6 +168,17 @@ export async function seed() {
 
     // Migrate the previously seeded VIP durations without overwriting later admin changes.
     for (const product of existingProducts) {
+      if (product.price === 4500) {
+        await db.update(products)
+          .set({
+            dailyEarnings: 380,
+            totalReturn: 76000,
+          })
+          .where(eq(products.id, product.id));
+        console.log(`Product earnings updated: ${product.name} -> 380 FCFA/day`);
+        continue;
+      }
+
       if (
         /^VIP\s*\d+$/i.test(product.name) &&
         (product.cycleDays === 80 || product.cycleDays === 90)
