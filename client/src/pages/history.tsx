@@ -325,25 +325,30 @@ export default function HistoryPage() {
           gap: 16px;
         }
         .history-card {
+          position: relative;
           width: 100%;
           min-height: 154px;
           overflow: hidden;
           border: 2px solid #111827;
           border-radius: 12px;
-          padding: 16px;
-          background: ${CARD_BACKGROUND};
+          padding: 0 16px 16px;
+          background: #ffffff;
           box-shadow: 0 4px 0 #111827, 0 8px 16px rgba(17, 24, 39, .12);
         }
         .history-card-top {
           display: flex;
-          min-height: 29px;
+          min-height: 76px;
           align-items: flex-start;
           justify-content: space-between;
           gap: 12px;
+          margin: 0 -16px;
+          padding: 14px 16px 13px;
+          border-bottom: 2px solid #111827;
+          background: ${CARD_ORANGE};
         }
         .history-amount {
           margin: 0;
-          color: #c65100;
+          color: #111827;
           font-size: 19px;
           font-weight: 800;
           line-height: 1.15;
@@ -370,9 +375,9 @@ export default function HistoryPage() {
           white-space: nowrap;
         }
         .history-divider {
-          height: 2px;
-          margin: 15px 0 8px;
-          background: #111827;
+          height: 0;
+          margin: 14px 0 9px;
+          border-top: 2px dashed #9ca3af;
         }
         .history-row {
           display: flex;
