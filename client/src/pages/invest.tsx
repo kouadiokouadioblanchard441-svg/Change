@@ -37,7 +37,6 @@ export default function InvestPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [confirmProduct, setConfirmProduct] = useState<ProductWithOwnership | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
 
   const { data: products, isLoading } = useQuery<ProductWithOwnership[]>({
     queryKey: ["/api/products"],
@@ -71,8 +70,6 @@ export default function InvestPage() {
   const country     = getCountryByCode(user.country);
   const currency    = country?.currency || "FCFA";
   const paidProducts = products?.filter(p => !p.isFree) || [];
-  const myProducts   = paidProducts.filter(p => p.isOwned);
-  const displayed    = activeTab === "all" ? paidProducts : myProducts;
 
   return (
     <div className="flex flex-col min-h-full" style={{ background: "#f0f2f5" }}>
@@ -95,40 +92,12 @@ export default function InvestPage() {
         </button>
       </div>
 
-      {/* ── Tabs ── */}
-      <div className="flex gap-3 px-4 pt-4 pb-2">
-        <button
-          onClick={() => setActiveTab("all")}
-          className="px-5 py-2 rounded-full font-bold text-sm transition-all"
-          style={{
-            background: activeTab === "all"
-              ? "linear-gradient(135deg, #16a34a, #22c55e)"
-              : "linear-gradient(135deg, #bbf7d0, #86efac)",
-            color: activeTab === "all" ? "#fff" : "#15803d",
-          }}
-        >
-          our products
-        </button>
-        <button
-          onClick={() => setActiveTab("mine")}
-          className="px-5 py-2 rounded-full font-bold text-sm transition-all"
-          style={{
-            background: activeTab === "mine"
-              ? "linear-gradient(135deg, #16a34a, #22c55e)"
-              : "linear-gradient(135deg, #bbf7d0, #86efac)",
-            color: activeTab === "mine" ? "#fff" : "#15803d",
-          }}
-        >
-          my product
-        </button>
-      </div>
-
       {/* ── Product list ── */}
       <div className="flex-1 overflow-y-auto pb-24 px-3 space-y-3 pt-1">
         {isLoading ? (
           Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />)
-        ) : displayed.length > 0 ? (
-          displayed.map((product, idx) => {
+        ) : paidProducts.length > 0 ? (
+          paidProducts.map((product, idx) => {
             const img = PRODUCT_IMAGES[idx % PRODUCT_IMAGES.length];
             return (
               <div
@@ -183,7 +152,7 @@ export default function InvestPage() {
           <div className="text-center py-8 flex flex-col items-center gap-2">
             <img src={emptyIllustration} alt="Vide" className="w-40 h-40 object-contain opacity-90" />
             <p className="text-gray-400 text-sm">
-              {activeTab === "mine" ? "Vous n'avez aucun produit actif" : "Aucun produit disponible"}
+              Aucun produit disponible
             </p>
           </div>
         )}

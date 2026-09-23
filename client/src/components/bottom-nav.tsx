@@ -6,7 +6,7 @@ import accountNavIcon from "@assets/20260228_010619_1787388821589.png";
 
 const navItems = [
   { path: "/",            label: "maison",  icon: homeNavIcon },
-  { path: "/my-products", label: "produit", icon: productsNavIcon },
+  { path: "/products",    label: "produit", icon: productsNavIcon },
   { path: "/team",        label: "équipe",  icon: teamNavIcon },
   { path: "/account",     label: "mon",     icon: accountNavIcon },
 ];
@@ -29,7 +29,7 @@ export default function BottomNav() {
       <div className="mx-auto flex h-[59px] max-w-[500px] items-center justify-around pb-1">
         {navItems.map((item) => {
           const isActive = location === item.path || (item.path === "/team" && isTeam);
-          const homeLabel = item.path === "/" ? "Accueil" : item.path === "/my-products" ? "Produits" : item.path === "/team" ? "Équipe" : "Mon compte";
+          const homeLabel = item.path === "/" ? "Accueil" : item.path === "/products" ? "Produits" : item.path === "/team" ? "Équipe" : "Mon compte";
 
           return (
             <button

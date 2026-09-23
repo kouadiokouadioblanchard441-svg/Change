@@ -199,6 +199,13 @@ function Router() {
           </AppLayout>
         </ProtectedRoute>
       </Route>
+      <Route path="/products">
+        <ProtectedRoute>
+          <AppLayout>
+            <InvestPage />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
       <Route path="/orders">
         <ProtectedRoute>
           <AppLayout>
