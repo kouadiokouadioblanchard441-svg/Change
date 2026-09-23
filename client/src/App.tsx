@@ -141,7 +141,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const isAccountPage = location === "/account";
 
   return (
-    <div className={`min-h-screen bg-background ${isAccountPage ? "pb-0" : "pb-16"}`}>
+    <div className={`min-h-screen ${isAccountPage ? "bg-white pb-0" : "bg-background pb-16"}`}>
       {children}
       <BottomNav />
     </div>
