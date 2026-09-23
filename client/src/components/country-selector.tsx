@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ApiCountry } from "@/lib/countries";
 import { Check, Loader2, Search, X } from "lucide-react";
@@ -12,6 +12,11 @@ interface CountrySelectorProps {
 
 export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }: CountrySelectorProps) {
   const [search, setSearch] = useState("");
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const { data: apiCountries, isLoading, isError } = useQuery<ApiCountry[]>({
     queryKey: ["/api/countries"],
     enabled: open,
@@ -19,12 +24,35 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
 
   useEffect(() => {
     if (!open) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const touchDevice = window.matchMedia("(pointer: coarse)").matches;
+    (touchDevice ? closeButtonRef.current : searchInputRef.current)?.focus({ preventScroll: true });
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSearch("");
+        onCloseRef.current();
+      }
+      if (event.key !== "Tab") return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLButtonElement | HTMLInputElement>("button, input");
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [open, onClose]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -44,6 +72,7 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
   return (
     <div className="country-picker-overlay" onClick={closePicker}>
       <section
+        ref={dialogRef}
         className="country-picker"
         role="dialog"
         aria-modal="true"
@@ -52,14 +81,15 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
       >
         <div className="country-picker-header">
           <h2 id="country-picker-heading">Choisir un pays</h2>
-          <button type="button" className="country-picker-close" onClick={closePicker} aria-label="Fermer">
+          <button ref={closeButtonRef} type="button" className="country-picker-close" onClick={closePicker} aria-label="Fermer">
             <X aria-hidden="true" />
           </button>
         </div>
         <div className="country-picker-search">
           <Search aria-hidden="true" />
           <input
-            autoFocus
+            ref={searchInputRef}
+            type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Rechercher un pays"
@@ -82,6 +112,7 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
                 key={country.code}
                 className={`country-picker-row${selected ? " is-selected" : ""}`}
                 onClick={() => { onSelect(country.code); closePicker(); }}
+                aria-pressed={selected}
                 data-testid={`country-option-${country.code}`}
               >
                 <span className="country-picker-name">{country.name}</span>
@@ -90,7 +121,7 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
               </button>
             );
           })}
-          {!isLoading && !isError && countries.length === 0 && <p className="country-picker-empty">Aucun pays disponible</p>}
+          {!isLoading && !isError && countries.length === 0 && <p className="country-picker-empty">{search ? "Aucun résultat" : "Aucun pays disponible"}</p>}
         </div>
       </section>
     </div>
