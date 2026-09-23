@@ -61,7 +61,7 @@ const DEPOSIT_STEP_STYLES = `
     border: 2px solid #111827;
     border-radius: 11px;
     background: #fff;
-    color: #e85d00;
+    color: ${TON_GREEN_DARK};
     font-size: 12px;
     font-weight: 800;
   }
@@ -80,7 +80,7 @@ const DEPOSIT_STEP_STYLES = `
     background: #fff;
   }
   .deposit-step-shell .deposit-step-card-orange {
-    border-color: #ff7a14;
+    border-color: ${TON_GREEN};
     background: #fff3e8;
   }
   .deposit-step-shell .deposit-step-field {
@@ -92,7 +92,7 @@ const DEPOSIT_STEP_STYLES = `
     min-height: 54px;
     border: 2px solid #111827 !important;
     border-radius: 12px !important;
-    background: #ff7a14 !important;
+    background: ${TON_GREEN} !important;
     color: #111827 !important;
     font-weight: 800 !important;
     box-shadow: 0 4px 0 #111827;
@@ -118,7 +118,7 @@ const DEPOSIT_STEP_STYLES = `
     background: #fff3e8;
   }
   .deposit-step-shell .deposit-step-icon svg {
-    color: #ff7a14;
+    color: ${TON_GREEN};
   }
   .deposit-step-shell .deposit-step-operator {
     border: 2px solid #d1d5db !important;
@@ -126,7 +126,7 @@ const DEPOSIT_STEP_STYLES = `
     background: #fff !important;
   }
   .deposit-step-shell .deposit-step-operator-selected {
-    border-color: #ff7a14 !important;
+    border-color: ${TON_GREEN} !important;
     background: #fff3e8 !important;
   }
   .deposit-step-shell .deposit-step-otp {
@@ -1189,7 +1189,7 @@ export default function DepositPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             className={`w-full border-2 border-dashed rounded-xl py-7 flex flex-col items-center gap-2 transition-colors ${
-              screenshot ? "border-orange-400 bg-orange-50" : "border-gray-300 bg-gray-50 hover:border-[#FF7A14] hover:bg-orange-50"
+              screenshot ? "border-[#FF7A14] bg-[#FFF3E8]" : "border-gray-300 bg-gray-50 hover:border-[#FF7A14] hover:bg-[#FFF3E8]"
             }`}
           >
             {screenshot ? (
@@ -1547,7 +1547,7 @@ export default function DepositPage() {
         </div>
 
         {/* Step 2 — Enter OTP */}
-        <div className="rounded-2xl border-2 border-orange-100 bg-orange-50 p-4">
+        <div className="deposit-step-card deposit-step-card-orange p-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-7 h-7 rounded-full bg-[#FF7A14] flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-xs">2</span>
