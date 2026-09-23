@@ -9,9 +9,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getPaymentMethodsForCountry, type ApiCountry } from "@/lib/countries";
 import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X } from "lucide-react";
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
+import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 import { Link, useLocation, useSearch } from "wouter";
 import type { WithdrawalWallet } from "@shared/schema";
-import withdrawalMethodBackground from "@assets/generated_images/withdrawal-method-background.jpg";
 
 const walletSchema = z.object({
   accountNumber: z.string().min(8, "Numéro requis"),
@@ -430,7 +430,9 @@ const walletStyles = `
   .wallet-scene-page .wallet-shell {
     min-height: 100vh;
     background-color: #ffffff;
-    background-image: url("${withdrawalMethodBackground}");
+    background-image:
+      linear-gradient(rgba(255, 255, 255, .22), rgba(255, 255, 255, .22)),
+      url("${chargepointPromo}");
     background-position: top center;
     background-repeat: no-repeat;
     background-size: 100% auto;
