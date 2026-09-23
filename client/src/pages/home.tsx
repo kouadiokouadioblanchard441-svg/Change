@@ -18,6 +18,8 @@ import electricBus from "@assets/banner-filtered/electric-bus.jpg";
 import homeCharging from "@assets/banner-filtered/home-charging.jpg";
 import publicCharger from "@assets/banner-filtered/public-charger.jpg";
 import chargerProduct from "@assets/banner-filtered/charger-product.jpg";
+import chargeflexOverview from "@assets/overview-chargeflex-no-bg.png";
+import cpf50Overview from "@assets/overview-cpf50-no-bg.png";
 import ct4000 from "@assets/CT4000-Top-main-with-energy-star_1790148214627.png";
 
 interface Withdrawal {
@@ -152,10 +154,12 @@ export default function HomePage() {
               </button>
               <div className="cp-stack">
                 <article className="cp-stat cp-stat-orange">
+                  <img className="cp-stat-image cp-stat-image-chargeflex" src={chargeflexOverview} alt="" />
                   <strong data-testid="text-total-earnings">{formatMoney(totalEarnings)}</strong>
                   <span>Cumul</span>
                 </article>
                 <article className="cp-stat cp-stat-ink">
+                  <img className="cp-stat-image cp-stat-image-cpf50" src={cpf50Overview} alt="" />
                   <strong>{withdrawnTotal === undefined ? "—" : formatMoney(withdrawnTotal)}</strong>
                   <span>Retrait</span>
                   {withdrawnTotal === undefined && <small>Historique indisponible</small>}
