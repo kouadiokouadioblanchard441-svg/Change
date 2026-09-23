@@ -21,6 +21,12 @@ import chargerProduct from "@assets/banner-filtered/charger-product.jpg";
 import chargeflexOverview from "@assets/overview-chargeflex-no-bg.png";
 import cpf50Overview from "@assets/overview-cpf50-no-bg.png";
 import ct4000 from "@assets/CT4000-Top-main-with-energy-star_1790148214627.png";
+import doosanLogo from "@assets/6790d8bd04714fedd7593cb6_Doosan_Group_and_Corporation_-_Logo.s_1784561452870.png";
+import intelLogo from "@assets/Intel-logo-2022_1782688971182.png";
+import sybotxLogo from "@/assets/Logo_SYBOTX_recadre_1786844134617.png";
+import vestasLogo from "@/assets/vestas-logo_1783210030332.png";
+import elfLogo from "@/assets/images/elf-logo-card.png";
+import jollibeeLogo from "@/assets/jollibee_logo.png";
 
 interface Withdrawal {
   amount: string;
@@ -55,6 +61,15 @@ const announcementLibrary = [
   "05****47 a retiré 27 800 F",
   "01****29 a obtenu 25 000 F de bonus d'équipe",
   "07****18 a retiré 11 250 F",
+] as const;
+
+const partners = [
+  { name: "Doosan", logo: doosanLogo, className: "cp-partner-logo-wide" },
+  { name: "Vestas", logo: vestasLogo, className: "cp-partner-logo-wide" },
+  { name: "ELF", logo: elfLogo, className: "cp-partner-logo-elf" },
+  { name: "SYBOTX", logo: sybotxLogo, className: "cp-partner-logo-sybotx" },
+  { name: "Intel", logo: intelLogo, className: "cp-partner-logo-intel" },
+  { name: "Jollibee", logo: jollibeeLogo, className: "cp-partner-logo-jollibee" },
 ] as const;
 
 export default function HomePage() {
@@ -165,6 +180,23 @@ export default function HomePage() {
                   {withdrawnTotal === undefined && <small>Historique indisponible</small>}
                 </article>
               </div>
+            </div>
+          </section>
+
+          <section className="cp-partners" aria-labelledby="partners-title">
+            <header className="cp-partners-heading">
+              <h2 id="partners-title">Nos partenaires</h2>
+              <span>Des marques qui avancent avec nous</span>
+            </header>
+            <div className="cp-partners-grid">
+              {partners.map(({ name, logo, className }) => (
+                <article className="cp-partner-card" key={name}>
+                  <div className="cp-partner-logo">
+                    <img className={className} src={logo} alt="" />
+                  </div>
+                  <span>{name}</span>
+                </article>
+              ))}
             </div>
           </section>
         </div>

@@ -60,6 +60,20 @@
 .cp-stat span { display:block; margin-top:12px; font-size:19px; line-height:1; }
 .cp-stat small { display:block; margin-top:7px; font-size:9px; }
 .cp-stat-orange { background:#ffe5cf; color:#632b00; }.cp-stat-ink { background:#303438; color:#fff; }
+.cp-partners { margin:16px 12px 0; padding:0 12px 16px; border:2px solid #111827; border-radius:12px; background:#fff; box-shadow:0 4px 0 #111827, 0 7px 14px rgba(17,24,39,.18); }
+.cp-partners-heading { display:flex; flex-direction:column; gap:2px; margin:0 -12px 14px; padding:11px 14px 10px; border-bottom:2px solid var(--cp-orange); background:#fff7f0; }
+.cp-partners-heading h2 { margin:0; color:#b84b00; font:600 23px/28px "Space Grotesk"; letter-spacing:-.04em; }
+.cp-partners-heading span { color:#71757a; font-size:11px; }
+.cp-partners-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.cp-partner-card { display:flex; min-width:0; min-height:98px; flex-direction:column; align-items:center; justify-content:space-between; padding:10px 7px 9px; border:1px solid #eceeed; border-radius:12px; background:#fff; box-shadow:0 3px 8px rgba(17,24,39,.08); }
+.cp-partner-logo { display:grid; place-items:center; width:100%; height:52px; overflow:hidden; }
+.cp-partner-logo img { display:block; max-width:100%; max-height:44px; object-fit:contain; }
+.cp-partner-logo-wide { width:100%; max-height:30px !important; }
+.cp-partner-logo-elf { width:100%; max-height:43px !important; }
+.cp-partner-logo-sybotx { width:100%; max-height:48px !important; }
+.cp-partner-logo-intel { width:92%; max-height:42px !important; }
+.cp-partner-logo-jollibee { width:88%; max-height:44px !important; }
+.cp-partner-card > span { overflow:hidden; color:#606568; font-size:11px; font-weight:600; line-height:1; text-overflow:ellipsis; white-space:nowrap; }
 .cp-dialog { max-width:380px; border:1px solid #ecebe8; border-radius:20px; background:#fff; box-shadow:0 20px 60px rgba(32,34,37,.16); padding:24px; }.cp-dialog [data-slot="dialog-title"] { font:600 23px "Space Grotesk"; letter-spacing:-.05em; }.cp-dialog-copy { display:flex; gap:13px; align-items:flex-start; color:var(--cp-orange); margin:16px 0 20px; }.cp-dialog-copy p { margin:0; color:#575b5f; font-size:13px; line-height:1.5; }.cp-dialog-link,.cp-dialog-close { display:flex; align-items:center; justify-content:center; width:100%; min-height:40px; border-radius:10px; font:600 12px "DM Sans"; cursor:pointer; }.cp-dialog-link { background:var(--cp-orange); color:#24160d; text-decoration:none; }.cp-dialog-close { margin-top:8px; border:1px solid #e4e3df; background:#fff; color:#555; }
 @media (min-width:768px) { .cp-home { padding-top:20px; }.cp-shell { box-shadow:0 0 0 1px #f0f0ef, 0 18px 50px rgba(32,34,37,.08); border-radius:22px; } }
 @media (max-width:360px) { .cp-hero { height:272px; }.cp-hero h1 { font-size:28px; }.cp-action { font-size:11px; }.cp-balance { height:238px; }.cp-balance strong { font-size:21px; }.cp-stat { padding:20px 10px 10px; }.cp-stat span { font-size:16px; } }
