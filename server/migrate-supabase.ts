@@ -340,8 +340,8 @@ async function run() {
     const productsData = [
       { name: "Bonus Gratuit", price: 0, daily_earnings: 50, cycle_days: 80, total_return: 4000, is_free: true, sort_order: 0 },
       { name: "VIP 1", price: 4500, daily_earnings: 380, cycle_days: 200, total_return: 76000, is_free: false, sort_order: 1 },
-      { name: "VIP 2", price: 6000, daily_earnings: 1500, cycle_days: 200, total_return: 300000, is_free: false, sort_order: 2 },
-      { name: "VIP 3", price: 10000, daily_earnings: 2568, cycle_days: 200, total_return: 513600, is_free: false, sort_order: 3 },
+      { name: "VIP 2", price: 8000, daily_earnings: 1850, cycle_days: 200, total_return: 370000, is_free: false, sort_order: 2 },
+      { name: "VIP 3", price: 15000, daily_earnings: 3550, cycle_days: 200, total_return: 710000, is_free: false, sort_order: 3 },
       { name: "VIP 4", price: 60000, daily_earnings: 3500, cycle_days: 200, total_return: 700000, is_free: false, sort_order: 4 },
       { name: "VIP 5", price: 100000, daily_earnings: 6000, cycle_days: 200, total_return: 1200000, is_free: false, sort_order: 5 },
       { name: "VIP 6", price: 200000, daily_earnings: 13000, cycle_days: 200, total_return: 2600000, is_free: false, sort_order: 6 },

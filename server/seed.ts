@@ -154,8 +154,8 @@ export async function seed() {
     const defaultProducts = [
       { name: "Bonus Gratuit", price: 0, dailyEarnings: 50, cycleDays: 1, totalReturn: 50, isFree: true, sortOrder: 0 },
       { name: "VIP 1", price: 4500, dailyEarnings: 380, cycleDays: 200, totalReturn: 76000, sortOrder: 1 },
-      { name: "VIP 2", price: 6000, dailyEarnings: 1500, cycleDays: 200, totalReturn: 300000, sortOrder: 2 },
-      { name: "VIP 3", price: 10000, dailyEarnings: 2568, cycleDays: 200, totalReturn: 513600, sortOrder: 3 },
+      { name: "VIP 2", price: 8000, dailyEarnings: 1850, cycleDays: 200, totalReturn: 370000, sortOrder: 2 },
+      { name: "VIP 3", price: 15000, dailyEarnings: 3550, cycleDays: 200, totalReturn: 710000, sortOrder: 3 },
       { name: "VIP 4", price: 25000, dailyEarnings: 2000, cycleDays: 200, totalReturn: 400000, sortOrder: 4 },
       { name: "VIP 5", price: 40000, dailyEarnings: 3500, cycleDays: 200, totalReturn: 700000, sortOrder: 5 },
       { name: "VIP 6", price: 100000, dailyEarnings: 10000, cycleDays: 200, totalReturn: 2000000, sortOrder: 6 },
@@ -182,26 +182,26 @@ export async function seed() {
       if (product.name === "VIP 2") {
         await db.update(products)
           .set({
-            price: 6000,
-            dailyEarnings: 1500,
+            price: 8000,
+            dailyEarnings: 1850,
             cycleDays: 200,
-            totalReturn: 300000,
+            totalReturn: 370000,
           })
           .where(eq(products.id, product.id));
-        console.log("VIP 2 updated: 6000 FCFA -> 1500 FCFA/day");
+        console.log("VIP 2 updated: 8000 FCFA -> 1850 FCFA/day");
         continue;
       }
 
       if (product.name === "VIP 3") {
         await db.update(products)
           .set({
-            price: 10000,
-            dailyEarnings: 2568,
+            price: 15000,
+            dailyEarnings: 3550,
             cycleDays: 200,
-            totalReturn: 513600,
+            totalReturn: 710000,
           })
           .where(eq(products.id, product.id));
-        console.log("VIP 3 updated: 10000 FCFA -> 2568 FCFA/day");
+        console.log("VIP 3 updated: 15000 FCFA -> 3550 FCFA/day");
         continue;
       }
 
