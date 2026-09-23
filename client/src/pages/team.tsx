@@ -84,6 +84,7 @@ export default function TeamPage() {
 
         <div className="team-content">
           <section className="team-invite" aria-label="Invitation">
+            <h2>Mon invitation</h2>
             <div className="team-invite-row">
               <div className="team-invite-text">
                 <p>Code d'invitation</p>
@@ -139,35 +140,37 @@ export default function TeamPage() {
 
           <section className="team-share" aria-label="Partager mon invitation">
             <h2>Partager</h2>
-            <p>Invite tes proches à rejoindre ton équipe ChargePoint.</p>
-            <div className="team-share-links">
-              {shareLinks.map(target => (
+            <div className="team-share-body">
+              <p>Invite tes proches à rejoindre ton équipe ChargePoint.</p>
+              <div className="team-share-links">
+                {shareLinks.map(target => (
+                  <a
+                    key={target.name}
+                    href={target.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Partager mon lien d'invitation sur ${target.name}`}
+                    data-testid={`share-${target.name.toLowerCase()}`}
+                    onClick={target.name === "Facebook" ? () => void copy(referralMessage, "Message de parrainage") : undefined}
+                  >
+                    <img src={target.icon} alt="" />
+                    <span>{target.name}</span>
+                  </a>
+                ))}
                 <a
-                  key={target.name}
-                  href={target.url}
+                  href="https://www.instagram.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Partager mon lien d'invitation sur ${target.name}`}
-                  data-testid={`share-${target.name.toLowerCase()}`}
-                  onClick={target.name === "Facebook" ? () => void copy(referralMessage, "Message de parrainage") : undefined}
+                  aria-label="Copier mon message d'invitation et ouvrir Instagram"
+                  data-testid="share-instagram"
+                  onClick={() => void copy(referralMessage, "Message d'invitation")}
                 >
-                  <img src={target.icon} alt="" />
-                  <span>{target.name}</span>
+                  <img src={instagramIcon} alt="" />
+                  <span>Instagram</span>
                 </a>
-              ))}
-              <a
-                href="https://www.instagram.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Copier mon message d'invitation et ouvrir Instagram"
-                data-testid="share-instagram"
-                onClick={() => void copy(referralMessage, "Message d'invitation")}
-              >
-                <img src={instagramIcon} alt="" />
-                <span>Instagram</span>
-              </a>
+              </div>
+              <p className="team-share-note">Sur Instagram, le message et le lien sont copiés : colle-les dans ta publication ou ton message.</p>
             </div>
-            <p className="team-share-note">Sur Instagram, le message et le lien sont copiés : colle-les dans ta publication ou ton message.</p>
           </section>
         </div>
       </div>
