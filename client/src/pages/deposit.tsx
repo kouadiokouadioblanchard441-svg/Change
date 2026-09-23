@@ -10,11 +10,11 @@ import {
 import { Link } from "wouter";
 import type { ApiCountry } from "@/lib/countries";
 import type { PaymentNumber } from "@shared/schema";
-import rechargeReference from "@assets/IMG-20260821-WA0163_1787357122336.jpg";
-import historyIcon from "@assets/20260410_193219_1787363717022.png";
+import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
+import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 
-const TON_GREEN = "#00CC2C";
-const TON_GREEN_DARK = "#009d22";
+const TON_GREEN = "#FF7A14";
+const TON_GREEN_DARK = "#E85D00";
 const TON_GRADIENT = `linear-gradient(112deg, ${TON_GREEN} 0%, ${TON_GREEN_DARK} 100%)`;
 
 type Step =
@@ -590,101 +590,167 @@ export default function DepositPage() {
     <main className="recharge-reference min-h-screen bg-[#f7f3f0]">
       <style>{`
         .recharge-reference {
-          color: #181818;
+          min-height: 100dvh;
+          background: #fff8f2;
+          color: #111827;
           font-family: Inter, Arial, sans-serif;
         }
         .recharge-reference .recharge-screen {
           width: 100%;
-          max-width: 500px;
-          min-height: 100vh;
+          max-width: 512px;
+          min-height: 100dvh;
           margin: 0 auto;
           overflow: hidden;
-          background: #f7f3f0;
+          background: #fff8f2;
         }
         .recharge-reference .recharge-hero {
           position: relative;
-          height: min(33.84vw, 169px);
-          min-height: 135px;
-          overflow: hidden;
-          background: #ffca29;
+          box-sizing: border-box;
+          min-height: 286px;
+          padding: 0 16px 20px;
+          background: #fff8f2;
+          border-bottom: 2px solid #111827;
         }
-        .recharge-reference .history-button {
+        .recharge-reference .recharge-hero-art {
+          position: relative;
+          width: 100%;
+          height: 166px;
+          overflow: hidden;
+          margin-top: 76px;
+          border: 2px solid #111827;
+          border-radius: 13px;
+          background: #fff;
+          box-shadow: 0 4px 0 #111827;
+        }
+        .recharge-reference .recharge-hero-art img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .recharge-reference .recharge-title {
+          position: absolute;
+          z-index: 2;
+          top: 20px;
+          right: 70px;
+          left: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          margin: 0;
+          color: #111827;
+          font-size: 20px;
+          font-weight: 800;
+          line-height: 1.2;
+        }
+        .recharge-reference .recharge-title-logo {
+          width: 38px;
+          height: 38px;
+          border: 2px solid #111827;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+        .recharge-reference .history-button,
+        .recharge-reference .recharge-back {
           position: absolute;
           z-index: 3;
           top: 14px;
-          right: 16px;
           display: grid;
-          width: 44px;
-          height: 44px;
+          width: 42px;
+          height: 42px;
           place-items: center;
-          border: 0;
-          border-radius: 12px;
-          background: rgba(255,255,255,.24);
+          border: 2px solid #111827;
+          border-radius: 11px;
+          padding: 0;
+          background: #fff;
+          box-shadow: 0 3px 0 #111827;
         }
-        .recharge-reference .history-icon {
-          width: 30px;
-          height: 30px;
-          background: #3174d1;
-          -webkit-mask-image: url("${historyIcon}");
-          mask-image: url("${historyIcon}");
-          -webkit-mask-position: center;
-          mask-position: center;
-          -webkit-mask-repeat: no-repeat;
-          mask-repeat: no-repeat;
-          -webkit-mask-size: contain;
-          mask-size: contain;
-        }
-        .recharge-reference .recharge-hero img {
-          width: 100%;
-          height: auto;
-          transform: translateY(-10.55%);
-          pointer-events: none;
+        .recharge-reference .history-button {
+          right: 16px;
         }
         .recharge-reference .recharge-back {
+          left: 16px;
+        }
+        .recharge-reference .history-button:active,
+        .recharge-reference .recharge-back:active {
+          transform: translateY(2px);
+          box-shadow: 0 1px 0 #111827;
+        }
+        .recharge-reference .history-icon {
+          position: relative;
+          width: 22px;
+          height: 25px;
+          border: 2px solid #111827;
+          border-radius: 4px;
+        }
+        .recharge-reference .history-icon::before {
           position: absolute;
-          top: 50%;
-          left: 24px;
-          width: 40px;
-          height: 40px;
-          transform: translateY(-50%);
+          top: 5px;
+          left: 4px;
+          width: 11px;
+          height: 2px;
+          content: "";
+          background: #ff7a14;
+          box-shadow: 0 6px 0 #ff7a14;
+        }
+        .recharge-reference .history-icon::after {
+          position: absolute;
+          right: -7px;
+          bottom: -6px;
+          width: 10px;
+          height: 10px;
+          border: 2px solid #111827;
+          border-radius: 50%;
+          content: "";
+          background: #fff;
+        }
+        .recharge-reference .recharge-back::before {
+          width: 13px;
+          height: 13px;
+          border-bottom: 3px solid #111827;
+          border-left: 3px solid #111827;
+          content: "";
+          transform: rotate(45deg) translate(2px, -2px);
         }
         .recharge-reference .amount-panel {
-          min-height: 238px;
-          padding: 29px 25px 35px;
-          background: white;
-          border-radius: 0 0 8px 8px;
+          min-height: 252px;
+          padding: 20px 16px 18px;
+          background: #fff;
         }
         .recharge-reference .preset-row {
           display: flex;
-          gap: 18px;
+          gap: 10px;
         }
         .recharge-reference .preset {
-          width: 82px;
-          height: 50px;
-          border-radius: 10px;
-          background: #eeeeee;
+          flex: 1;
+          height: 48px;
+          border: 2px solid #d1d5db;
+          border-radius: 11px;
+          background: #fff;
           color: #24252a;
           font-size: 15px;
-          font-weight: 500;
+          font-weight: 800;
         }
         .recharge-reference .preset.active {
           background: ${TON_GRADIENT};
-          color: white;
-          box-shadow: 0 2px 4px rgba(247,178,0,.14);
+          border-color: #111827;
+          color: #111827;
+          box-shadow: 0 3px 0 #111827;
         }
         .recharge-reference .amount-label {
-          margin: 25px 0 23px 16px;
-          color: #c98e41;
+          margin: 20px 0 9px;
+          color: #111827;
           font-size: 16px;
-          font-weight: 400;
+          font-weight: 800;
         }
         .recharge-reference .amount-input {
           display: flex;
-          height: 55px;
+          height: 56px;
           align-items: center;
           overflow: hidden;
-          border-radius: 11px;
-          background: #f5f2f0;
+          border: 2px solid #111827;
+          border-radius: 12px;
+          background: #fff;
         }
         .recharge-reference .amount-input input {
           width: 100%;
@@ -693,72 +759,120 @@ export default function DepositPage() {
           padding: 0 14px;
           border: 0;
           outline: 0;
-          color: #787878;
+          color: #111827;
           background: transparent;
           font-size: 19px;
         }
         .recharge-reference .currency {
           padding: 0 13px 0 0;
-          color: #707070;
-          font-size: 24px;
-          font-weight: 400;
+          color: #111827;
+          font-size: 18px;
+          font-weight: 800;
+        }
+        .recharge-reference .country-panel {
+          margin: 14px 16px 0;
+        }
+        .recharge-reference .country-panel label {
+          display: block;
+          margin-bottom: 8px;
+          color: #111827;
+          font-size: 14px;
+          font-weight: 800;
+        }
+        .recharge-reference .country-panel select {
+          width: 100%;
+          min-height: 52px;
+          padding: 0 14px;
+          border: 2px solid #111827;
+          border-radius: 12px;
+          outline: 0;
+          background: #fff;
+          color: #4b5563;
+          font-size: 14px;
         }
         .recharge-reference .continue {
           display: flex;
-          width: 231px;
-          height: 52px;
+          width: calc(100% - 32px);
+          min-height: 57px;
           align-items: center;
           justify-content: center;
-          margin: 30px auto 0;
-          border-radius: 28px;
+          margin: 14px 16px 0;
+          border: 2px solid #111827;
+          border-radius: 12px;
           background: ${TON_GRADIENT};
-          color: white;
-          font-size: 18px;
-          font-weight: 400;
-          box-shadow: 0 2px 4px rgba(236,165,0,.16);
+          color: #111827;
+          font-size: 16px;
+          font-weight: 800;
+          box-shadow: 0 4px 0 #111827;
+        }
+        .recharge-reference .continue:active:not(:disabled) {
+          transform: translateY(3px);
+          box-shadow: 0 1px 0 #111827;
+        }
+        .recharge-reference .continue:disabled {
+          opacity: .55;
         }
         .recharge-reference .instructions {
-          padding: 25px 9px 40px;
-          color: #151515;
+          margin-top: 18px;
+          padding: 22px 16px 24px;
+          border-top: 2px solid #111827;
+          background: #fff;
+          color: #4b5563;
         }
         .recharge-reference .instructions-title {
-          margin-bottom: 28px;
-          font-size: 17px;
+          margin: 0 0 18px;
+          color: #111827;
+          font-size: 18px;
           font-weight: 800;
         }
         .recharge-reference .instructions-title::before {
-          content: "▰";
+          content: "•";
           margin-right: 8px;
-          color: #f3c414;
-          font-size: 18px;
+          color: #ff7a14;
+          font-size: 24px;
+          line-height: 0;
         }
         .recharge-reference .instruction {
           position: relative;
-          margin: 0 0 25px 26px;
-          font-size: 17px;
+          margin: 0 0 14px 20px;
+          font-size: 14px;
           font-weight: 500;
-          line-height: 1.65;
+          line-height: 1.55;
         }
         .recharge-reference .instruction::before {
-          content: "◆";
           position: absolute;
-          left: -20px;
-          top: 2px;
-          color: #579ad8;
-          font-size: 10px;
+          top: 7px;
+          left: -15px;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          content: "";
+          background: #ff7a14;
         }
-        .recharge-reference .instruction strong { font-weight: 800; }
+        .recharge-reference .instruction strong { color: #111827; font-weight: 800; }
         @media (max-width: 360px) {
-          .recharge-reference .amount-panel { padding-right: 18px; padding-left: 18px; }
+          .recharge-reference .recharge-hero { min-height: 270px; padding-right: 12px; padding-left: 12px; }
+          .recharge-reference .recharge-hero-art { height: 150px; }
+          .recharge-reference .history-button { right: 12px; }
+          .recharge-reference .recharge-back { left: 12px; }
+          .recharge-reference .amount-panel { padding-right: 12px; padding-left: 12px; }
+          .recharge-reference .country-panel { margin-right: 12px; margin-left: 12px; }
+          .recharge-reference .continue { width: calc(100% - 24px); margin-right: 12px; margin-left: 12px; }
           .recharge-reference .preset-row { gap: 10px; }
-          .recharge-reference .preset { flex: 1; width: auto; }
+          .recharge-reference .preset { font-size: 13px; }
           .recharge-reference .instruction { font-size: 15px; }
         }
       `}</style>
 
       <div className="recharge-screen">
-        <section className="recharge-hero" aria-label="Recharger">
-          <img src={rechargeReference} alt="" />
+        <section className="recharge-hero" aria-label="Dépôt">
+          <div className="recharge-hero-art">
+            <img src={chargepointPromo} alt="" />
+          </div>
+          <h1 className="recharge-title">
+            <img className="recharge-title-logo" src={chargepointLogo} alt="" />
+            <span>Dépôt</span>
+          </h1>
           <Link href="/history">
             <button className="history-button" aria-label="Historique des transactions">
               <span className="history-icon" aria-hidden="true" />
@@ -795,13 +909,12 @@ export default function DepositPage() {
           </label>
         </section>
 
-        <section className="mx-auto mt-2 w-[88%]" aria-label="Pays du paiement">
-          <label htmlFor="deposit-country" className="mb-2 block text-sm font-semibold text-gray-800">Pays du paiement</label>
+        <section className="country-panel" aria-label="Pays du paiement">
+          <label htmlFor="deposit-country">Pays du paiement</label>
           <select
             id="deposit-country"
             value={depositCountry}
             onChange={(event) => setDepositCountry(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none"
           >
             <option value="">Sélectionnez un pays</option>
             {activeDepositCountries.map((item) => (
