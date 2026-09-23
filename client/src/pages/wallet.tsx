@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getPaymentMethodsForCountry, type ApiCountry } from "@/lib/countries";
-import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X } from "lucide-react";
+import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X, Wifi } from "lucide-react";
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 import { Link, useLocation, useSearch } from "wouter";
@@ -19,6 +19,12 @@ const walletSchema = z.object({
 });
 
 type WalletForm = z.infer<typeof walletSchema>;
+
+function maskWalletNumber(accountNumber: string) {
+  const compactNumber = accountNumber.replace(/\s+/g, "");
+  if (compactNumber.length <= 6) return accountNumber;
+  return `${compactNumber.slice(0, 2)}••••••${compactNumber.slice(-4)}`;
+}
 
 const walletStyles = `
   .wallet-page {
