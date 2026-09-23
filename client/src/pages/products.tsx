@@ -238,7 +238,6 @@ export default function ProductsPage() {
 
         <div className="cp-products-section-title">
           <h2>Nos produits</h2>
-          <span>{availableProducts.length} disponibles</span>
         </div>
 
         <section className="cp-products-list" aria-label="Produits disponibles">
