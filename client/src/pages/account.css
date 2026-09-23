@@ -4,7 +4,7 @@
   --cp-ink: #15171a;
   --cp-panel: #fff;
   min-height: auto;
-  padding-bottom: 16px;
+  padding-bottom: 0;
   background: #fff;
   color: var(--cp-ink);
   font-family: "DM Sans", Arial, sans-serif;

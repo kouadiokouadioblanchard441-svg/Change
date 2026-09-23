@@ -137,8 +137,11 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const isAccountPage = location === "/account";
+
   return (
-    <div className="min-h-screen bg-background pb-16">
+    <div className={`min-h-screen bg-background ${isAccountPage ? "pb-0" : "pb-16"}`}>
       {children}
       <BottomNav />
     </div>
