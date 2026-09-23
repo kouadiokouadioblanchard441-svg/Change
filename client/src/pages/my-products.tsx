@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearch } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +37,9 @@ interface ProductWithOwnership extends Product {
 export default function MyProductsPage() {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"our" | "my">("our");
+  const search = useSearch();
+  const initialTab = new URLSearchParams(search).get("tab") === "my" ? "my" : "our";
+  const [activeTab, setActiveTab] = useState<"our" | "my">(initialTab);
   const [confirmProduct, setConfirmProduct] = useState<ProductWithOwnership | null>(null);
 
   const { data: products, isLoading: loadingProducts } = useQuery<ProductWithOwnership[]>({
