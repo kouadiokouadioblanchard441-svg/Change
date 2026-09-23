@@ -17,6 +17,134 @@ const TON_GREEN = "#FF7A14";
 const TON_GREEN_DARK = "#E85D00";
 const TON_GRADIENT = `linear-gradient(112deg, ${TON_GREEN} 0%, ${TON_GREEN_DARK} 100%)`;
 
+const DEPOSIT_STEP_STYLES = `
+  .deposit-step-shell {
+    min-height: 100dvh;
+    max-width: 512px;
+    margin: 0 auto;
+    overflow: hidden;
+    background: #fff8f2;
+    color: #111827;
+    font-family: Inter, Arial, sans-serif;
+  }
+  .deposit-step-shell .deposit-step-header {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 2px solid #111827;
+    background: #fff8f2;
+  }
+  .deposit-step-shell .deposit-step-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 8px 12px 8px 8px;
+    border: 2px solid #111827;
+    border-radius: 11px;
+    background: #fff;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 3px 0 #111827;
+  }
+  .deposit-step-shell .deposit-step-back:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #111827;
+  }
+  .deposit-step-shell .deposit-step-history {
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 2px solid #111827;
+    border-radius: 11px;
+    background: #fff;
+    color: #e85d00;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .deposit-step-shell .deposit-step-content {
+    padding: 16px;
+  }
+  .deposit-step-shell .deposit-step-summary {
+    border: 2px solid #111827;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 0 #111827;
+  }
+  .deposit-step-shell .deposit-step-card {
+    border: 2px solid #111827;
+    border-radius: 14px;
+    background: #fff;
+  }
+  .deposit-step-shell .deposit-step-card-orange {
+    border-color: #ff7a14;
+    background: #fff3e8;
+  }
+  .deposit-step-shell .deposit-step-field {
+    border: 2px solid #111827 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+  }
+  .deposit-step-shell .deposit-step-primary {
+    min-height: 54px;
+    border: 2px solid #111827 !important;
+    border-radius: 12px !important;
+    background: #ff7a14 !important;
+    color: #111827 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 0 #111827;
+  }
+  .deposit-step-shell .deposit-step-primary:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #111827;
+  }
+  .deposit-step-shell .deposit-step-secondary {
+    border: 2px solid #111827 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    color: #111827 !important;
+    font-weight: 800 !important;
+  }
+  .deposit-step-shell .deposit-step-icon {
+    display: grid;
+    width: 76px;
+    height: 76px;
+    place-items: center;
+    border: 2px solid #111827;
+    border-radius: 50%;
+    background: #fff3e8;
+  }
+  .deposit-step-shell .deposit-step-icon svg {
+    color: #ff7a14;
+  }
+  .deposit-step-shell .deposit-step-operator {
+    border: 2px solid #d1d5db !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+  }
+  .deposit-step-shell .deposit-step-operator-selected {
+    border-color: #ff7a14 !important;
+    background: #fff3e8 !important;
+  }
+  .deposit-step-shell .deposit-step-otp {
+    border: 2px solid #111827 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+  }
+  @media (max-width: 360px) {
+    .deposit-step-shell .deposit-step-header { padding-right: 12px; padding-left: 12px; }
+    .deposit-step-shell .deposit-step-content { padding: 12px; }
+    .deposit-step-shell .deposit-step-back { font-size: 14px; }
+  }
+`;
+
+function DepositStepStyles() {
+  return <style>{DEPOSIT_STEP_STYLES}</style>;
+}
+
 type Step =
   | "amount"
   | "select"
