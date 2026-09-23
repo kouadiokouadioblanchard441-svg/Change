@@ -28,7 +28,7 @@ import checkinIcon from "@/assets/home-actions/checkin.png";
 import downloadIcon from "@assets/mine-mod-download-B1teb57W_1784762231070.png";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
-import giftIcon from "@assets/IMG_20260829_070918_659_1790162584399.jpg";
+import giftIcon from "@/assets/gift-icon-transparent.png";
 import "./account.css";
 
 const tonGreen = "#00CC2C";
