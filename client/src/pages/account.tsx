@@ -20,7 +20,7 @@ import historyIcon from "@assets/4-1_1787388071574.png";
 import taskIcon from "@assets/téléchargement_(66)_1787388422746.png";
 import walletIcon from "@/assets/account-wallet.png";
 import aboutIcon from "@/assets/account-about.png";
-import serviceIcon from "@assets/20260822_083355_1787387728003.png";
+import serviceIcon from "@/assets/account-service.png";
 import passwordIcon from "@/assets/account-password.png";
 import rulesIcon from "@/assets/account-rules.png";
 import logoutIcon from "@assets/logout_1787368185297.png";
@@ -28,7 +28,7 @@ import checkinIcon from "@/assets/home-actions/checkin.png";
 import downloadIcon from "@assets/mine-mod-download-B1teb57W_1784762231070.png";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
-import giftIcon from "@/assets/gift-icon-transparent.png";
+import giftIcon from "@/assets/account-gift.png";
 import "./account.css";
 
 const tonGreen = "#00CC2C";
