@@ -9,8 +9,27 @@ import {
   , type WithdrawalFeePayment
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, gte, lte, or, isNull } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, or, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
+
+type TeamStats = {
+  level1Count: number;
+  level2Count: number;
+  level3Count: number;
+  totalCommission: number;
+  level1Commission: number;
+  level2Commission: number;
+  level3Commission: number;
+  level1Invested: number;
+  level2Invested: number;
+  level3Invested: number;
+  level1Recharged: number;
+  totalDepositAmount: number;
+  totalWithdrawalAmount: number;
+  todayNewMembers: number;
+  todayDepositAmount: number;
+  todayWithdrawalAmount: number;
+};
 
 export interface IStorage {
   // Users
@@ -87,7 +106,7 @@ export interface IStorage {
   getReferrals(userId: number, level: number): Promise<User[]>;
   createReferralCommission(data: Partial<ReferralCommission>): Promise<ReferralCommission>;
   getUserCommissions(userId: number): Promise<number>;
-  getTeamStats(userId: number): Promise<{ level1Count: number; level2Count: number; level3Count: number; totalCommission: number; level1Commission: number; level2Commission: number; level3Commission: number; level1Invested: number; level2Invested: number; level3Invested: number; level1Recharged: number }>;
+  getTeamStats(userId: number): Promise<TeamStats>;
   getTeamStatsSimple(userId: number): Promise<{ level1Count: number; level2Count: number; level3Count: number; totalCommission: number }>;
   
   // Tasks
@@ -955,11 +974,33 @@ export class DatabaseStorage implements IStorage {
     return { level1Count, level2Count, level3Count, totalCommission };
   }
 
-  async getTeamStats(userId: number): Promise<{ level1Count: number; level2Count: number; level3Count: number; totalCommission: number; level1Commission: number; level2Commission: number; level3Commission: number; level1Invested: number; level2Invested: number; level3Invested: number; level1Recharged: number }> {
+  async getTeamStats(userId: number): Promise<TeamStats> {
     const level1 = await this.getReferrals(userId, 1);
     const level2 = await this.getReferrals(userId, 2);
     const level3 = await this.getReferrals(userId, 3);
     const totalCommission = await this.getUserCommissions(userId);
+    const teamIds = Array.from(new Set([...level1, ...level2, ...level3].map(member => member.id)));
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+
+    let totalDepositAmount = 0;
+    let totalWithdrawalAmount = 0;
+    let todayDepositAmount = 0;
+    let todayWithdrawalAmount = 0;
+    if (teamIds.length > 0) {
+      const [depositTotals] = await db.select({
+        total: sql<string>`COALESCE(SUM(${deposits.amount}), 0)`,
+        today: sql<string>`COALESCE(SUM(CASE WHEN ${deposits.processedAt} >= ${todayStart} THEN ${deposits.amount} ELSE 0 END), 0)`,
+      }).from(deposits).where(and(inArray(deposits.userId, teamIds), eq(deposits.status, "approved")));
+      const [withdrawalTotals] = await db.select({
+        total: sql<string>`COALESCE(SUM(${withdrawals.amount}), 0)`,
+        today: sql<string>`COALESCE(SUM(CASE WHEN ${withdrawals.processedAt} >= ${todayStart} THEN ${withdrawals.amount} ELSE 0 END), 0)`,
+      }).from(withdrawals).where(and(inArray(withdrawals.userId, teamIds), eq(withdrawals.status, "approved")));
+      totalDepositAmount = Number(depositTotals.total);
+      todayDepositAmount = Number(depositTotals.today);
+      totalWithdrawalAmount = Number(withdrawalTotals.total);
+      todayWithdrawalAmount = Number(withdrawalTotals.today);
+    }
 
     const getCommissionByLevel = async (level: number) => {
       const result = await db.select({ total: sql<string>`COALESCE(SUM(${referralCommissions.amount}), 0)` })
@@ -998,6 +1039,11 @@ export class DatabaseStorage implements IStorage {
       level2Invested: await countInvested(level2),
       level3Invested: await countInvested(level3),
       level1Recharged: await countRecharged(level1),
+      totalDepositAmount,
+      totalWithdrawalAmount,
+      todayNewMembers: [...level1, ...level2, ...level3].filter(member => member.createdAt >= todayStart).length,
+      todayDepositAmount,
+      todayWithdrawalAmount,
     };
   }
 

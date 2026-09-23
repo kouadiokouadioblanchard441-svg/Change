@@ -1,0 +1,272 @@
+.team-page {
+  min-height: 100dvh;
+  background: #fffcf7;
+  color: #202128;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.team-page *,
+.team-page *::before,
+.team-page *::after {
+  box-sizing: border-box;
+}
+
+.team-page-inner {
+  width: 100%;
+  max-width: 500px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: #fffdf8;
+}
+
+.team-header {
+  display: flex;
+  height: 62px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  background: #ffe5c8;
+}
+
+.team-header h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.team-header-brand {
+  margin-left: auto;
+  color: #744022;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.team-back,
+.team-copy,
+.team-details-link {
+  border: 0;
+  cursor: pointer;
+}
+
+.team-back {
+  display: grid;
+  width: 32px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  background: transparent;
+  color: #202128;
+}
+
+.team-back svg {
+  width: 23px;
+  height: 23px;
+}
+
+.team-content {
+  padding: 13px 10px 35px;
+}
+
+.team-invite {
+  display: grid;
+  min-height: 142px;
+  gap: 19px;
+  padding: 17px 18px 14px;
+  border: 1px solid #e8a268;
+  border-radius: 12px;
+  background: linear-gradient(115deg, #fffdf8, #fff1df);
+  box-shadow: 0 2px 0 #f6d9bb;
+}
+
+.team-invite-row {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.team-invite-text {
+  min-width: 0;
+}
+
+.team-invite-text p {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.team-invite-text strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.team-invite-text .team-invite-link {
+  overflow: hidden;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.team-copy {
+  display: grid;
+  width: 39px;
+  height: 35px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 8px;
+  background: transparent;
+  color: #774019;
+}
+
+.team-copy svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.7;
+}
+
+.team-copy:hover,
+.team-back:hover {
+  background: #ffd9b1;
+}
+
+.team-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 15px 7px 0;
+  padding: 12px 0 15px;
+  border: 1px solid #e8b88d;
+  border-radius: 10px;
+  background: #fffaf5;
+}
+
+.team-summary-item {
+  display: flex;
+  min-width: 0;
+  min-height: 84px;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 5px 2px;
+  text-align: center;
+}
+
+.team-summary-item strong {
+  max-width: 100%;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.team-summary-item span {
+  margin-top: 12px;
+  color: #343641;
+  font-size: clamp(11px, 3.1vw, 15px);
+  line-height: 1.13;
+}
+
+.team-error {
+  margin: 8px 7px 0;
+  color: #a02719;
+  font-size: 13px;
+}
+
+.team-levels {
+  display: grid;
+  gap: 11px;
+  margin: 29px 7px 0;
+}
+
+.team-level {
+  overflow: hidden;
+  border: 1px solid #f0b17d;
+  border-radius: 5px;
+  background: #fffdf8;
+}
+
+.team-level h2 {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  margin: 0;
+  padding: 0 21px;
+  background: #ff7a14;
+  color: #202128;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.team-level-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 89px;
+  padding: 12px 0;
+}
+
+.team-level-metrics > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  text-align: center;
+}
+
+.team-level-metrics > div + div {
+  border-left: 1px solid #eadccd;
+}
+
+.team-level-metrics strong {
+  color: #9e4100;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.team-level-metrics span {
+  margin-top: 9px;
+  font-size: 14px;
+  line-height: 1.14;
+}
+
+.team-details-link {
+  display: flex;
+  width: calc(100% - 14px);
+  min-height: 47px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 7px 0;
+  padding: 0 16px;
+  border: 1px solid #d6650e;
+  border-radius: 7px;
+  background: #fff3e8;
+  color: #613009;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.team-details-link svg {
+  width: 17px;
+  height: 17px;
+}
+
+.team-page button:focus-visible {
+  outline: 2px solid #202128;
+  outline-offset: 2px;
+}
+
+@media (max-width: 360px) {
+  .team-invite {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .team-invite-text .team-invite-link {
+    font-size: 13px;
+  }
+
+  .team-summary-item span {
+    font-size: 11px;
+  }
+}
