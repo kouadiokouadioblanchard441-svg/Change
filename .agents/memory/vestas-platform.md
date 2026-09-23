@@ -1,10 +1,10 @@
 ---
-name: Stone by ton identity
-description: Current identity, company positioning, and visual boundaries for Stone by ton.
+name: Brand transition
+description: Historical Stone by ton identity and the new ChargePoint direction.
 ---
 
-The platform name is **Stone by ton**. It represents a French company founded in 2013 that sells natural stone, travertine, tiles, and wall cladding online and in person. The business is based in Six-Fours-les-Plages, in the Var region.
+The previous identity was **Stone by ton**, a natural-stone business. The user has now named **ChargePoint** as the new company for this app. Authentication has moved to that name, but the remaining product has not yet been explicitly rebranded. Treat Stone by ton content elsewhere as legacy, not as an instruction to propagate it to new work.
 
-**Why:** The user replaced the former entertainment and robotics identities with the Stone by ton brand and its TON green logo.
+**Why:** The user explicitly introduced ChargePoint as the new company after earlier Stone by ton branding work. Assuming either a complete rebrand or a return to the old brand would be premature.
 
-**How to apply:** Use the supplied TON mark and the Stone by ton name in user-visible branding. Use the French company description in informational pages and the English version in metadata. Keep the dashboard’s current banner and visual treatment unchanged unless the user explicitly asks otherwise.
+**How to apply:** Use ChargePoint on new authentication work; avoid expanding changes to other pages without a request. Keep the dashboard’s visual treatment unchanged unless the user explicitly asks otherwise.

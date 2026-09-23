@@ -3,8 +3,8 @@ name: TON green theme
 description: Brand-color scope for the TON visual refresh.
 ---
 
-Use the bright TON green as the primary visual color on pages outside the user dashboard. Keep the dashboard’s existing banner and color treatment unchanged.
+The previous TON green refresh is legacy styling on pages not yet rebranded. Authentication now uses ChargePoint branding instead. Keep the dashboard’s existing banner and color treatment unchanged.
 
-**Why:** The user requested a platform-wide TON green refresh while explicitly preserving the dashboard as-is.
+**Why:** The user previously requested TON green outside the dashboard, but subsequently chose ChargePoint as the new company and requested orange on authentication. The dashboard preservation request has not changed.
 
-**How to apply:** New or restyled non-dashboard pages should use the TON green theme tokens. Do not recolor the dashboard unless the user explicitly changes this direction.
+**How to apply:** Do not apply TON green to new ChargePoint-authentication work. Ask for scope before changing other pages' legacy styles; do not recolor the dashboard unless explicitly requested.

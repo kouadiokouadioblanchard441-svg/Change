@@ -102,7 +102,7 @@ export default function RegisterPage() {
   return (
     <main className="auth-reference auth-register">
       <style>{`
-         .auth-reference { width: 100%; min-height: 100dvh; overflow-x: hidden; background: #ffffff; color: #f97316; font-family: Arial, sans-serif; }
+         .auth-reference { width: 100%; min-height: 100dvh; overflow-x: hidden; background: #ffffff; color: #ff7a14; font-family: Arial, sans-serif; }
         .auth-reference *, .auth-reference *::before, .auth-reference *::after { box-sizing: border-box; }
          .auth-reference .auth-screen { width: 100%; max-width: 512px; min-height: 100dvh; margin: 0 auto; overflow: hidden; background: #ffffff; }
          .auth-reference .auth-panel { min-height: 100dvh; box-sizing: border-box; background: #ffffff; }
@@ -119,11 +119,11 @@ export default function RegisterPage() {
         .auth-reference .auth-prefix .prefix-chevron { width: clamp(15px, 3.52vw, 18px); height: clamp(15px, 3.52vw, 18px); margin-left: -9px; color: #b8b8b8; stroke-width: 1.6; }
         .auth-reference .auth-field-icon { width: clamp(27px, 6.64vw, 34px); height: clamp(27px, 6.64vw, 34px); flex: none; margin-right: clamp(7px, 1.95vw, 10px); color: #111827; stroke-width: 2.9; }
          .auth-reference .auth-switch { display: block; max-width: 100%; width: fit-content; margin: 21px 0 0 auto; border: 0; padding: 0; background: transparent; color: #111a13; font-size: clamp(16px, 3.9vw, 20px); font-weight: 400; line-height: 28px; text-align: right; text-decoration: underline; text-underline-offset: 2px; }
-        .auth-reference .auth-submit { display: grid; width: 100%; min-height: 68px; place-items: center; margin-top: 15px; border: 2px solid #9a3412; border-radius: 11px; background: #c2410c; color: #fff; font-size: clamp(23px, 5.66vw, 29px); font-weight: 800; line-height: 1.2; box-shadow: 0 4px 0 #9a3412, 0 7px 14px rgba(154, 52, 18, .22); cursor: pointer; transition: transform .12s ease, background-color .12s ease, box-shadow .12s ease; }
-        .auth-reference .auth-submit:hover:not(:disabled) { background: #9a3412; }
+        .auth-reference .auth-submit { display: grid; width: 100%; min-height: 68px; place-items: center; margin-top: 15px; border: 2px solid #111827; border-radius: 11px; background: #ff7a14; color: #111827; font-size: clamp(23px, 5.66vw, 29px); font-weight: 800; line-height: 1.2; box-shadow: 0 4px 0 #111827, 0 7px 14px rgba(17, 24, 39, .22); cursor: pointer; transition: transform .12s ease, filter .12s ease, box-shadow .12s ease; }
+        .auth-reference .auth-submit:hover:not(:disabled) { filter: brightness(.94); }
         .auth-reference .auth-submit:focus-visible { outline: 3px solid #111827; outline-offset: 4px; }
-        .auth-reference .auth-submit:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #9a3412, 0 3px 7px rgba(154, 52, 18, .22); }
-        .auth-reference .auth-submit:disabled { cursor: wait; background: #9a3412; }
+        .auth-reference .auth-submit:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #111827, 0 3px 7px rgba(17, 24, 39, .22); }
+        .auth-reference .auth-submit:disabled { cursor: wait; }
         .auth-reference .auth-error { margin: -13px 0 -7px 4px; color: #fff; font-size: 12px; }
          .auth-reference .auth-illustration { display: block; width: 100%; max-width: 600px; height: auto; margin: 4px auto 28px; object-fit: contain; }
         @media (max-width: 370px) {
