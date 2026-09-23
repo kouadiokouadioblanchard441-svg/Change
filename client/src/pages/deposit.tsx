@@ -818,16 +818,18 @@ export default function DepositPage() {
           opacity: .55;
         }
         .recharge-reference .instructions {
-          margin-top: 18px;
-          padding: 22px 16px 24px;
-          border-top: 2px solid #111827;
+          margin: 18px 16px 24px;
+          padding: 22px 16px 10px;
+          border: 2px solid #111827;
+          border-top: 5px solid #ff7a14;
+          border-radius: 14px;
           background: #fff;
           color: #4b5563;
         }
         .recharge-reference .instructions-title {
-          margin: 0 0 18px;
+          margin: 0 0 20px;
           color: #111827;
-          font-size: 18px;
+          font-size: 19px;
           font-weight: 800;
         }
         .recharge-reference .instructions-title::before {
@@ -839,10 +841,10 @@ export default function DepositPage() {
         }
         .recharge-reference .instruction {
           position: relative;
-          margin: 0 0 14px 20px;
-          font-size: 14px;
+          margin: 0 0 16px 20px;
+          font-size: 15px;
           font-weight: 500;
-          line-height: 1.55;
+          line-height: 1.65;
         }
         .recharge-reference .instruction::before {
           position: absolute;
