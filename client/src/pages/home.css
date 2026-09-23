@@ -28,7 +28,7 @@
 .cp-action-icon img { display:block; width:48px; height:48px; object-fit:contain; }
 .cp-action:hover .cp-action-icon { transform:translateY(-3px); }
 .cp-action:focus-visible,.cp-notice:focus-visible,.cp-balance:focus-visible { outline:2px solid var(--cp-orange); outline-offset:2px; }
-.cp-notice { display:flex; align-items:center; gap:10px; width:calc(100% - 24px); margin:12px 12px 0; min-height:48px; padding:9px 12px; border:1px solid #dededc; border-left:3px solid var(--cp-orange); border-radius:10px; background:#fff; text-align:left; color:#52565a; font-size:12px; overflow:hidden; cursor:pointer; }
+.cp-notice { display:flex; align-items:center; gap:10px; width:calc(100% - 24px); margin:12px 12px 0; min-height:48px; padding:9px 12px; border:2px solid #111827; border-left:4px solid var(--cp-orange); border-radius:12px; background:#ffffff; box-shadow:0 4px 0 #111827, 0 7px 14px rgba(17,24,39,.18); text-align:left; color:#52565a; font-size:12px; overflow:hidden; cursor:pointer; }
 .cp-notice-icon { flex:none; display:grid; place-items:center; width:32px; height:32px; }
 .cp-notice-icon img { display:block; width:26px; height:26px; object-fit:contain; }
 .cp-notice-marquee { flex:1; min-width:0; overflow:hidden; -webkit-mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 8px),transparent); mask-image:linear-gradient(90deg,transparent,#000 8px,#000 calc(100% - 8px),transparent); }
