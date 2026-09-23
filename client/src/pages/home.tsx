@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
-import { Bell, CreditCard, Gauge, Headphones, PlugZap, ReceiptText, ShieldCheck, WalletCards } from "lucide-react";
+import { Bell, CreditCard, Headphones, PlugZap, ReceiptText, WalletCards } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "./home.css";
 
@@ -62,7 +62,7 @@ export default function HomePage() {
           <section className="cp-actions" aria-label="Actions rapides">
             {quickActions.map(({ label, href, icon: Icon }) => (
               <button key={label} className="cp-action" onClick={() => navigate(href)}>
-                <span className="cp-action-icon"><Icon size={23} strokeWidth={1.8} /></span>
+                <span className="cp-action-icon"><Icon size={27} strokeWidth={1.9} /></span>
                 <span>{label}</span>
               </button>
             ))}
@@ -75,32 +75,26 @@ export default function HomePage() {
 
           <section className="cp-overview" aria-labelledby="overview-title">
             <header className="cp-section-heading">
-              <div><span className="cp-eyebrow">VOTRE ESPACE</span><h2 id="overview-title">Aperçu</h2></div>
-              <button className="cp-outline-button" onClick={() => navigate("/wallet")}><Gauge size={15} /> Détails</button>
+              <h2 id="overview-title">Aperçu</h2>
             </header>
             <div className="cp-metrics">
-              <article className="cp-balance">
-                <div className="cp-card-top"><span>Solde disponible</span><ShieldCheck size={18} /></div>
+              <button className="cp-balance" type="button" onClick={() => navigate("/wallet")} aria-label={`Voir le portefeuille, solde ${formatMoney(balance)}`}>
+                <div className="cp-balance-image"><img src={ct4000} alt="" /></div>
                 <strong data-testid="text-balance">{formatMoney(balance)}</strong>
-                <span className="cp-card-note">Prêt pour votre prochaine recharge</span>
-                <div className="cp-balance-image"><img src={homeFlex} alt="" /></div>
-              </article>
+                <span className="cp-card-note">Solde</span>
+              </button>
               <div className="cp-stack">
                 <article className="cp-stat cp-stat-orange">
-                  <span>Revenus accumulés</span><strong data-testid="text-total-earnings">{formatMoney(totalEarnings)}</strong>
-                  <span className="cp-stat-mark">+ ChargePoint</span>
+                  <strong data-testid="text-total-earnings">{formatMoney(totalEarnings)}</strong>
+                  <span>Cumul</span>
                 </article>
                 <article className="cp-stat cp-stat-ink">
-                  <span>Montant retiré</span><strong>{withdrawnTotal === undefined ? "—" : formatMoney(withdrawnTotal)}</strong>
-                  <span className="cp-stat-mark">{withdrawnTotal === undefined ? "Historique indisponible" : "Retraits approuvés"}</span>
+                  <strong>{withdrawnTotal === undefined ? "—" : formatMoney(withdrawnTotal)}</strong>
+                  <span>Retrait</span>
+                  {withdrawnTotal === undefined && <small>Historique indisponible</small>}
                 </article>
               </div>
             </div>
-            <button className="cp-mission" onClick={() => navigate("/about")}>
-              <div><span className="cp-eyebrow">NOTRE MISSION</span><h2>Une recharge plus simple.</h2><p>Découvrez l'écosystème ChargePoint.</p></div>
-              <span className="cp-mission-arrow">Accéder <span>→</span></span>
-              <img src={ct4000} alt="" />
-            </button>
           </section>
         </div>
       </main>
