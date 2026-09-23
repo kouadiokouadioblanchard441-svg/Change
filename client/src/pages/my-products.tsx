@@ -9,7 +9,8 @@ import { Loader2 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
-import productsReference from "@assets/20260822_123747_1787403034334.jpg";
+import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
+import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 import productImage1 from "@assets/images_(67)_1787404892163.jpeg";
 import productImage2 from "@assets/maquininha-ton-e-boa_(1)_1787404928174.webp";
 import productImage3 from "@assets/images_(59)_1787404956774.jpeg";
