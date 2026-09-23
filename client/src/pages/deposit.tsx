@@ -101,7 +101,14 @@ export default function DepositPage() {
   const { data: platformSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
   });
-  const MIN_DEPOSIT = parseInt(platformSettings?.minDeposit || "3500");
+  const MIN_DEPOSIT = Math.max(3500, parseInt(platformSettings?.minDeposit || "3500"));
+  const depositPresets = [
+    MIN_DEPOSIT,
+    MIN_DEPOSIT + 1500,
+    MIN_DEPOSIT + 6500,
+    MIN_DEPOSIT + 21500,
+    MIN_DEPOSIT + 46500,
+  ];
   const sendavapayEnabled = platformSettings?.sendavapayEnabled === "true";
   const sendavapayChannelName = platformSettings?.sendavapayChannelName || "SendavaPay";
   const westpayEnabled = platformSettings?.westpayEnabled === "true";
@@ -885,7 +892,7 @@ export default function DepositPage() {
 
         <section className="amount-panel" aria-label="Montant de recharge">
           <div className="preset-row">
-            {[3000, 12500, 32000].map((preset) => (
+            {depositPresets.map((preset) => (
               <button
                 key={preset}
                 className={`preset ${amount === preset ? "active" : ""}`}
