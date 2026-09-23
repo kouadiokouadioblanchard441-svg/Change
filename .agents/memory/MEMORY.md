@@ -11,3 +11,4 @@
 - [AshtechPay Burkina flow](ashtechpay-burkina.md) — BF uses exact operator names and requires the returned reference on OTP retries.
 - [Country availability](country-availability.md) — retire countries by deactivating them, not deleting historical records; confirm existing-account impact first.
 - [Demo referrals](demo-referrals.md) — persistent fictitious filleuls are explicitly labeled and financially inert; their counts still appear in team statistics.
+- [Dev workflow port conflict](workflow-port-conflict.md) — a failed restart can leave a prior server child listening on port 5000; inspect the listener before retrying.

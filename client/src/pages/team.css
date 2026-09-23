@@ -278,8 +278,8 @@
   padding: 9px 18px;
   border: 0;
   border-top: 2px solid #000000;
-  background: #000000;
-  color: #ffffff;
+  background: #ff7a14;
+  color: #111827;
   font: inherit;
   font-size: 14px;
   font-weight: 800;
@@ -288,7 +288,7 @@
 }
 
 .team-level-open:hover {
-  background: #202020;
+  background: #ff9b4a;
 }
 
 .team-level-open svg {
