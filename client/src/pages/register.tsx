@@ -125,7 +125,8 @@ export default function RegisterPage() {
         .auth-reference .auth-submit:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #111827, 0 3px 7px rgba(17, 24, 39, .22); }
         .auth-reference .auth-submit:disabled { cursor: wait; }
         .auth-reference .auth-error { margin: -13px 0 -7px 4px; color: #fff; font-size: 12px; }
-         .auth-reference .auth-illustration { display: block; width: 100%; max-width: 600px; height: auto; margin: 4px auto 28px; object-fit: contain; }
+         .auth-reference .auth-illustration-frame { width: 100%; margin: 4px auto 28px; overflow: hidden; border: 2px solid #111827; border-radius: 12px; background: #fff; box-shadow: 0 5px 0 #111827, 0 10px 18px rgba(17, 24, 39, .18); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+         .auth-reference .auth-illustration { display: block; width: 100%; height: auto; -webkit-user-drag: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         @media (max-width: 370px) {
           .auth-register .auth-panel { padding-right: 22px; padding-left: 22px; }
           .auth-reference .auth-field { height: 64px; }
@@ -139,7 +140,9 @@ export default function RegisterPage() {
       <div className="auth-screen">
         <section className="auth-panel">
           <h1 className="auth-title">ChargePoint</h1>
-          <img className="auth-illustration" src={registerIllustration} alt="Borne domestique et station de recharge ChargePoint" />
+          <div className="auth-illustration-frame" onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()}>
+            <img className="auth-illustration" src={registerIllustration} alt="Borne domestique et station de recharge ChargePoint" draggable={false} />
+          </div>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <input type="hidden" {...form.register("country")} />
 
