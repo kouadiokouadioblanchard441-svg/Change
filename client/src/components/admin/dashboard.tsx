@@ -71,7 +71,7 @@ export default function AdminDashboard({ isSuperAdmin }: AdminDashboardProps) {
       const response = await apiRequest("POST", "/api/admin/reset-stats");
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur lors de la reinitialisation");
+        throw new Error(result.message || "Réinitialisation des statistiques impossible");
       }
       return response.json();
     },
@@ -81,7 +81,7 @@ export default function AdminDashboard({ isSuperAdmin }: AdminDashboardProps) {
       toast({ title: "Statistiques reinitialisees avec succes!" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Réinitialisation des statistiques impossible", description: error.message, variant: "destructive" });
     },
   });
 

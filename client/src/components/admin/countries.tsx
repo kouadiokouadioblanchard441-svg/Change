@@ -68,7 +68,7 @@ export default function AdminCountries() {
       setEditingId(null);
     },
     onError: (e: any) => {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      toast({ title: editingId ? "Modification du pays impossible" : "Ajout du pays impossible", description: e.message, variant: "destructive" });
     },
   });
 
@@ -85,7 +85,7 @@ export default function AdminCountries() {
       setDeleteId(null);
     },
     onError: (e: any) => {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      toast({ title: "Suppression du pays impossible", description: e.message, variant: "destructive" });
     },
   });
 

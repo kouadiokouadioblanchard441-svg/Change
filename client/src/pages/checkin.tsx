@@ -31,7 +31,7 @@ export default function CheckinPage() {
       const response = await apiRequest("POST", "/api/claim-daily-bonus", {});
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Erreur");
+        throw new Error(data.message || "Récompense indisponible");
       }
       return response.json();
     },
@@ -42,7 +42,7 @@ export default function CheckinPage() {
       toast({ title: "Bonus reçu !", description: `${amount} FCFA ajoutés à votre solde` });
     },
     onError: (error: Error) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Récompense indisponible", description: error.message, variant: "destructive" });
     },
   });
 

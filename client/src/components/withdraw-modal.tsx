@@ -62,7 +62,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
       });
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Impossible d'enregistrer la demande de retrait");
       }
       return response.json();
     },
@@ -77,7 +77,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
         navigate(error.data.paymentUrl);
         return;
       }
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Retrait impossible", description: error.message, variant: "destructive" });
     },
   });
 

@@ -53,7 +53,7 @@ export default function AdminProducts() {
       const response = await apiRequest("POST", "/api/admin/products", data);
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "La création du produit a échoué");
       }
       return response.json();
     },
@@ -65,7 +65,7 @@ export default function AdminProducts() {
       createForm.reset();
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Création du produit impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -74,7 +74,7 @@ export default function AdminProducts() {
       const response = await apiRequest("PATCH", `/api/admin/products/${id}`, data);
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "La mise à jour du produit a échoué");
       }
       return response.json();
     },
@@ -85,7 +85,7 @@ export default function AdminProducts() {
       setSelectedProduct(null);
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Mise à jour du produit impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -94,7 +94,7 @@ export default function AdminProducts() {
       const response = await apiRequest("PATCH", `/api/admin/products/${id}`, { isActive });
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "La modification de la visibilité du produit a échoué");
       }
       return response.json();
     },
@@ -103,7 +103,7 @@ export default function AdminProducts() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Modification de la visibilité impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -112,7 +112,7 @@ export default function AdminProducts() {
       const response = await apiRequest("DELETE", `/api/admin/products/${id}`, {});
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "La suppression du produit a échoué");
       }
       return response.json();
     },
@@ -122,7 +122,7 @@ export default function AdminProducts() {
       toast({ title: "Produit supprimé" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Suppression du produit impossible", description: error.message, variant: "destructive" });
     },
   });
 

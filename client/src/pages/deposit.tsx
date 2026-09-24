@@ -265,7 +265,7 @@ export default function DepositPage() {
     queryKey: ["/api/payment-numbers", country],
     queryFn: async () => {
       const res = await fetch(`/api/payment-numbers?country=${country}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Erreur");
+       if (!res.ok) throw new Error("Impossible de charger les numéros de paiement");
       return res.json();
     },
     enabled: !!country,
@@ -276,7 +276,7 @@ export default function DepositPage() {
     queryKey: ["/api/sendavapay/operators", svCountry],
     queryFn: async () => {
       const res = await fetch(`/api/sendavapay/operators/${svCountry}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Erreur");
+       if (!res.ok) throw new Error("Impossible de charger les opérateurs SendavaPay");
       return res.json();
     },
     enabled: step === "sv-operator" && !!svCountry,
@@ -411,7 +411,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Erreur");
+        throw new Error(d.message || "Dépôt non enregistré");
       }
       return res.json();
     },
@@ -428,7 +428,7 @@ export default function DepositPage() {
       setPaymentMessage("");
       setReference("");
     },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Dépôt non enregistré", description: e.message, variant: "destructive" }),
   });
 
   // WestPay: create deposit + get redirect URL
@@ -463,7 +463,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Erreur WestPay");
+        throw new Error(d.message || "Dépôt WestPay non enregistré");
       }
       return res.json();
     },
@@ -472,7 +472,7 @@ export default function DepositPage() {
         window.location.href = data.westpayUrl;
       }
     },
-    onError: (e: any) => toast({ title: "Erreur WestPay", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Dépôt WestPay non enregistré", description: e.message, variant: "destructive" }),
   });
 
   const inpayInitiateMutation = useMutation({
@@ -487,7 +487,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Erreur InPay");
+        throw new Error(d.message || "Dépôt InPay non enregistré");
       }
       return res.json();
     },
@@ -496,7 +496,7 @@ export default function DepositPage() {
         window.location.href = data.inpayUrl;
       }
     },
-    onError: (e: any) => toast({ title: `Erreur ${inpayChannelName}`, description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: `Dépôt ${inpayChannelName} non enregistré`, description: e.message, variant: "destructive" }),
   });
 
   const ashtechCollectMutation = useMutation({
@@ -512,7 +512,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Erreur AshtechPay");
+        throw new Error(d.message || "Dépôt AshtechPay non enregistré");
       }
       return res.json();
     },
@@ -540,7 +540,7 @@ export default function DepositPage() {
         setStep("ashtech-otp");
         return;
       }
-      toast({ title: `Erreur ${ashtechChannelName}`, description: e.message, variant: "destructive" });
+      toast({ title: `Dépôt ${ashtechChannelName} non enregistré`, description: e.message, variant: "destructive" });
     },
   });
 
@@ -558,7 +558,7 @@ export default function DepositPage() {
       });
       if (!createRes.ok) {
         const d = await createRes.json();
-        throw new Error(d.message || "Erreur création paiement");
+        throw new Error(d.message || "Création du paiement impossible");
       }
       const createData = await createRes.json();
       setSvDepositId(createData.depositId);
@@ -574,7 +574,7 @@ export default function DepositPage() {
       });
       if (!initRes.ok) {
         const d = await initRes.json();
-        throw new Error(d.message || "Erreur initiation paiement");
+        throw new Error(d.message || "Initiation du paiement impossible");
       }
       return initRes.json();
     },
@@ -600,10 +600,10 @@ export default function DepositPage() {
         setSvPolling(true);
         setStep("sv-waiting");
       } else {
-        toast({ title: "Erreur", description: data.error || data.message || "Erreur paiement", variant: "destructive" });
+        toast({ title: "Paiement SendavaPay impossible", description: data.error || data.message || "Le paiement n'a pas pu être initié.", variant: "destructive" });
       }
     },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Paiement SendavaPay impossible", description: e.message, variant: "destructive" }),
   });
 
   // SendavaPay: retry failed payment
@@ -616,7 +616,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Erreur retry");
+        throw new Error(d.message || "Nouvelle tentative impossible");
       }
       return res.json();
     },
@@ -629,7 +629,7 @@ export default function DepositPage() {
       setStep("sv-operator");
       toast({ title: "Prêt à réessayer", description: "Sélectionnez un opérateur et relancez le paiement." });
     },
-    onError: (e: any) => toast({ title: "Erreur retry", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Nouvelle tentative impossible", description: e.message, variant: "destructive" }),
   });
 
   // SendavaPay: submit OTP
@@ -641,7 +641,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Erreur OTP");
+        throw new Error(d.message || "Validation du code OTP impossible");
       }
       return res.json();
     },
@@ -649,7 +649,7 @@ export default function DepositPage() {
       setSvPolling(true);
       setStep("sv-waiting");
     },
-    onError: (e: any) => toast({ title: "Erreur OTP", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Validation du code OTP impossible", description: e.message, variant: "destructive" }),
   });
 
   const handleAmountNext = () => {

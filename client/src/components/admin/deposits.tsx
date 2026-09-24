@@ -75,7 +75,7 @@ export default function AdminDeposits() {
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || `Erreur ${res.status}`);
+       if (!res.ok) throw new Error(data.message || `Le traitement du dépôt a échoué (code ${res.status})`);
       return data;
     },
     onSuccess: () => {
@@ -84,7 +84,7 @@ export default function AdminDeposits() {
       toast({ title: "Dépôt traité !" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+       toast({ title: "Traitement du dépôt impossible", description: error.message, variant: "destructive" });
     },
     onSettled: () => setProcessingId(null),
   });

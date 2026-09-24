@@ -55,7 +55,7 @@ export default function TasksPage() {
       const response = await apiRequest("POST", `/api/tasks/${taskId}/claim`, {});
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Erreur");
+        throw new Error(data.message || "Récompense indisponible");
       }
       return response.json();
     },
@@ -65,7 +65,7 @@ export default function TasksPage() {
       toast({ title: "Récompense réclamée!", description: "Le bonus a été ajouté à votre compte." });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Récompense indisponible", description: error.message, variant: "destructive" });
     },
   });
 

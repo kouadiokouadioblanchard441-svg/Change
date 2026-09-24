@@ -45,7 +45,7 @@ export default function ProductsPage() {
       const response = await apiRequest("POST", `/api/products/${productId}/purchase`, {});
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Erreur lors de l'achat");
+        throw new Error(data.message || "Achat impossible");
       }
       return response.json();
     },
@@ -58,7 +58,7 @@ export default function ProductsPage() {
     },
     onError: (error: Error) => {
       setSelectedProduct(null);
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Achat impossible", description: error.message, variant: "destructive" });
     },
   });
 

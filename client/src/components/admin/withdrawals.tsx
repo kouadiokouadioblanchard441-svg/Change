@@ -50,7 +50,7 @@ export default function AdminWithdrawals() {
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || `Erreur ${res.status}`);
+       if (!res.ok) throw new Error(data.message || `Le traitement du retrait a échoué (code ${res.status})`);
       return data;
     },
     onSuccess: () => {
@@ -59,7 +59,7 @@ export default function AdminWithdrawals() {
       toast({ title: "Retrait traité !" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+       toast({ title: "Traitement du retrait impossible", description: error.message, variant: "destructive" });
     },
     onSettled: () => setProcessingId(null),
   });
@@ -72,7 +72,7 @@ export default function AdminWithdrawals() {
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || `Erreur ${res.status}`);
+       if (!res.ok) throw new Error(data.message || `L'envoi du retrait à InPay a échoué (code ${res.status})`);
       return data;
     },
     onSuccess: () => {
@@ -81,7 +81,7 @@ export default function AdminWithdrawals() {
       toast({ title: "Retrait envoyé à InPay" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur InPay", description: error.message, variant: "destructive" });
+       toast({ title: "Envoi du retrait à InPay impossible", description: error.message, variant: "destructive" });
     },
     onSettled: () => setProcessingId(null),
   });

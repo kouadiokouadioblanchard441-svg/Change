@@ -75,7 +75,7 @@ export default function LoginPage() {
       await login(data.phone, data.country, data.password);
       navigate("/");
     } catch (error: any) {
-      toast({ title: "Erreur de connexion", description: error.message || "Vérifiez vos informations", variant: "destructive" });
+      toast({ title: "Connexion impossible", description: error.message || "Vérifiez votre numéro et votre mot de passe.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

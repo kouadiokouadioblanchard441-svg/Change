@@ -93,7 +93,7 @@ export default function RegisterPage() {
       toast({ title: "Inscription réussie !", description: "Bienvenue sur ChargePoint !" });
       navigate("/");
     } catch (error: any) {
-      toast({ title: "Erreur d'inscription", description: error.message || "Une erreur est survenue", variant: "destructive" });
+      toast({ title: "Inscription impossible", description: error.message || "Vérifiez vos informations et réessayez.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

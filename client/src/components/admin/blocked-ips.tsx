@@ -25,7 +25,7 @@ export default function AdminBlockedIps() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/blocked-ips"] });
       toast({ title: "IP bloquée" });
     },
-    onError: (error: Error) => toast({ title: "Erreur", description: error.message, variant: "destructive" }),
+    onError: (error: Error) => toast({ title: "Blocage de l'adresse IP impossible", description: error.message, variant: "destructive" }),
   });
 
   const unblockMutation = useMutation({
@@ -38,7 +38,7 @@ export default function AdminBlockedIps() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/blocked-ips"] });
       toast({ title: "IP débloquée" });
     },
-    onError: (error: Error) => toast({ title: "Erreur", description: error.message, variant: "destructive" }),
+    onError: (error: Error) => toast({ title: "Déblocage de l'adresse IP impossible", description: error.message, variant: "destructive" }),
   });
 
   return (

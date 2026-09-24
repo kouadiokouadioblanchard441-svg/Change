@@ -187,7 +187,7 @@ export default function HistoryPage() {
         toast({ title: "En cours", description: "Le paiement est toujours en attente" });
       }
     } catch {
-      toast({ title: "Erreur", description: "Impossible de vérifier le paiement", variant: "destructive" });
+      toast({ title: "Vérification du paiement impossible", description: "Impossible de vérifier le paiement", variant: "destructive" });
     } finally {
       setVerifyingId(null);
     }

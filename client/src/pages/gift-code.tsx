@@ -21,7 +21,7 @@ export default function GiftCodePage() {
       const response = await apiRequest("POST", "/api/gift-codes/claim", { code: giftCode });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Erreur");
+        throw new Error(data.message || "Le code cadeau n'a pas pu être validé.");
       }
       return response.json();
     },
@@ -31,13 +31,13 @@ export default function GiftCodePage() {
       toast({ title: "Félicitations !", description: data.message });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Validation du code cadeau impossible", description: error.message, variant: "destructive" });
     },
   });
 
   const handleSubmit = () => {
     if (!code.trim()) {
-      toast({ title: "Erreur", description: "Veuillez saisir un code", variant: "destructive" });
+      toast({ title: "Code cadeau requis", description: "Veuillez saisir un code cadeau.", variant: "destructive" });
       return;
     }
     claimMutation.mutate(code.trim());

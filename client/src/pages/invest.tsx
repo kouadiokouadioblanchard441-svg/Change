@@ -47,7 +47,7 @@ export default function InvestPage() {
       const response = await apiRequest("POST", `/api/products/${productId}/purchase`, {});
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Erreur");
+        throw new Error(data.message || "Achat impossible");
       }
       return response.json();
     },
@@ -60,7 +60,7 @@ export default function InvestPage() {
     },
     onError: (error: any) => {
       setConfirmProduct(null);
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Achat impossible", description: error.message, variant: "destructive" });
     },
   });
 

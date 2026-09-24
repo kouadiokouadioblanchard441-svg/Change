@@ -703,7 +703,7 @@ export default function WalletPage() {
       });
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Le portefeuille n'a pas pu être ajouté.");
       }
       return response.json();
     },
@@ -716,7 +716,7 @@ export default function WalletPage() {
       setShowForm(false);
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Ajout du portefeuille impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -725,7 +725,7 @@ export default function WalletPage() {
       const response = await apiRequest("DELETE", `/api/wallets/${walletId}`, {});
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Le portefeuille n'a pas pu être supprimé.");
       }
       return response.json();
     },
@@ -734,7 +734,7 @@ export default function WalletPage() {
       toast({ title: "Portefeuille supprimé !" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Suppression du portefeuille impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -743,7 +743,7 @@ export default function WalletPage() {
       const response = await apiRequest("PATCH", `/api/wallets/${walletId}/default`, {});
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Le portefeuille par défaut n'a pas pu être défini.");
       }
       return response.json();
     },
@@ -751,7 +751,7 @@ export default function WalletPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/wallets"] });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Sélection du portefeuille impossible", description: error.message, variant: "destructive" });
     },
   });
 

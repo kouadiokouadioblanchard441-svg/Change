@@ -56,7 +56,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
       });
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Impossible d'ajouter le portefeuille");
       }
       return response.json();
     },
@@ -67,7 +67,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
       setShowForm(false);
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Ajout du portefeuille impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -76,7 +76,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
       const response = await apiRequest("DELETE", `/api/wallets/${walletId}`, {});
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Impossible de supprimer le portefeuille");
       }
       return response.json();
     },
@@ -85,7 +85,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
       toast({ title: "Portefeuille supprimé!" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Suppression du portefeuille impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -94,7 +94,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
       const response = await apiRequest("PATCH", `/api/wallets/${walletId}/default`, {});
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Impossible de définir le portefeuille par défaut");
       }
       return response.json();
     },
@@ -103,7 +103,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
       toast({ title: "Portefeuille par défaut mis à jour!" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Mise à jour du portefeuille par défaut impossible", description: error.message, variant: "destructive" });
     },
   });
 

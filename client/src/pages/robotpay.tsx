@@ -187,7 +187,7 @@ export default function RobotPayPage() {
       else if (data.requiresRedirect && data.redirectUrl) { setRedirectUrl(data.redirectUrl); setStep(2); }
       else { setStep(2); setStatus("processing"); }
     },
-    onError: (e: any) => toast({ title: "Erreur de paiement", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: "Paiement impossible", description: e.message, variant: "destructive" }),
   });
   const ashtechMutation = useMutation({
     mutationFn: async (otpCode?: string) => {
@@ -215,7 +215,7 @@ export default function RobotPayPage() {
         setStep(2);
         return;
       }
-      toast({ title: "Erreur de paiement", description: e.message, variant: "destructive" });
+       toast({ title: "Paiement impossible", description: e.message, variant: "destructive" });
     },
   });
   const manualMutation = useMutation({
@@ -246,7 +246,7 @@ export default function RobotPayPage() {
       setStep(3);
       queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
     },
-    onError: (e: any) => toast({ title: "Erreur de dépôt", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: "Dépôt non enregistré", description: e.message, variant: "destructive" }),
   });
 
   useEffect(() => {

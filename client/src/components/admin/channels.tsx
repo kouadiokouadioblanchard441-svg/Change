@@ -52,7 +52,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       const response = await apiRequest("POST", "/api/admin/channels", data);
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Création du canal impossible");
       }
       return response.json();
     },
@@ -63,7 +63,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       form.reset();
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Création du canal impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -72,7 +72,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       const response = await apiRequest("PATCH", `/api/admin/channels/${id}`, data);
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Modification du canal impossible");
       }
       return response.json();
     },
@@ -82,7 +82,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       setEditChannel(null);
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Modification du canal impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -91,7 +91,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       const response = await apiRequest("DELETE", `/api/admin/channels/${id}`, {});
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Suppression du canal impossible");
       }
       return response.json();
     },
@@ -100,7 +100,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       toast({ title: "Canal supprimé!" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Suppression du canal impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -109,7 +109,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       const response = await apiRequest("PATCH", `/api/admin/channels/${id}`, { isActive });
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Modification du statut du canal impossible");
       }
       return response.json();
     },
@@ -117,7 +117,7 @@ export default function AdminChannels({ isSuperAdmin }: AdminChannelsProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/channels"] });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Modification du statut du canal impossible", description: error.message, variant: "destructive" });
     },
   });
 

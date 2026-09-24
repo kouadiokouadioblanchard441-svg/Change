@@ -112,7 +112,7 @@ export default function WithdrawalPage() {
         navigate(error.data.paymentUrl);
         return;
       }
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Retrait impossible", description: error.message, variant: "destructive" });
     },
   });
 

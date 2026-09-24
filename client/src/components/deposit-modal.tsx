@@ -60,7 +60,7 @@ export default function DepositModal({ open, onClose }: DepositModalProps) {
       });
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "Impossible d'enregistrer la demande de dépôt");
       }
       return response.json();
     },
@@ -74,7 +74,7 @@ export default function DepositModal({ open, onClose }: DepositModalProps) {
       handleClose();
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Dépôt non enregistré", description: error.message, variant: "destructive" });
     },
   });
 

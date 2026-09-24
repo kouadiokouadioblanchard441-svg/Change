@@ -56,11 +56,11 @@ export default function AdminPaymentNumbers() {
       if (!payload.country) throw new Error("Veuillez sélectionner ou saisir un pays");
       if (editTarget) {
         const res = await apiRequest("PUT", `/api/admin/payment-numbers/${editTarget.id}`, payload);
-        if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Erreur"); }
+         if (!res.ok) { const d = await res.json(); throw new Error(d.message || "La mise à jour du numéro de paiement a échoué"); }
         return res.json();
       } else {
         const res = await apiRequest("POST", "/api/admin/payment-numbers", payload);
-        if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Erreur"); }
+         if (!res.ok) { const d = await res.json(); throw new Error(d.message || "L'ajout du numéro de paiement a échoué"); }
         return res.json();
       }
     },
@@ -70,33 +70,33 @@ export default function AdminPaymentNumbers() {
       toast({ title: editTarget ? "Numéro mis à jour" : "Numéro ajouté" });
       closeForm();
     },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: editTarget ? "Mise à jour du numéro impossible" : "Ajout du numéro impossible", description: e.message, variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await apiRequest("DELETE", `/api/admin/payment-numbers/${id}`, {});
-      if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Erreur"); }
+       if (!res.ok) { const d = await res.json(); throw new Error(d.message || "La suppression du numéro de paiement a échoué"); }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/payment-numbers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/payment-numbers"] });
       toast({ title: "Numéro supprimé" });
     },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: "Suppression du numéro impossible", description: e.message, variant: "destructive" }),
   });
 
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
       const res = await apiRequest("PUT", `/api/admin/payment-numbers/${id}`, { isActive });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Erreur"); }
+       if (!res.ok) { const d = await res.json(); throw new Error(d.message || "La modification de l'état du numéro a échoué"); }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/payment-numbers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/payment-numbers"] });
     },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: "Modification de l'état du numéro impossible", description: e.message, variant: "destructive" }),
   });
 
   const openAdd = () => {

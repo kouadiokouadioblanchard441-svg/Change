@@ -50,7 +50,7 @@ export default function BankerPage() {
     queryKey: ["/api/banker/deposits"],
     queryFn: async () => {
       const res = await fetch("/api/banker/deposits", { credentials: "include" });
-      if (!res.ok) throw new Error("Erreur");
+       if (!res.ok) throw new Error("Impossible de charger les dépôts");
       return res.json();
     },
     refetchInterval: 30000,
@@ -60,7 +60,7 @@ export default function BankerPage() {
     queryKey: ["/api/banker/withdrawals"],
     queryFn: async () => {
       const res = await fetch("/api/banker/withdrawals", { credentials: "include" });
-      if (!res.ok) throw new Error("Erreur");
+       if (!res.ok) throw new Error("Impossible de charger les retraits");
       return res.json();
     },
     refetchInterval: 30000,
@@ -69,27 +69,27 @@ export default function BankerPage() {
   const depositMutation = useMutation({
     mutationFn: async ({ id, action }: { id: number; action: "approve" | "reject" }) => {
       const res = await apiRequest("POST", `/api/banker/deposits/${id}/${action}`, {});
-      if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Erreur"); }
+       if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Traitement du dépôt impossible"); }
       return res.json();
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/banker/deposits"] });
       toast({ title: vars.action === "approve" ? "Dépôt validé !" : "Dépôt rejeté" });
     },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: "Traitement du dépôt impossible", description: e.message, variant: "destructive" }),
   });
 
   const withdrawalMutation = useMutation({
     mutationFn: async ({ id, action }: { id: number; action: "approve" | "reject" }) => {
       const res = await apiRequest("POST", `/api/banker/withdrawals/${id}/${action}`, {});
-      if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Erreur"); }
+       if (!res.ok) { const d = await res.json(); throw new Error(d.message || "Traitement du retrait impossible"); }
       return res.json();
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/banker/withdrawals"] });
       toast({ title: vars.action === "approve" ? "Retrait validé !" : "Retrait rejeté et remboursé" });
     },
-    onError: (e: any) => toast({ title: "Erreur", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: "Traitement du retrait impossible", description: e.message, variant: "destructive" }),
   });
 
   const filterDeposits = (items: DepositWithUser[]) => {

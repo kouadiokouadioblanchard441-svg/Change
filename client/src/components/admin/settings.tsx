@@ -225,7 +225,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       const response = await apiRequest("POST", "/api/admin/settings", serialized);
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.message || "Erreur");
+        throw new Error(result.message || "L'enregistrement des paramètres a échoué");
       }
       return response.json();
     },
@@ -236,7 +236,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       toast({ title: "Paramètres enregistrés !" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Enregistrement des paramètres impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -252,7 +252,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       setInpayBalances((current) => ({ ...current, [country]: balance }));
     },
     onError: (error: any) => {
-      toast({ title: "Erreur InPay", description: error.message, variant: "destructive" });
+      toast({ title: "Solde InPay indisponible", description: error.message, variant: "destructive" });
     },
   });
 

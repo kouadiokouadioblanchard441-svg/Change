@@ -44,7 +44,7 @@ export default function AdminGiftCodes() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Erreur");
+        throw new Error(errorData.message || "Création du code cadeau impossible");
       }
       return response.json();
     },
@@ -55,14 +55,14 @@ export default function AdminGiftCodes() {
       toast({ title: "Succes", description: "Code cadeau cree avec succes" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Création du code cadeau impossible", description: error.message, variant: "destructive" });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const response = await apiRequest("DELETE", `/api/admin/gift-codes/${id}`);
-      if (!response.ok) throw new Error("Erreur lors de la suppression");
+      if (!response.ok) throw new Error("Suppression du code cadeau impossible");
       return response.json();
     },
     onSuccess: () => {
@@ -70,14 +70,14 @@ export default function AdminGiftCodes() {
       toast({ title: "Succes", description: "Code cadeau supprime" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Suppression du code cadeau impossible", description: error.message, variant: "destructive" });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.code || !formData.amount || !formData.maxUses || !formData.expiresAt) {
-      toast({ title: "Erreur", description: "Tous les champs sont requis", variant: "destructive" });
+      toast({ title: "Informations du code cadeau incomplètes", description: "Tous les champs sont requis", variant: "destructive" });
       return;
     }
     createMutation.mutate(formData);

@@ -21,7 +21,7 @@ export default function ChangePasswordPage() {
       const res = await apiRequest("POST", "/api/change-password", data);
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Erreur lors du changement de mot de passe");
+        throw new Error(err.message || "Le mot de passe n'a pas pu être modifié.");
       }
       return res.json();
     },
@@ -33,7 +33,7 @@ export default function ChangePasswordPage() {
       navigate("/account");
     },
     onError: (error: Error) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Modification du mot de passe impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -47,7 +47,7 @@ export default function ChangePasswordPage() {
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: "Erreur", description: "Les nouveaux mots de passe ne correspondent pas", variant: "destructive" });
+      toast({ title: "Confirmation du mot de passe impossible", description: "Les nouveaux mots de passe ne correspondent pas", variant: "destructive" });
       return;
     }
     changePasswordMutation.mutate({ currentPassword, newPassword });

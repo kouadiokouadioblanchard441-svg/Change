@@ -182,7 +182,7 @@ export default function AdminUsers({ isSuperAdmin }: AdminUsersProps) {
       const response = await apiRequest("POST", `/api/admin/users/${userId}/revoke-product`, { value: productId });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Erreur");
+         throw new Error(data.message || "La révocation du produit a échoué");
       }
       return response.json();
     },
@@ -192,7 +192,7 @@ export default function AdminUsers({ isSuperAdmin }: AdminUsersProps) {
       toast({ title: "Produit revoque!" });
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+       toast({ title: "Révocation du produit impossible", description: error.message, variant: "destructive" });
     },
   });
 
@@ -201,7 +201,7 @@ export default function AdminUsers({ isSuperAdmin }: AdminUsersProps) {
       const response = await apiRequest("POST", `/api/admin/users/${userId}/${action}`, { value });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Erreur");
+         throw new Error(data.message || "La mise à jour de l'utilisateur a échoué");
       }
       return response.json();
     },
@@ -211,7 +211,7 @@ export default function AdminUsers({ isSuperAdmin }: AdminUsersProps) {
       setSelectedUser(null);
     },
     onError: (error: any) => {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+       toast({ title: "Mise à jour de l'utilisateur impossible", description: error.message, variant: "destructive" });
     },
   });
 

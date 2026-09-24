@@ -30,7 +30,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
       const res = await apiRequest("POST", "/api/change-password", data);
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Erreur lors du changement de mot de passe");
+        throw new Error(errorData.message || "Impossible de modifier le mot de passe");
       }
       return res.json();
     },
@@ -46,7 +46,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
     },
     onError: (error: Error) => {
       toast({
-        title: "Erreur",
+        title: "Modification du mot de passe impossible",
         description: error.message,
         variant: "destructive",
       });
