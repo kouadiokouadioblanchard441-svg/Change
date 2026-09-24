@@ -1,5 +1,5 @@
 .cp-pro-overlay {
-  position: absolute;
+  position: fixed;
   z-index: 6;
   inset: 0;
   display: flex;
@@ -131,7 +131,7 @@
 
 @media (max-height: 620px) {
   .cp-pro-overlay { padding: 30px 12px 12px; }
-  .cp-pro-dialog { height: calc(100dvh - 32px); min-height: calc(100dvh - 32px); max-height: calc(100dvh - 32px); }
+  .cp-pro-dialog { height: calc(100dvh - 72px); min-height: calc(100dvh - 72px); max-height: calc(100dvh - 72px); }
   .cp-pro-mark { top: -25px; width: 54px; height: 54px; }
   .cp-pro-scroll { padding-top: 34px; }
   .cp-pro-description { margin-top: 7px; }
