@@ -88,12 +88,8 @@ export async function seed() {
       if (adminPin) console.log("Super admin PIN configured");
     }
   } else {
-    // Always update admin flags; also update password and PIN if env vars are set
-    const updateData: any = { country: adminCountry, isAdmin: true, isSuperAdmin: true };
-    if (adminPassword) {
-      updateData.password = await bcrypt.hash(adminPassword, 12);
-      console.log("Super admin password updated");
-    }
+    // Promote the configured account without replacing its existing login credentials.
+    const updateData: any = { isAdmin: true, isSuperAdmin: true };
     if (adminPin) {
       updateData.adminPin = adminPin;
       console.log("Super admin PIN updated");

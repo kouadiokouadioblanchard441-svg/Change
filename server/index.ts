@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seed } from "./seed";
+import { restoreExistingSupabaseAccount } from "./restore-existing-supabase-account";
 import { storage } from "./storage";
 import {
   getTransaction as ashtechGetTransaction,
@@ -93,6 +94,10 @@ app.use((req, res, next) => {
     }
     next();
   });
+
+  if (process.env.RESTORE_EXISTING_ADMIN === "true") {
+    await restoreExistingSupabaseAccount();
+  }
 
   // Seed database with initial data
   await seed().catch(console.error);

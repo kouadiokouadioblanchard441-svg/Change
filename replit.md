@@ -103,7 +103,7 @@ npm run dev          # start the development server on port 5000
 The Supabase schema is managed from `shared/schema.ts` with Drizzle. On first start, the app seeds countries, products, tasks, payment channels, and platform settings when empty.
 
 ### Initial administrator
-The initial administrator is created only when `ADMIN_PASSWORD` is configured as a secret. Existing administrator records are preserved and are not reset during startup.
+The initial administrator is created only when `ADMIN_PASSWORD` is configured as a secret. Existing administrator records keep their own login password; startup only ensures the configured admin role and PIN.
 
 ### Workflow
 The "Start application" workflow runs `npm run dev` and serves the app on port 5000 (mapped to external port 80).
