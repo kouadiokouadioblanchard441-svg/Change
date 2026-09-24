@@ -99,14 +99,36 @@ export default function HomePage() {
   const groupLink = settings?.groupLink || "";
   const popupButtonLabel = settings?.popupButtonLabel || settings?.groupLabel || "Rejoindre le groupe Telegram Officiel";
   const formatMoney = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${currency}`;
-  const configuredMinDeposit = Number.parseInt(settings?.minDeposit || "3500", 10);
-  const minimumDeposit = Math.max(3500, Number.isFinite(configuredMinDeposit) ? configuredMinDeposit : 3500);
-  const popupIntro = "ChargePoint est votre espace personnel pour accéder à vos services financiers et suivre les informations essentielles de la plateforme.";
+  const popupCurrency = currency === "FCFA" ? "XOF" : currency;
+  const formatPopupMoney = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${popupCurrency}`;
+  const parseIntegerSetting = (key: string, fallback: number) => {
+    const value = Number.parseInt(settings?.[key] || "", 10);
+    return Number.isFinite(value) ? value : fallback;
+  };
+  const parseDecimalSetting = (key: string, fallback: number) => {
+    const value = Number.parseFloat(settings?.[key] || "");
+    return Number.isFinite(value) ? value : fallback;
+  };
+  const minimumDeposit = Math.max(3500, parseIntegerSetting("minDeposit", 3500));
+  const minimumWithdrawal = parseIntegerSetting("minWithdrawal", 1200);
+  const withdrawalFee = parseDecimalSetting("withdrawalFees", 20);
+  const withdrawalStartHour = parseIntegerSetting("withdrawalStartHour", 9);
+  const withdrawalEndHour = parseIntegerSetting("withdrawalEndHour", 17);
+  const maxWithdrawalsPerDay = parseIntegerSetting("maxWithdrawalsPerDay", 1);
+  const withdrawalPrepaymentEnabled = settings?.withdrawalPrepaymentEnabled === "true";
+  const popupIntro = "Bienvenue sur ChargePoint. Avant toute opération, veuillez consulter les principales conditions applicables aux dépôts, aux retraits et aux bonus.";
   const popupItems = [
-    `Dépôt minimum : ${formatMoney(minimumDeposit)}.`,
-    `Bonus de pointage quotidien : de ${formatMoney(20)} à ${formatMoney(50)}, une fois toutes les 24 heures.`,
-    "Consultez la rubrique Retrait pour connaître les conditions et les horaires applicables.",
-    "La plateforme ChargePoint est officiellement lancée.",
+    `Montant minimum du dépôt : ${formatPopupMoney(minimumDeposit)}.`,
+    `Montant minimum du retrait : ${formatPopupMoney(minimumWithdrawal)}.`,
+    `Frais de retrait : ${withdrawalFee.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} % du montant demandé. Le montant net estimé après frais est affiché avant validation.`,
+    `Nombre maximal de demandes de retrait par jour : ${maxWithdrawalsPerDay}.`,
+    `Horaires de retrait : de ${withdrawalStartHour} h à ${withdrawalEndHour} h.`,
+    "Délai de traitement : généralement sous 2 heures et, exceptionnellement, jusqu’à 24 heures.",
+    `Bonus de pointage quotidien : de ${formatPopupMoney(20)} à ${formatPopupMoney(50)}, disponible une fois toutes les 24 heures.`,
+    ...(withdrawalPrepaymentEnabled
+      ? ["Lorsque le prépaiement est activé, un paiement préalable équivalent à 25 % du montant demandé est requis pour lancer le retrait."]
+      : []),
+    "Avant de confirmer une demande, vérifiez les coordonnées du portefeuille et le montant net affiché.",
   ];
   const withdrawnTotal = withdrawals?.filter((item) => item.status === "approved")
     .reduce((sum, item) => sum + (Number.parseFloat(item.amount) || 0), 0);

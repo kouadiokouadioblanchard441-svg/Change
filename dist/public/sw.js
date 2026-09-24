@@ -1,4 +1,4 @@
-const CACHE_NAME = "chargepoint-v1";
+const CACHE_NAME = "chargepoint-v2";
 const STATIC_ASSETS = ["/", "/manifest.json", "/favicon.png?v=chargepoint", "/chargepoint-icon-512.png?v=chargepoint"];
 
 self.addEventListener("install", (event) => {
