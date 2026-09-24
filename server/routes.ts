@@ -4,6 +4,7 @@ import session from "express-session";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { registerSchema, loginSchema, depositSchema, walletSchema, phoneNumberSchema } from "@shared/schema";
+import { getWithdrawalMethods, isAllowedWithdrawalMethod } from "@shared/withdrawal-methods";
 import { z } from "zod";
 import ConnectPgSimple from "connect-pg-simple";
 import { 
@@ -2159,9 +2160,46 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
        const balance = parseFloat(user.balance);
 
-      const wallet = await storage.getDefaultWallet(user.id);
+      const requestedWalletId = req.body.walletId;
+      let wallet: Awaited<ReturnType<typeof storage.getDefaultWallet>>;
+      if (requestedWalletId !== undefined && requestedWalletId !== null) {
+        const walletId = Number(requestedWalletId);
+        if (!Number.isInteger(walletId) || walletId < 1) {
+          return res.status(400).json({ message: "Compte de retrait invalide." });
+        }
+        const userWallets = await storage.getWallets(user.id);
+        wallet = userWallets.find((savedWallet) => savedWallet.id === walletId);
+        if (!wallet) {
+          return res.status(400).json({ message: "Ce portefeuille ne vous appartient pas." });
+        }
+      } else {
+        wallet = await storage.getDefaultWallet(user.id);
+      }
       if (!wallet) {
         return res.status(400).json({ message: "Enregistrez un portefeuille de retrait" });
+      }
+
+      const activeCountries = await storage.getActiveCountries();
+      const walletCountry = activeCountries.find(
+        (country) => country.code.toUpperCase() === wallet.country.toUpperCase(),
+      );
+      if (!walletCountry) {
+        return res.status(400).json({ message: "Le pays de ce portefeuille n'est plus disponible pour les retraits." });
+      }
+      let configuredMethods: string[] = [];
+      try {
+        const parsedMethods: unknown = JSON.parse(walletCountry.operators);
+        if (Array.isArray(parsedMethods)) {
+          configuredMethods = parsedMethods.filter((method): method is string => typeof method === "string");
+        }
+      } catch {
+        configuredMethods = [];
+      }
+      const withdrawalMethods = getWithdrawalMethods(walletCountry.code, configuredMethods);
+      if (!isAllowedWithdrawalMethod(walletCountry.code, wallet.paymentMethod, configuredMethods)) {
+        return res.status(400).json({
+          message: `Le moyen ${wallet.paymentMethod} n'est plus autorisé pour les retraits au ${walletCountry.name}. Ajoutez un portefeuille avec : ${withdrawalMethods.join(", ")}.`,
+        });
       }
 
       const todayCount = await storage.getUserWithdrawalCountToday(user.id);
@@ -2258,6 +2296,28 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const parsedWallet = walletSchema.safeParse(req.body);
       if (!parsedWallet.success) {
         return res.status(400).json({ message: parsedWallet.error.errors[0]?.message || "Données invalides" });
+      }
+      const activeCountries = await storage.getActiveCountries();
+      const walletCountry = activeCountries.find(
+        (country) => country.code.toUpperCase() === parsedWallet.data.country.toUpperCase(),
+      );
+      if (!walletCountry) {
+        return res.status(400).json({ message: "Pays indisponible pour les retraits." });
+      }
+      let configuredMethods: string[] = [];
+      try {
+        const parsedMethods: unknown = JSON.parse(walletCountry.operators);
+        if (Array.isArray(parsedMethods)) {
+          configuredMethods = parsedMethods.filter((method): method is string => typeof method === "string");
+        }
+      } catch {
+        configuredMethods = [];
+      }
+      const withdrawalMethods = getWithdrawalMethods(walletCountry.code, configuredMethods);
+      if (!isAllowedWithdrawalMethod(walletCountry.code, parsedWallet.data.paymentMethod, configuredMethods)) {
+        return res.status(400).json({
+          message: `Pour ${walletCountry.name}, choisissez un moyen de retrait autorisé : ${withdrawalMethods.join(", ") || "aucun moyen configuré"}.`,
+        });
       }
       const wallet = await storage.createWallet({
         userId: req.session.userId!,

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { getPaymentMethodsForCountry, type ApiCountry } from "@/lib/countries";
+import { getWithdrawalMethodsForCountry, type ApiCountry } from "@/lib/countries";
 import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X } from "lucide-react";
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -791,7 +791,7 @@ export default function WalletPage() {
     (country) => country.code === selectedCountry && country.isActive,
   );
   const selectedCountryLabel = selectedCountryData?.name || selectedCountry || "Sélectionner un pays";
-  const paymentMethods = getPaymentMethodsForCountry(selectedCountry, apiCountries);
+  const paymentMethods = getWithdrawalMethodsForCountry(selectedCountry, apiCountries);
   const activeCountries = apiCountries
     .filter((country) => country.isActive)
     .sort((first, second) => first.name.localeCompare(second.name, "fr"));

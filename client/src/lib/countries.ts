@@ -1,3 +1,5 @@
+import { getWithdrawalMethods } from "@shared/withdrawal-methods";
+
 // Countries are managed by the database and loaded from /api/countries.
 // Keep these arrays empty so stale country data can never flash while the API loads.
 export const COUNTRIES: Array<{
@@ -73,6 +75,11 @@ export function getCountryByCode(code: string, apiCountries?: ApiCountry[]) {
 export function getPaymentMethodsForCountry(code: string, apiCountries?: ApiCountry[]): string[] {
   const country = getCountryByCode(code, apiCountries);
   return country ? [...country.paymentMethods] : [];
+}
+
+export function getWithdrawalMethodsForCountry(code: string, apiCountries?: ApiCountry[]): string[] {
+  const country = getCountryByCode(code, apiCountries);
+  return country ? getWithdrawalMethods(country.code, country.paymentMethods) : [];
 }
 
 export function formatCurrency(amount: number, countryCode: string, apiCountries?: ApiCountry[]): string {
