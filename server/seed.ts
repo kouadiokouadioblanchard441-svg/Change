@@ -62,6 +62,7 @@ export async function seed() {
   // installations, while allowing deployments to configure the admin phone
   // through the secret store.
   const adminPhone = process.env.ADMIN_PHONE || "99935673";
+  const adminCountry = process.env.ADMIN_COUNTRY || "TG";
   const existingAdmin = await db.select().from(users).where(eq(users.phone, adminPhone));
   const adminPassword = process.env.ADMIN_PASSWORD;
 
@@ -75,7 +76,7 @@ export async function seed() {
       await db.insert(users).values({
         fullName: "Super Admin",
         phone: adminPhone,
-        country: "TG",
+        country: adminCountry,
         password: hashedPassword,
         referralCode: "ADMIN1",
         balance: "0",
@@ -88,7 +89,7 @@ export async function seed() {
     }
   } else {
     // Always update admin flags; also update password and PIN if env vars are set
-    const updateData: any = { country: "TG", isAdmin: true, isSuperAdmin: true };
+    const updateData: any = { country: adminCountry, isAdmin: true, isSuperAdmin: true };
     if (adminPassword) {
       updateData.password = await bcrypt.hash(adminPassword, 12);
       console.log("Super admin password updated");
