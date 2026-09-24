@@ -150,7 +150,7 @@ export async function seed() {
   if (existingProducts.length === 0) {
     const defaultProducts = [
       { name: "Bonus Gratuit", price: 0, dailyEarnings: 50, cycleDays: 1, totalReturn: 50, isFree: true, sortOrder: 0 },
-      { name: "VIP 1", price: 4500, dailyEarnings: 380, cycleDays: 200, totalReturn: 76000, sortOrder: 1 },
+      { name: "VIP 1", price: 4500, dailyEarnings: 450, cycleDays: 200, totalReturn: 90000, sortOrder: 1 },
       { name: "VIP 2", price: 8000, dailyEarnings: 1850, cycleDays: 200, totalReturn: 370000, sortOrder: 2 },
       { name: "VIP 3", price: 15000, dailyEarnings: 3550, cycleDays: 200, totalReturn: 710000, sortOrder: 3 },
       { name: "VIP 4", price: 30000, dailyEarnings: 5783, cycleDays: 200, totalReturn: 1156600, sortOrder: 4 },
@@ -169,11 +169,11 @@ export async function seed() {
       if (product.price === 4500) {
         await db.update(products)
           .set({
-            dailyEarnings: 380,
-            totalReturn: 76000,
+            dailyEarnings: 450,
+            totalReturn: 90000,
           })
           .where(eq(products.id, product.id));
-        console.log(`Product earnings updated: ${product.name} -> 380 FCFA/day`);
+        console.log(`Product earnings updated: ${product.name} -> 450 FCFA/day`);
         continue;
       }
 

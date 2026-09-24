@@ -339,7 +339,7 @@ async function run() {
     // ── Seed products ──
     const productsData = [
       { name: "Bonus Gratuit", price: 0, daily_earnings: 50, cycle_days: 80, total_return: 4000, is_free: true, sort_order: 0 },
-      { name: "VIP 1", price: 4500, daily_earnings: 380, cycle_days: 200, total_return: 76000, is_free: false, sort_order: 1 },
+      { name: "VIP 1", price: 4500, daily_earnings: 450, cycle_days: 200, total_return: 90000, is_free: false, sort_order: 1 },
       { name: "VIP 2", price: 8000, daily_earnings: 1850, cycle_days: 200, total_return: 370000, is_free: false, sort_order: 2 },
       { name: "VIP 3", price: 15000, daily_earnings: 3550, cycle_days: 200, total_return: 710000, is_free: false, sort_order: 3 },
       { name: "VIP 4", price: 30000, daily_earnings: 5783, cycle_days: 200, total_return: 1156600, is_free: false, sort_order: 4 },
