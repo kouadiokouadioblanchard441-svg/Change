@@ -3,7 +3,6 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seed } from "./seed";
-import { inspectNewSupabase } from "./inspect-new-supabase";
 import { storage } from "./storage";
 import {
   getTransaction as ashtechGetTransaction,
@@ -97,11 +96,6 @@ app.use((req, res, next) => {
 
   // Seed database with initial data
   await seed().catch(console.error);
-  if (process.env.SUPABASE_NEW_DATABASE_URL) {
-    await inspectNewSupabase().catch((error) => {
-      console.error("[new-supabase-inspection] inspection failed", error?.code || "UNKNOWN_ERROR");
-    });
-  }
   
   await registerRoutes(httpServer, app);
   startTelegramBot();
