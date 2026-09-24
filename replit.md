@@ -65,8 +65,9 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Database
-- **PostgreSQL**: Primary database (connection via `DATABASE_URL` environment variable)
+- **PostgreSQL**: Supabase is the application's only database, configured with `SUPABASE_NEW_DATABASE_URL`.
 - **Drizzle ORM**: Type-safe database queries and schema management
+- The previous database is retained but is not read or written by the application.
 
 ### Frontend Libraries
 - **Radix UI**: Accessible UI primitives (dialogs, dropdowns, tabs, etc.)
@@ -84,22 +85,22 @@ Preferred communication style: Simple, everyday language.
 - **TypeScript**: Type checking across full stack
 
 ### Environment Variables Required
-- `SUPABASE_DATABASE_URL` or `DATABASE_URL`: PostgreSQL connection string used for application data and sessions
+- `SUPABASE_NEW_DATABASE_URL`: Supabase PostgreSQL connection string used for application data, sessions, and schema changes
 - `SESSION_SECRET`: Secret for session encryption (required)
 
 ## Running on Replit
 
 ### Prerequisites
-- Replit provides the PostgreSQL database through `DATABASE_URL`. The application can alternatively use an existing Supabase database through `SUPABASE_DATABASE_URL`.
-- `SESSION_SECRET` is configured as a Replit Secret.
+- Configure `SUPABASE_NEW_DATABASE_URL` and `SESSION_SECRET` as Replit Secrets.
 
 ### First-time setup
 ```bash
 npm install          # install dependencies
+npm run db:push      # create/update the schema in the configured Supabase database
 npm run dev          # start the development server on port 5000
 ```
 
-The imported baseline schema must be applied before its first start. The development database is already initialized and the app now seeds countries, products, tasks, payment channels, and platform settings automatically when empty.
+The Supabase schema is managed from `shared/schema.ts` with Drizzle. On first start, the app seeds countries, products, tasks, payment channels, and platform settings when empty.
 
 ### Initial administrator
 The initial administrator is created only when `ADMIN_PASSWORD` is configured as a secret. Existing administrator records are preserved and are not reset during startup.

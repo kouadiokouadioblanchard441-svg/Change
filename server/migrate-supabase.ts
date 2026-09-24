@@ -2,8 +2,8 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-const url = process.env.SUPABASE_DATABASE_URL;
-if (!url) throw new Error("SUPABASE_DATABASE_URL manquant");
+const url = process.env.SUPABASE_NEW_DATABASE_URL;
+if (!url) throw new Error("SUPABASE_NEW_DATABASE_URL manquant");
 
 const pool = new Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
 

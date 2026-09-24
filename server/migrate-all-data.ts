@@ -3,10 +3,10 @@ import "dotenv/config";
 
 const { Pool } = pg;
 
-const SUPABASE_URL = process.env.SUPABASE_DATABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_NEW_DATABASE_URL;
 
 if (!SUPABASE_URL) {
-  console.error("SUPABASE_DATABASE_URL must be set");
+  console.error("SUPABASE_NEW_DATABASE_URL must be set");
   process.exit(1);
 }
 
