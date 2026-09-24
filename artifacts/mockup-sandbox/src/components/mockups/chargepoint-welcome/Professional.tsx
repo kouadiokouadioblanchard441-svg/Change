@@ -1,36 +1,17 @@
-import { ArrowDownToLine, Bell, ChevronRight, Gift, Send, ShieldCheck, Wallet } from "lucide-react";
+import { Bell, ChevronRight, Send } from "lucide-react";
 import "./_group.css";
 import "./welcome.css";
 import "./professional.css";
 
-const sections = [
-  {
-    title: "Dépôts",
-    icon: Wallet,
-    rows: [{ label: "Montant minimum", value: "3 500 XOF" }],
-    note: undefined,
-  },
-  {
-    title: "Retraits",
-    icon: ArrowDownToLine,
-    rows: [
-      { label: "Montant minimum", value: "1 200 XOF" },
-      { label: "Frais", value: "20 % du montant demandé" },
-      { label: "Limite quotidienne", value: "1 demande" },
-      { label: "Horaires", value: "09 h – 17 h" },
-      { label: "Traitement", value: "Sous 2 h en général ; jusqu’à 24 h exceptionnellement" },
-    ],
-    note: "Le montant net estimé après frais est affiché avant validation.",
-  },
-  {
-    title: "Bonus de pointage",
-    icon: Gift,
-    rows: [
-      { label: "Montant", value: "20 à 50 XOF" },
-      { label: "Fréquence", value: "Une fois toutes les 24 h" },
-    ],
-    note: undefined,
-  },
+const rules = [
+  "Montant minimum du dépôt : 3 500 XOF.",
+  "Montant minimum du retrait : 1 200 XOF.",
+  "Frais de retrait : 20 % du montant demandé. Le montant net estimé après frais est affiché avant validation.",
+  "Limite quotidienne de retrait : 1 demande par jour.",
+  "Horaires de retrait : de 9 h à 17 h.",
+  "Délai de traitement : généralement sous 2 heures et, exceptionnellement, jusqu’à 24 heures.",
+  "Bonus de pointage quotidien : de 20 à 50 XOF, disponible une fois toutes les 24 heures.",
+  "Avant de confirmer une demande, vérifiez les coordonnées du portefeuille et le montant net affiché.",
 ];
 
 export function Professional() {
@@ -39,38 +20,15 @@ export function Professional() {
       <PreviewDashboard />
       <div className="cp-pro-overlay">
         <section className="cp-pro-dialog" aria-labelledby="cp-pro-title" aria-describedby="cp-pro-description">
-          <header className="cp-pro-header">
-            <div className="cp-pro-mark" aria-hidden="true"><Bell size={23} /></div>
-            <div className="cp-pro-heading">
-              <span className="cp-pro-eyebrow">CHARGEPOINT · INFORMATIONS UTILES</span>
-              <h2 id="cp-pro-title">Conditions importantes</h2>
-            </div>
-          </header>
-          <p id="cp-pro-description" className="cp-pro-description">
-            Consultez les règles applicables à vos dépôts, retraits et bonus quotidiens.
-          </p>
+          <div className="cp-pro-mark" aria-hidden="true"><Bell size={31} /></div>
           <div className="cp-pro-scroll">
-            {sections.map(({ title, icon: Icon, rows, note }) => (
-              <section className="cp-pro-section" key={title} aria-label={title}>
-                <h3 className="cp-pro-section-title">
-                  <Icon size={17} aria-hidden="true" />
-                  {title}
-                </h3>
-                <dl className="cp-pro-rows">
-                  {rows.map(({ label, value }) => (
-                    <div className="cp-pro-row" key={label}>
-                      <dt>{label}</dt>
-                      <dd>{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                {note && <p className="cp-pro-section-note">{note}</p>}
-              </section>
-            ))}
-            <p className="cp-pro-reminder">
-              <ShieldCheck size={18} aria-hidden="true" />
-              <span>Avant de confirmer une demande, vérifiez les coordonnées du portefeuille et le montant net affiché.</span>
+            <h2 id="cp-pro-title">Message de bienvenue ChargePoint</h2>
+            <p id="cp-pro-description" className="cp-pro-description">
+              Bienvenue sur ChargePoint. Avant toute opération, veuillez consulter les principales conditions applicables aux dépôts, aux retraits et aux bonus.
             </p>
+            <ol className="cp-pro-rules">
+              {rules.map((rule) => <li key={rule}>{rule}</li>)}
+            </ol>
           </div>
           <footer className="cp-pro-actions">
             <a href="#telegram" onClick={(event) => event.preventDefault()}>
