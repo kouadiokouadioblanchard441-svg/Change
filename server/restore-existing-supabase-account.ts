@@ -47,8 +47,19 @@ export async function restoreExistingSupabaseAccount(): Promise<void> {
   const phone = process.env.ADMIN_PHONE;
   const adminPin = process.env.ADMIN_PIN;
 
-  if (!sourceUrl || !targetUrl || !phone || !adminPin) {
-    throw new Error("Account restoration requires both Supabase URLs and the configured admin phone/PIN.");
+  const missingConfiguration = [
+    ["SUPABASE_DATABASE_URL", sourceUrl],
+    ["SUPABASE_NEW_DATABASE_URL", targetUrl],
+    ["ADMIN_PHONE", phone],
+    ["ADMIN_PIN", adminPin],
+  ]
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
+
+  if (missingConfiguration.length > 0) {
+    throw new Error(
+      `Account restoration is missing configured variables: ${missingConfiguration.join(", ")}.`,
+    );
   }
   if (databaseIdentity(sourceUrl) === databaseIdentity(targetUrl)) {
     throw new Error("Source and destination Supabase databases are identical; refusing account restoration.");
