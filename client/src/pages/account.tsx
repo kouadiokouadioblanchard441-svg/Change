@@ -31,6 +31,18 @@ import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 import giftIcon from "@/assets/account-gift.png";
 import "./account.css";
 
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+declare global {
+  interface Window {
+    _installPrompt?: InstallPromptEvent | null;
+    _appInstalled?: boolean;
+  }
+}
+
 const tonGreen = "#00CC2C";
 
 export default function AccountPage() {
@@ -112,6 +124,58 @@ export default function AccountPage() {
       return;
     }
     setShowPinModal(true);
+  };
+
+  const handleDownload = async () => {
+    const isInstalled =
+      window._appInstalled ||
+      window.matchMedia("(display-mode: standalone)").matches ||
+      Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+
+    if (isInstalled) {
+      toast({
+        title: "ChargePoint est déjà installée",
+        description: "Vous pouvez ouvrir l’application depuis l’écran d’accueil de votre appareil.",
+      });
+      return;
+    }
+
+    const installPrompt = window._installPrompt;
+    if (installPrompt) {
+      window._installPrompt = null;
+      try {
+        await installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        toast(
+          outcome === "accepted"
+            ? {
+                title: "Installation lancée",
+                description: "ChargePoint est en cours d’installation sur votre appareil.",
+              }
+            : {
+                title: "Installation annulée",
+                description: "Vous pourrez relancer l’installation depuis ce bouton.",
+              },
+        );
+      } catch {
+        toast({
+          title: "Installation indisponible",
+          description: "Ouvrez le menu de votre navigateur et choisissez « Installer l’application ».",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    const isIos =
+      /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    toast({
+      title: "Installer ChargePoint",
+      description: isIos
+        ? "Dans Safari, touchez Partager puis « Sur l’écran d’accueil »."
+        : "Dans le menu de votre navigateur, choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».",
+    });
   };
 
   return (
@@ -439,7 +503,7 @@ export default function AccountPage() {
                 type="button"
                 onClick={() => {
                   if (item.action === "download") {
-                    toast({ title: "Application ChargePoint", description: "Le téléchargement sera bientôt disponible." });
+                    void handleDownload();
                     return;
                   }
                   navigate(item.href);
