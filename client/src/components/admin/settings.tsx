@@ -69,11 +69,12 @@ const settingsSchema = z.object({
   level3Commission: z.string().min(1, "Commission requise"),
   sendavapayEnabled: z.boolean(),
   sendavapayChannelName: z.string().min(1, "Nom requis"),
-  sendavapayWebhookSecret: z.string(),
+  soleaspayEnabled: z.boolean(),
+  soleaspayChannelName: z.string().min(1, "Nom requis"),
+  soleaspayCountries: z.string(),
   westpayEnabled: z.boolean(),
   westpayChannelName: z.string().min(1, "Nom requis"),
   westpayCountries: z.string(),
-  westpayWebhookSecret: z.string(),
   ashtechEnabled: z.boolean(),
   ashtechChannelName: z.string().min(1, "Nom requis"),
   ashtechCountries: z.string(),
@@ -141,17 +142,18 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       level3Commission: "1",
       sendavapayEnabled: false,
       sendavapayChannelName: "SendavaPay",
-      sendavapayWebhookSecret: "",
-      westpayEnabled: false,
+      soleaspayEnabled: true,
+      soleaspayChannelName: "SoleaPay",
+      soleaspayCountries: "TG,BF",
+      westpayEnabled: true,
       westpayChannelName: "WestPay",
-      westpayCountries: "",
-      westpayWebhookSecret: "",
+      westpayCountries: "NE",
       ashtechEnabled: true,
       ashtechChannelName: "AshtechPay",
       ashtechCountries: "BF,TG,CM,BJ",
-      inpayEnabled: false,
+      inpayEnabled: true,
       inpayChannelName: "InPay",
-      inpayCountries: "",
+      inpayCountries: "CI",
       ...Object.fromEntries(INPAY_COUNTRIES.map(({ code }) => [`inpayMerchantId_${code}`, ""])),
     },
   });
@@ -187,19 +189,20 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         level1Commission: settings.level1Commission || "25",
         level2Commission: settings.level2Commission || "4",
         level3Commission: settings.level3Commission || "1",
+        soleaspayEnabled: settings.soleaspayEnabled === "true",
+        soleaspayChannelName: settings.soleaspayChannelName || "SoleaPay",
+        soleaspayCountries: settings.soleaspayCountries ?? "TG,BF",
         westpayEnabled: settings.westpayEnabled === "true",
         westpayChannelName: settings.westpayChannelName || "WestPay",
-        westpayCountries: settings.westpayCountries || "",
-        westpayWebhookSecret: settings.westpayWebhookSecret || "",
+        westpayCountries: settings.westpayCountries ?? "NE",
         sendavapayEnabled: settings.sendavapayEnabled === "true",
         sendavapayChannelName: settings.sendavapayChannelName || "SendavaPay",
-        sendavapayWebhookSecret: settings.sendavapayWebhookSecret || "",
         ashtechEnabled: settings.ashtechEnabled === "true",
         ashtechChannelName: settings.ashtechChannelName || "AshtechPay",
-        ashtechCountries: settings.ashtechCountries || "",
+        ashtechCountries: settings.ashtechCountries ?? "BF,TG,CM,BJ",
         inpayEnabled: settings.inpayEnabled === "true",
         inpayChannelName: settings.inpayChannelName || "InPay",
-        inpayCountries: settings.inpayCountries || "",
+        inpayCountries: settings.inpayCountries ?? "CI",
         ...Object.fromEntries(INPAY_COUNTRIES.map(({ code }) => [
           `inpayMerchantId_${code}`,
           settings[`inpayMerchantId_${code}`] || "",
@@ -218,6 +221,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         groupEnabled: String(data.groupEnabled),
         withdrawalPrepaymentEnabled: String(data.withdrawalPrepaymentEnabled),
         sendavapayEnabled: String(data.sendavapayEnabled),
+        soleaspayEnabled: String(data.soleaspayEnabled),
         westpayEnabled: String(data.westpayEnabled),
         ashtechEnabled: String(data.ashtechEnabled),
         inpayEnabled: String(data.inpayEnabled),
@@ -633,18 +637,54 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="sendavapayWebhookSecret" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Webhook Secret</FormLabel>
-                <FormControl><Input {...field} type="password" placeholder="whsec_..." /></FormControl>
-                 <FormDescription className="text-xs">Configurez SENDAVAPAY_WEBHOOK_SECRET dans les Secrets/variables d'environnement du serveur. Cette variable est prioritaire et obligatoire pour accepter les webhooks.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
             <div className="rounded-xl bg-orange-50 border border-orange-100 p-3 text-xs text-orange-700 space-y-1">
               <p className="font-semibold">Configuration requise :</p>
               <p>1. Ajoutez la variable d'environnement <code className="bg-orange-100 px-1 rounded">SENDAVAPAY_API_KEY</code> avec votre clé SDK (commence par <code className="bg-orange-100 px-1 rounded">sdk_</code>)</p>
                <p>2. Ajoutez le secret Webhook dans SENDAVAPAY_WEBHOOK_SECRET, puis configurez l'URL webhook dans votre compte SendavaPay : <code className="bg-orange-100 px-1 rounded">/api/webhooks/sendavapay</code></p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── SoleaPay ── */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="w-5 h-5 text-purple-600" />
+              SoleaPay — Dépôts Mobile Money
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Activer SoleaPay</p>
+                <p className="text-xs text-gray-500">Dépôts directs avec confirmation par vérification du paiement</p>
+              </div>
+              <FormField control={form.control} name="soleaspayEnabled" render={({ field }) => (
+                <FormItem className="flex items-center gap-2 space-y-0">
+                  <FormLabel className="text-xs text-gray-500">{field.value ? "Actif" : "Désactivé"}</FormLabel>
+                  <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                </FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="soleaspayChannelName" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nom du canal affiché</FormLabel>
+                <FormControl><Input {...field} placeholder="SoleaPay" /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="soleaspayCountries" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pays SoleaPay activés</FormLabel>
+                <FormControl><Input {...field} placeholder="TG,BF — codes séparés par virgule" /></FormControl>
+                <FormDescription className="text-xs">Seuls les pays listés peuvent utiliser SoleaPay. Un champ vide désactive la disponibilité par pays.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <div className="rounded-xl bg-purple-50 border border-purple-100 p-3 text-xs text-purple-800 space-y-1">
+              <p className="font-semibold">Configuration serveur :</p>
+              <p>Ajoutez <code className="bg-purple-100 px-1 rounded">SOLEASPAY_API_KEY</code> dans les Secrets du serveur.</p>
+              <p>Les retraits SoleaPay ne sont pas raccordés. URL de vérification : <code className="bg-purple-100 px-1 rounded">/api/deposits/:id/verify</code>.</p>
             </div>
           </CardContent>
         </Card>
@@ -682,30 +722,22 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
             <FormField control={form.control} name="westpayCountries" render={({ field }) => (
               <FormItem>
                 <FormLabel>Pays activés (codes séparés par virgule)</FormLabel>
-                <FormControl><Input {...field} placeholder="TG,CM,BJ,BF,SN,CI — vide = tous les pays" /></FormControl>
-                <FormDescription className="text-xs">Laissez vide pour afficher WestPay dans tous les pays. Chaque pays peut avoir sa propre clé API pour les retraits (WESTPAY_API_KEY_TG, etc.).</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="westpayWebhookSecret" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Webhook Secret</FormLabel>
-                <FormControl><Input {...field} type="password" placeholder="Secret webhook WestPay..." /></FormControl>
-                 <FormDescription className="text-xs">Configurez WESTPAY_WEBHOOK_SECRET dans les Secrets du serveur. Cette variable est prioritaire et obligatoire pour accepter les webhooks.</FormDescription>
+                <FormControl><Input {...field} placeholder="NE — vide = tous les pays" /></FormControl>
+                <FormDescription className="text-xs">WestPay est raccordé aux dépôts uniquement. Laissez vide pour autoriser tous les pays.</FormDescription>
                 <FormMessage />
               </FormItem>
             )} />
             <div className="rounded-xl bg-orange-50 border border-orange-100 p-3 text-xs text-orange-700 space-y-1">
-              <p className="font-semibold">Variables d'environnement à définir sur le serveur (Plesk, VPS…) :</p>
+              <p className="font-semibold">Secrets requis sur le serveur :</p>
               <p>• <code className="bg-orange-100 px-1 rounded">WESTPAY_MERCHANT_SLUG</code> — votre identifiant marchand WestPay</p>
-              <p>• <code className="bg-orange-100 px-1 rounded">WESTPAY_API_KEY_TG</code>, <code className="bg-orange-100 px-1 rounded">WESTPAY_API_KEY_BF</code>… — clé API par pays</p>
+              <p>• <code className="bg-orange-100 px-1 rounded">WESTPAY_WEBHOOK_SECRET</code> — vérification des confirmations de paiement</p>
               <p>• URL webhook à configurer dans votre compte WestPay : <code className="bg-orange-100 px-1 rounded">/api/webhooks/westpay</code></p>
               <p className="font-semibold text-red-600 mt-1">⚠ Ne jamais saisir ces clés dans un formulaire ou les stocker en base de données.</p>
             </div>
           </CardContent>
         </Card>
 
-        {/* ── AshtechPay ── */}
+        {/* ── InPay ── */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -776,7 +808,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
               ))}
             </div>
             <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-800 space-y-1">
-              <p className="font-semibold">Configuration serveur à faire après l'intégration :</p>
+              <p className="font-semibold">Configuration serveur InPay :</p>
               <p>• <code className="bg-blue-100 px-1 rounded">INPAY_API_BASE_URL</code> — URL de base fournie par InPay</p>
               <p>• <code className="bg-blue-100 px-1 rounded">INPAY_API_KEY_TG</code>, <code className="bg-blue-100 px-1 rounded">INPAY_API_KEY_CI</code>… — une clé API par pays activé</p>
               <p>• URL webhook InPay : <code className="bg-blue-100 px-1 rounded">/api/webhooks/inpay</code></p>
@@ -817,7 +849,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
               <FormItem>
                 <FormLabel>Pays activés (codes séparés par virgule)</FormLabel>
                 <FormControl><Input {...field} placeholder="TG,CI,BJ,SN — vide = tous les pays" /></FormControl>
-                <FormDescription className="text-xs">Les codes doivent correspondre aux pays AshtechPay. Laissez vide pour tous les pays.</FormDescription>
+                <FormDescription className="text-xs">AshtechPay traite les dépôts. En cas de chevauchement avec SoleaPay, SoleaPay est choisi en priorité.</FormDescription>
                 <FormMessage />
               </FormItem>
             )} />
@@ -826,6 +858,22 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
               <p>Ajoutez <code className="bg-green-100 px-1 rounded">ASHTECHPAY_API_KEY</code> dans les Secrets du serveur.</p>
               <p>La clé API n'est jamais enregistrée dans les paramètres ni affichée dans ce formulaire.</p>
               <p>URL de notification à configurer chez AshtechPay : <code className="bg-green-100 px-1 rounded">/api/webhooks/ashtechpay</code>. Le statut est confirmé par interrogation sécurisée de l'API.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── OmniPay ── */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="w-5 h-5 text-gray-500" />
+              OmniPay — Non raccordé
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 space-y-1">
+              <p className="font-semibold">Visible, mais pas opérationnel</p>
+              <p>Le module OmniPay est présent dans le projet, mais aucun parcours de dépôt ou de retrait ne l'appelle. Il n'y a donc pas de bouton d'activation pour éviter d'afficher une option qui ne peut pas traiter les paiements.</p>
             </div>
           </CardContent>
         </Card>

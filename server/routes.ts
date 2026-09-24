@@ -270,6 +270,7 @@ const PUBLIC_SETTING_KEYS = new Set([
   "withdrawalPrepaymentEnabled",
   "level1Commission", "level2Commission", "level3Commission",
   "sendavapayEnabled", "sendavapayChannelName",
+  "soleaspayEnabled", "soleaspayChannelName", "soleaspayCountries",
   "westpayEnabled", "westpayChannelName", "westpayCountries",
   "ashtechEnabled", "ashtechChannelName", "ashtechCountries",
   "inpayEnabled", "inpayChannelName", "inpayCountries",
@@ -745,7 +746,7 @@ export async function registerRoutes(
       ]);
 
       const soleaspayEnabled = settings.soleaspayEnabled === "true";
-      const soleaspayChannelName = settings.soleaspayChannelName || "Westpay";
+      const soleaspayChannelName = settings.soleaspayChannelName || "SoleaPay";
       const sendavapayEnabled = settings.sendavapayEnabled === "true";
       const sendavapayChannelName = settings.sendavapayChannelName || "SendavaPay";
       // Build virtual gateway channels when enabled in settings
@@ -808,8 +809,11 @@ export async function registerRoutes(
   app.get("/api/soleaspay/services", requireAuth, async (req, res) => {
     try {
       const settings = await storage.getSettings();
-      const soleaspayEnabled = settings.soleaspayEnabled !== "false";
-      const soleaspayCountries = settings.soleaspayCountries ? settings.soleaspayCountries.split(",").filter(Boolean) : [];
+      const soleaspayEnabled = settings.soleaspayEnabled === "true";
+      const soleaspayCountries = (settings.soleaspayCountries || "")
+        .split(",")
+        .map((country) => country.trim().toUpperCase())
+        .filter(Boolean);
       res.json({ 
         enabled: soleaspayEnabled,
         services: SOLEASPAY_SERVICE_MAP,
@@ -1083,15 +1087,27 @@ export async function registerRoutes(
          }
        }
 
-      const soleaspayEnabled = settings.soleaspayEnabled !== "false";
-      const soleaspayCountries = settings.soleaspayCountries ? settings.soleaspayCountries.split(",").filter(Boolean) : [];
+      const soleaspayEnabled = settings.soleaspayEnabled === "true";
+      const soleaspayCountries = (settings.soleaspayCountries || "")
+        .split(",")
+        .map((country) => country.trim().toUpperCase())
+        .filter(Boolean);
+      const soleaspayCountry = normalizedDeposit.country.trim().toUpperCase();
       const orderId = `JOLLIBEE-${Date.now()}-${user.id}`;
       
-      // Only use Soleaspay when user explicitly chose the Soleaspay channel (Westpay)
-      if (useSoleaspay && soleaspayEnabled) {
-         if (!isSoleaspaySupported(normalizedDeposit.country, normalizedDeposit.paymentMethod)) {
+      if (useSoleaspay === true) {
+        if (!soleaspayEnabled) {
+          return res.status(400).json({ message: "SoleaPay est désactivé", soleaspay: true });
+        }
+        if (!soleaspayCountries.includes(soleaspayCountry)) {
+          return res.status(400).json({ message: "SoleaPay n'est pas activé pour ce pays", soleaspay: true });
+        }
+        if (!process.env.SOLEASPAY_API_KEY) {
+          return res.status(503).json({ message: "SoleaPay n'est pas configuré : ajoutez SOLEASPAY_API_KEY dans les Secrets du serveur", soleaspay: true });
+        }
+         if (!isSoleaspaySupported(soleaspayCountry, normalizedDeposit.paymentMethod)) {
           return res.status(400).json({
-            message: `L'opérateur "${normalizedDeposit.paymentMethod}" n'est pas supporté par ce canal pour le pays "${normalizedDeposit.country}". Veuillez choisir un autre canal.`,
+            message: `L'opérateur "${normalizedDeposit.paymentMethod}" n'est pas supporté par ce canal pour le pays "${soleaspayCountry}". Veuillez choisir un autre canal.`,
             soleaspay: true,
           });
         }
@@ -1099,7 +1115,7 @@ export async function registerRoutes(
           const paymentResult = await initiatePayment(
             normalizedDeposit.accountNumber,
             normalizedDeposit.amount,
-            normalizedDeposit.country,
+            soleaspayCountry,
             normalizedDeposit.paymentMethod,
             orderId,
             normalizedDeposit.accountName,
@@ -1112,7 +1128,7 @@ export async function registerRoutes(
              amount: normalizedDeposit.amount,
              accountName: normalizedDeposit.accountName,
              accountNumber: normalizedDeposit.accountNumber,
-             country: normalizedDeposit.country,
+             country: soleaspayCountry,
              paymentMethod: normalizedDeposit.paymentMethod,
                paymentChannelId: normalizedDeposit.paymentChannelId && normalizedDeposit.paymentChannelId > 0 ? normalizedDeposit.paymentChannelId : null,
               status: "processing",
@@ -1144,11 +1160,23 @@ export async function registerRoutes(
       }
 
       // ── WestPay: redirect-based hosted-payment flow ─────────────────────────
-      const westpayEnabledDeposit = settings.westpayEnabled === "true";
-      if (useWestpay && westpayEnabledDeposit) {
+      if (useWestpay === true) {
+        if (settings.westpayEnabled !== "true") {
+          return res.status(400).json({ message: "WestPay est désactivé", westpay: true });
+        }
+        const westpayCountries = (settings.westpayCountries || "")
+          .split(",")
+          .map((enabledCountry) => enabledCountry.trim().toUpperCase())
+          .filter(Boolean);
+        if (westpayCountries.length && !westpayCountries.includes(normalizedDeposit.country.trim().toUpperCase())) {
+          return res.status(400).json({ message: "WestPay n'est pas activé pour ce pays", westpay: true });
+        }
         try {
           if (!process.env.WESTPAY_MERCHANT_SLUG) {
             return res.status(400).json({ message: "WestPay non configuré : la variable WESTPAY_MERCHANT_SLUG doit être définie sur le serveur", westpay: true });
+          }
+          if (!process.env.WESTPAY_WEBHOOK_SECRET && !settings.westpayWebhookSecret) {
+            return res.status(503).json({ message: "WestPay ne peut pas confirmer les paiements : configurez WESTPAY_WEBHOOK_SECRET dans les Secrets du serveur", westpay: true });
           }
           const baseUrl = `${req.protocol}://${req.get("host")}`;
           // Create deposit to get an ID, then build the redirect URL
