@@ -1,4 +1,5 @@
 import { Bell, ChevronRight, Send } from "lucide-react";
+import chargePointLogo from "./chargepoint-icon-512.png";
 import "./_group.css";
 import "./welcome.css";
 import "./professional.css";
@@ -20,6 +21,7 @@ export function Professional() {
       <PreviewDashboard />
       <div className="cp-pro-overlay">
         <section className="cp-pro-dialog" aria-labelledby="cp-pro-title" aria-describedby="cp-pro-description">
+          <img className="cp-pro-brand-logo" src={chargePointLogo} alt="Logo ChargePoint" />
           <div className="cp-pro-mark" aria-hidden="true"><Bell size={31} /></div>
           <div className="cp-pro-scroll">
             <h2 id="cp-pro-title">Message de bienvenue ChargePoint</h2>

@@ -4,9 +4,10 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
 import { Bell, ChevronRight, Send } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import "./home.css";
 
+import chargePointLogo from "@assets/chargepoint_1790147948102.jpg";
 import noticeBell from "@/assets/notice-bell.png";
 import announcementStar from "@/assets/announcement-star.png";
 import depositIcon from "@/assets/home-actions/deposit.png";
@@ -238,6 +239,9 @@ export default function HomePage() {
 
       <Dialog open={welcomePopupOpen} onOpenChange={setWelcomePopupOpen}>
         <DialogContent className="cp-dialog" overlayClassName="cp-dialog-overlay">
+          <DialogClose className="cp-dialog-brand-close" aria-label="Fermer le popup">
+            <img src={chargePointLogo} alt="" />
+          </DialogClose>
           <div className="cp-dialog-mark" aria-hidden="true">
             <Bell size={31} />
           </div>

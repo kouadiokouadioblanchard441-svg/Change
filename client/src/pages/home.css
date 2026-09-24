@@ -76,6 +76,11 @@
 .cp-dialog-overlay { background-color:rgba(17,24,39,.74); }
 .cp-dialog { position:relative; display:flex; flex-direction:column; gap:0; width:calc(100% - 32px); max-width:440px; height:min(610px,calc(100dvh - 40px)); min-height:min(460px,calc(100dvh - 40px)); max-height:calc(100dvh - 40px); padding:0; overflow:visible; border:2px solid #111827; border-radius:14px; background:#fff; color:#111827; box-shadow:0 6px 0 #111827,0 18px 42px rgba(0,0,0,.25); }
 .cp-dialog > button:last-child { display:none; }
+.cp-dialog-brand-close { position:absolute; z-index:4; top:10px; right:10px; display:grid; width:36px; height:36px; place-items:center; border:2px solid #111827; border-radius:10px; padding:2px; background:#fff; box-shadow:0 3px 0 #111827; cursor:pointer; transition:transform .12s ease,box-shadow .12s ease; }
+.cp-dialog-brand-close img { display:block; width:100%; height:100%; border-radius:6px; object-fit:contain; }
+.cp-dialog-brand-close:hover { transform:translateY(-1px); box-shadow:0 4px 0 #111827; }
+.cp-dialog-brand-close:active { transform:translateY(2px); box-shadow:0 1px 0 #111827; }
+.cp-dialog-brand-close:focus-visible { outline:3px solid #FF7A14; outline-offset:3px; }
 .cp-dialog-mark { position:absolute; z-index:2; top:-30px; left:50%; display:grid; width:64px; height:64px; place-items:center; transform:translateX(-50%); border:2px solid #111827; border-radius:13px; background:#FF7A14; color:#111827; box-shadow:0 4px 0 #111827,0 7px 13px rgba(17,24,39,.16); }
 .cp-dialog-mark svg { stroke-width:2.5; }
 .cp-dialog-copy { display:flex; flex:1; min-height:0; flex-direction:column; margin:0; padding:40px 18px 14px; overflow-y:auto; overscroll-behavior:contain; color:#111827; scrollbar-color:#d0d4d8 transparent; scrollbar-width:thin; }
@@ -94,6 +99,6 @@
 .cp-dialog-telegram:focus-visible,.cp-dialog-close:focus-visible { outline:3px solid #FF7A14; outline-offset:3px; }
 @media (min-width:768px) { .cp-home { padding-top:20px; }.cp-shell { box-shadow:0 0 0 1px #f0f0ef, 0 18px 50px rgba(32,34,37,.08); border-radius:22px; } }
 @media (max-width:360px) { .cp-hero { height:272px; }.cp-hero h1 { font-size:28px; }.cp-action { font-size:11px; }.cp-balance { height:238px; }.cp-balance strong { font-size:21px; }.cp-stat { padding:20px 10px 10px; }.cp-stat span { font-size:16px; } }
-@media (max-width:370px) { .cp-dialog { width:calc(100% - 28px); }.cp-dialog-mark { top:-26px; width:56px; height:56px; }.cp-dialog-copy { padding:36px 12px 12px; }.cp-dialog-title { font-size:20px; }.cp-dialog-message { margin-top:9px; font-size:12px; }.cp-dialog-list { gap:7px; margin-top:12px; padding-left:21px; font-size:11.5px; }.cp-dialog-actions { padding:10px 12px 13px; } }
+@media (max-width:370px) { .cp-dialog { width:calc(100% - 28px); }.cp-dialog-brand-close { top:7px; right:7px; width:33px; height:33px; }.cp-dialog-mark { top:-26px; width:56px; height:56px; }.cp-dialog-copy { padding:36px 12px 12px; }.cp-dialog-title { font-size:20px; }.cp-dialog-message { margin-top:9px; font-size:12px; }.cp-dialog-list { gap:7px; margin-top:12px; padding-left:21px; font-size:11.5px; }.cp-dialog-actions { padding:10px 12px 13px; } }
 @media (max-height:620px) { .cp-dialog { height:calc(100dvh - 72px); min-height:calc(100dvh - 72px); max-height:calc(100dvh - 72px); }.cp-dialog-mark { top:-25px; width:54px; height:54px; }.cp-dialog-copy { padding-top:34px; }.cp-dialog-message { margin-top:7px; }.cp-dialog-list { gap:6px; margin-top:10px; }.cp-dialog-actions { gap:7px; padding-top:8px; padding-bottom:10px; } }
-@media (prefers-reduced-motion:reduce) { .cp-dialog-telegram,.cp-dialog-close { transition:none; } }
+@media (prefers-reduced-motion:reduce) { .cp-dialog-brand-close,.cp-dialog-telegram,.cp-dialog-close { transition:none; } }
