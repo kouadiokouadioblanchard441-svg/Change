@@ -97,9 +97,17 @@ export default function HomePage() {
   const balance = Number.parseFloat(user.balance || "0");
   const totalEarnings = Number.parseFloat(user.totalEarnings || "0");
   const groupLink = settings?.groupLink || "";
-  const popupMessage = settings?.welcomeText || settings?.noticeText || "Retrouvez les nouveautés et l'assistance ChargePoint dans votre espace.";
   const popupButtonLabel = settings?.popupButtonLabel || settings?.groupLabel || "Rejoindre le groupe Telegram Officiel";
   const formatMoney = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${currency}`;
+  const configuredMinDeposit = Number.parseInt(settings?.minDeposit || "3500", 10);
+  const minimumDeposit = Math.max(3500, Number.isFinite(configuredMinDeposit) ? configuredMinDeposit : 3500);
+  const popupIntro = "ChargePoint est votre espace personnel pour accéder à vos services financiers et suivre les informations essentielles de la plateforme.";
+  const popupItems = [
+    `Dépôt minimum : ${formatMoney(minimumDeposit)}.`,
+    `Bonus de pointage quotidien : de ${formatMoney(20)} à ${formatMoney(50)}, une fois toutes les 24 heures.`,
+    "Consultez la rubrique Retrait pour connaître les conditions et les horaires applicables.",
+    "La plateforme ChargePoint est officiellement lancée.",
+  ];
   const withdrawnTotal = withdrawals?.filter((item) => item.status === "approved")
     .reduce((sum, item) => sum + (Number.parseFloat(item.amount) || 0), 0);
 
@@ -210,7 +218,7 @@ export default function HomePage() {
       <Dialog open={welcomePopupOpen} onOpenChange={setWelcomePopupOpen}>
         <DialogContent className="cp-dialog" overlayClassName="cp-dialog-overlay">
           <DialogTitle className="sr-only">Message de bienvenue ChargePoint</DialogTitle>
-          <DialogDescription className="sr-only">Consultez l’annonce et rejoignez le groupe Telegram officiel.</DialogDescription>
+          <DialogDescription className="sr-only">Consultez les informations de ChargePoint et rejoignez le groupe Telegram officiel.</DialogDescription>
           <div className="cp-dialog-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32" focusable="false">
               <path d="M16 3.5c-5.1 0-8 3.8-8 9v4.6l-2.1 3v1.4h20.2v-1.4l-2.1-3v-4.6c0-5.2-2.9-9-8-9Z" />
@@ -218,7 +226,10 @@ export default function HomePage() {
             <span />
           </div>
           <div className="cp-dialog-copy">
-            <p className="cp-dialog-message">{popupMessage}</p>
+            <p className="cp-dialog-message">{popupIntro}</p>
+            <ol className="cp-dialog-list">
+              {popupItems.map((item) => <li key={item}>{item}</li>)}
+            </ol>
           </div>
           <div className="cp-dialog-actions">
             {groupLink && (
