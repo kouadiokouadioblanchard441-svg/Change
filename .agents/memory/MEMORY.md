@@ -14,3 +14,5 @@
 - [Dev workflow port conflict](workflow-port-conflict.md) — a failed restart can leave a prior server child listening on port 5000; inspect the listener before retrying.
 - [Withdrawal balance policy](withdrawal-balance-policy.md) — deposits remain protected; only earnings, commissions, bonuses, and other non-deposit funds are withdrawable.
 - [VIP duration](vip-duration.md) — VIP products use a 200-day cycle and their total return is daily earnings multiplied by 200.
+- [Mockup sandbox dependencies](mockup-sandbox-dependencies.md) — The standalone preview needs its own Tailwind dependencies; root modules do not satisfy its CSS transform.
+- [Workflow secret scope](workflow-secret-scope.md) — One-off shell commands may lack secrets available to the managed app workflow; use scoped presence checks and guarded execution.

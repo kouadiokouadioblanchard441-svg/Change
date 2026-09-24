@@ -32,8 +32,27 @@ const transferableUserColumns = [
   "banker_set_by",
 ] as const;
 
+function supabaseProjectRef(parsed: URL): string | undefined {
+  const hostname = parsed.hostname.toLowerCase();
+  const directMatch = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/);
+  if (directMatch) return directMatch[1];
+
+  // Supabase's regional pooler hosts are shared; the project ref is in the username.
+  if (hostname.endsWith(".pooler.supabase.com")) {
+    const username = decodeURIComponent(parsed.username);
+    const poolerMatch = username.match(/^postgres\.([a-z0-9]+)$/i);
+    if (poolerMatch) return poolerMatch[1].toLowerCase();
+  }
+
+  return undefined;
+}
+
 function databaseIdentity(connectionString: string): string {
   const parsed = new URL(connectionString);
+  const projectRef = supabaseProjectRef(parsed);
+  const databaseName = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+  if (projectRef) return `supabase:${projectRef}/${databaseName}`;
+
   return `${parsed.hostname.toLowerCase()}:${parsed.port || "5432"}${parsed.pathname}`;
 }
 
