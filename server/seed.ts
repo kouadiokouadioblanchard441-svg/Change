@@ -325,12 +325,6 @@ export async function seed() {
 
   // Check if settings exist - apply new values for new keys or update existing
   const existingSettings = await db.select().from(platformSettings);
-  const currentSignupBonus = existingSettings.find((setting) => setting.key === "signupBonus");
-  if (currentSignupBonus?.value === "1000") {
-    await db.update(platformSettings)
-      .set({ value: "500", modifiedAt: new Date() })
-      .where(eq(platformSettings.key, "signupBonus"));
-  }
   const requiredSettings = [
     { key: "supportLink", value: "https://t.me/sybotx" },
     { key: "supportType", value: "telegram" },
@@ -360,7 +354,7 @@ export async function seed() {
     { key: "level1Commission", value: "25" },
     { key: "level2Commission", value: "4" },
     { key: "level3Commission", value: "1" },
-    { key: "signupBonus", value: "500" },
+    { key: "signupBonus", value: "1000" },
     { key: "soleaspayEnabled", value: "false" },
     { key: "soleaspayCountries", value: "" },
     { key: "soleaspayChannelName", value: "Westpay" },

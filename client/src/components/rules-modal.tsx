@@ -12,7 +12,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
     queryKey: ["/api/settings"],
   });
 
-  const signupBonus = settings?.signupBonus || "500";
+  const signupBonus = settings?.signupBonus || "1000";
   const minDeposit = settings?.minDeposit || "3500";
   const minWithdrawal = settings?.minWithdrawal || "1200";
   const withdrawalFees = settings?.withdrawalFees || "20";
