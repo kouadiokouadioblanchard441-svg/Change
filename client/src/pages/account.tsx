@@ -42,6 +42,16 @@ export default function AccountPage() {
   const { data: apiCountries } = useQuery<ApiCountry[]>({
     queryKey: ["/api/countries"],
   });
+  const { data: purchasedProducts } = useQuery<Array<{
+    product?: { name?: string } | null;
+  }>>({
+    queryKey: ["/api/user/products"],
+    enabled: !!user,
+  });
+  const accountLevel = (purchasedProducts || []).reduce((highestLevel, entry) => {
+    const vipNumber = /^VIP\s*(\d+)$/i.exec(entry.product?.name || "");
+    return Math.max(highestLevel, vipNumber ? Number(vipNumber[1]) : 0);
+  }, 0);
 
   const verifyPinMutation = useMutation({
     mutationFn: async (pin: string) => {
@@ -385,7 +395,7 @@ export default function AccountPage() {
             </div>
             <div className="cp-profile-copy">
               <p className="cp-account-phone">+{phonePrefix} {user.phone}</p>
-              <span className="cp-account-level">Lv1</span>
+              <span className="cp-account-level">LV{accountLevel}</span>
             </div>
             <button className="cp-logout-top" onClick={handleLogout} data-testid="button-logout">
               <img src={logoutIcon} alt="" />
