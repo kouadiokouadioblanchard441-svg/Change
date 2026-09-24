@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
 :root {
   --button-outline: rgba(0,0,0,.10);
   --badge-outline: rgba(0,0,0,.05);
@@ -33,11 +35,33 @@
   --destructive-foreground: 0 0% 100%;
   --input: 0 0% 85%;
   --ring: 16 100% 35%;
+  --chart-1: 0 75% 50%;
+  --chart-2: 160 65% 45%;
+  --chart-3: 200 70% 50%;
+  --chart-4: 280 65% 55%;
+  --chart-5: 340 70% 55%;
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: .5rem;
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.05);
+  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.08);
+  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.08);
+  --shadow: 0px 4px 6px -1px rgba(0,0,0,0.08);
+  --shadow-md: 0px 6px 10px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0px 10px 15px -3px rgba(0,0,0,0.1);
+  --shadow-xl: 0px 20px 25px -5px rgba(0,0,0,0.12);
+  --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.15);
+  --tracking-normal: 0em;
   --spacing: .25rem;
+
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
 .dark {
@@ -75,4 +99,17 @@
   --destructive-foreground: 0 0% 100%;
   --input: 0 0% 22%;
   --ring: 16 100% 50%;
+  --chart-1: 16 100% 50%;
+  --chart-2: 160 65% 45%;
+  --chart-3: 200 70% 50%;
+  --chart-4: 280 65% 55%;
+  --chart-5: 340 70% 55%;
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.2);
+  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.3);
+  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.3);
+  --shadow: 0px 4px 6px -1px rgba(0,0,0,0.3);
+  --shadow-md: 0px 6px 10px -2px rgba(0,0,0,0.35);
+  --shadow-lg: 0px 10px 15px -3px rgba(0,0,0,0.4);
+  --shadow-xl: 0px 20px 25px -5px rgba(0,0,0,0.45);
+  --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.5);
 }

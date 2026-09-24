@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
-import { ChevronRight, Send } from "lucide-react";
+import { ArrowDownToLine, Bell, ChevronRight, Gift, Send, ShieldCheck, Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import "./home.css";
 
@@ -116,19 +116,39 @@ export default function HomePage() {
   const withdrawalEndHour = parseIntegerSetting("withdrawalEndHour", 17);
   const maxWithdrawalsPerDay = parseIntegerSetting("maxWithdrawalsPerDay", 1);
   const withdrawalPrepaymentEnabled = settings?.withdrawalPrepaymentEnabled === "true";
-  const popupIntro = "Bienvenue sur ChargePoint. Avant toute opération, veuillez consulter les principales conditions applicables aux dépôts, aux retraits et aux bonus.";
-  const popupItems = [
-    `Montant minimum du dépôt : ${formatPopupMoney(minimumDeposit)}.`,
-    `Montant minimum du retrait : ${formatPopupMoney(minimumWithdrawal)}.`,
-    `Frais de retrait : ${withdrawalFee.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} % du montant demandé. Le montant net estimé après frais est affiché avant validation.`,
-    `Nombre maximal de demandes de retrait par jour : ${maxWithdrawalsPerDay}.`,
-    `Horaires de retrait : de ${withdrawalStartHour} h à ${withdrawalEndHour} h.`,
-    "Délai de traitement : généralement sous 2 heures et, exceptionnellement, jusqu’à 24 heures.",
-    `Bonus de pointage quotidien : de ${formatPopupMoney(20)} à ${formatPopupMoney(50)}, disponible une fois toutes les 24 heures.`,
-    ...(withdrawalPrepaymentEnabled
-      ? ["Lorsque le prépaiement est activé, un paiement préalable équivalent à 25 % du montant demandé est requis pour lancer le retrait."]
-      : []),
-    "Avant de confirmer une demande, vérifiez les coordonnées du portefeuille et le montant net affiché.",
+  const popupSections = [
+    {
+      title: "Dépôts",
+      icon: Wallet,
+      rows: [
+        { label: "Montant minimum", value: formatPopupMoney(minimumDeposit) },
+      ],
+      note: undefined,
+    },
+    {
+      title: "Retraits",
+      icon: ArrowDownToLine,
+      rows: [
+        { label: "Montant minimum", value: formatPopupMoney(minimumWithdrawal) },
+        { label: "Frais", value: `${withdrawalFee.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} % du montant demandé` },
+        { label: "Limite quotidienne", value: `${maxWithdrawalsPerDay} demande${maxWithdrawalsPerDay === 1 ? "" : "s"} par jour` },
+        { label: "Horaires", value: `${withdrawalStartHour} h – ${withdrawalEndHour} h` },
+        { label: "Traitement", value: "Sous 2 h en général ; jusqu’à 24 h exceptionnellement" },
+        ...(withdrawalPrepaymentEnabled
+          ? [{ label: "Prépaiement", value: "25 % du montant demandé, avant traitement" }]
+          : []),
+      ],
+      note: "Le montant net estimé après frais est affiché avant validation.",
+    },
+    {
+      title: "Bonus de pointage",
+      icon: Gift,
+      rows: [
+        { label: "Montant", value: `${formatPopupMoney(20)} à ${formatPopupMoney(50)}` },
+        { label: "Fréquence", value: "Une fois toutes les 24 h" },
+      ],
+      note: undefined,
+    },
   ];
   const withdrawnTotal = withdrawals?.filter((item) => item.status === "approved")
     .reduce((sum, item) => sum + (Number.parseFloat(item.amount) || 0), 0);
@@ -239,19 +259,40 @@ export default function HomePage() {
 
       <Dialog open={welcomePopupOpen} onOpenChange={setWelcomePopupOpen}>
         <DialogContent className="cp-dialog" overlayClassName="cp-dialog-overlay">
-          <DialogTitle className="sr-only">Message de bienvenue ChargePoint</DialogTitle>
-          <DialogDescription className="sr-only">Consultez les informations de ChargePoint et rejoignez le groupe Telegram officiel.</DialogDescription>
-          <div className="cp-dialog-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" focusable="false">
-              <path d="M16 3.5c-5.1 0-8 3.8-8 9v4.6l-2.1 3v1.4h20.2v-1.4l-2.1-3v-4.6c0-5.2-2.9-9-8-9Z" />
-            </svg>
-            <span />
-          </div>
+          <header className="cp-dialog-header">
+            <div className="cp-dialog-mark" aria-hidden="true">
+              <Bell size={23} />
+            </div>
+            <div className="cp-dialog-heading">
+              <span className="cp-dialog-kicker">CHARGEPOINT · INFORMATIONS UTILES</span>
+              <DialogTitle className="cp-dialog-title">Conditions importantes</DialogTitle>
+            </div>
+          </header>
+          <DialogDescription className="cp-dialog-message">
+            Consultez les règles applicables à vos dépôts, retraits et bonus quotidiens.
+          </DialogDescription>
           <div className="cp-dialog-copy">
-            <p className="cp-dialog-message">{popupIntro}</p>
-            <ol className="cp-dialog-list">
-              {popupItems.map((item) => <li key={item}>{item}</li>)}
-            </ol>
+            {popupSections.map(({ title, icon: Icon, rows, note }) => (
+              <section className="cp-dialog-section" key={title} aria-label={title}>
+                <h3 className="cp-dialog-section-title">
+                  <Icon size={17} aria-hidden="true" />
+                  {title}
+                </h3>
+                <dl className="cp-dialog-rows">
+                  {rows.map(({ label, value }) => (
+                    <div className="cp-dialog-row" key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {note && <p className="cp-dialog-section-note">{note}</p>}
+              </section>
+            ))}
+            <p className="cp-dialog-note">
+              <ShieldCheck size={18} aria-hidden="true" />
+              <span>Avant de confirmer une demande, vérifiez les coordonnées du portefeuille et le montant net affiché.</span>
+            </p>
           </div>
           <div className="cp-dialog-actions">
             {groupLink && (
