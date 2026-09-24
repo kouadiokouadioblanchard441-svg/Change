@@ -57,7 +57,12 @@ export default function AccountPage() {
       setAdminPin("");
       navigate(ADMIN_PATH);
     },
-    onError: (error: Error) => toast({ title: error.message, variant: "destructive" }),
+    onError: (error: Error) =>
+      toast({
+        title: "Vérification du code PIN impossible",
+        description: error.message,
+        variant: "destructive",
+      }),
   });
 
   if (!user) return null;
