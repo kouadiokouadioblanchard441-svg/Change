@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seed } from "./seed";
 import { restoreExistingAccountToSupabase } from "./restore-existing-supabase-account";
+import { clearReplitDevelopmentData } from "./clear-replit-development-data";
 import { storage } from "./storage";
 import {
   getTransaction as ashtechGetTransaction,
@@ -95,7 +96,15 @@ app.use((req, res, next) => {
     next();
   });
 
-  if (process.env.RESTORE_EXISTING_ADMIN === "true") {
+  const restoreExistingAdmin = process.env.RESTORE_EXISTING_ADMIN === "true";
+  const clearReplitData = process.env.CLEAR_REPLIT_DEVELOPMENT_DATA === "true";
+  if (restoreExistingAdmin && clearReplitData) {
+    throw new Error("Conflicting one-time database operations; refusing to start.");
+  }
+  if (clearReplitData) {
+    await clearReplitDevelopmentData();
+  }
+  if (restoreExistingAdmin) {
     await restoreExistingAccountToSupabase();
   }
 

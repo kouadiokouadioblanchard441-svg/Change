@@ -47,7 +47,7 @@ function supabaseProjectRef(parsed: URL): string | undefined {
   return undefined;
 }
 
-function databaseIdentity(connectionString: string): string {
+export function databaseIdentity(connectionString: string): string {
   const parsed = new URL(connectionString);
   const projectRef = supabaseProjectRef(parsed);
   const databaseName = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
