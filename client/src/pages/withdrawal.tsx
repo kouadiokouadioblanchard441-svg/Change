@@ -634,7 +634,7 @@ export default function WithdrawalPage() {
         <section className="instructions" aria-label="Instructions de retrait">
           <h2 className="instructions-title">Instructions de Retrait :</h2>
           <p className="instruction"><strong>Montant minimum de retrait :</strong> {minWithdrawal.toLocaleString("fr-FR")} {currency}</p>
-          <p className="instruction"><strong>Retraits possibles à tout moment,</strong> sans limite de temps, de montant ou de fréquence</p>
+          <p className="instruction"><strong>Heures de retrait :</strong> de {withdrawalStartHour}h à {withdrawalEndHour}h</p>
           <p className="instruction"><strong>Frais de retrait :</strong> {withdrawalFee} % par transaction</p>
           <p className="instruction"><strong>Délai de traitement :</strong> généralement dans les 2 heures, et exceptionnellement sous 24 heures.</p>
           <p className="instruction">Vérifiez vos informations de portefeuille avant de soumettre votre demande.</p>
