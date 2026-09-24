@@ -64,3 +64,5 @@ timeoutMs = 120000
 
 [userenv.shared]
 ADMIN_COUNTRY = "CI"
+
+[userenv.development]

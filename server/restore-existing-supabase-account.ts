@@ -72,13 +72,16 @@ export async function restoreExistingAccountToSupabase(): Promise<void> {
     ["ADMIN_PHONE", phone],
     ["ADMIN_PIN", adminPin],
   ]
-    .filter(([, value]) => !value)
+    .filter((entry) => !entry[1])
     .map(([name]) => name);
 
   if (missingConfiguration.length > 0) {
     throw new Error(
       `Account restoration is missing configured variables: ${missingConfiguration.join(", ")}.`,
     );
+  }
+  if (!sourceUrl || !targetUrl || !phone || !adminPin) {
+    throw new Error("Account restoration is missing required configuration.");
   }
   if (databaseIdentity(sourceUrl) === databaseIdentity(targetUrl)) {
     throw new Error("Source and destination databases are identical; refusing account restoration.");
