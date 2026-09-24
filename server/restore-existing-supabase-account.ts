@@ -60,14 +60,14 @@ function normalizePhone(value: string): string {
   return value.replace(/\D/g, "");
 }
 
-export async function restoreExistingSupabaseAccount(): Promise<void> {
-  const sourceUrl = process.env.SUPABASE_DATABASE_URL;
+export async function restoreExistingAccountToSupabase(): Promise<void> {
+  const sourceUrl = process.env.DATABASE_URL;
   const targetUrl = process.env.SUPABASE_NEW_DATABASE_URL;
   const phone = process.env.ADMIN_PHONE;
   const adminPin = process.env.ADMIN_PIN;
 
   const missingConfiguration = [
-    ["SUPABASE_DATABASE_URL", sourceUrl],
+    ["DATABASE_URL", sourceUrl],
     ["SUPABASE_NEW_DATABASE_URL", targetUrl],
     ["ADMIN_PHONE", phone],
     ["ADMIN_PIN", adminPin],
@@ -81,7 +81,7 @@ export async function restoreExistingSupabaseAccount(): Promise<void> {
     );
   }
   if (databaseIdentity(sourceUrl) === databaseIdentity(targetUrl)) {
-    throw new Error("Source and destination Supabase databases are identical; refusing account restoration.");
+    throw new Error("Source and destination databases are identical; refusing account restoration.");
   }
 
   const sourcePool = new Pool({
