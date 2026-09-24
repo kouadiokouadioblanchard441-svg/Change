@@ -140,7 +140,11 @@ export default function WithdrawalPage() {
 
   const handleSubmit = () => {
     if (!isWithinWithdrawalHours) {
-      toast({ title: "Horaires de retrait", description: `Les retraits sont disponibles de ${withdrawalStartHour}h à ${withdrawalEndHour}h`, variant: "destructive" });
+      toast({
+        title: "Retrait indisponible",
+        description: `Horaires de retrait : de ${withdrawalStartHour}h à ${withdrawalEndHour}h.`,
+        variant: "destructive",
+      });
       return;
     }
     if (!hasActiveProduct) {
@@ -612,7 +616,7 @@ export default function WithdrawalPage() {
           <img src={walletIcon} alt="" />
           <span className="wallet-copy">
             {selectedWallet
-              ? `${selectedWallet.accountName} · ${selectedWallet.accountNumber}`
+              ? selectedWallet.accountNumber
               : "Choisissez votre portefeuille"}
           </span>
           <ChevronRight aria-hidden="true" />
