@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { getWithdrawalMethodsForCountry, type ApiCountry } from "@/lib/countries";
+import { getCountriesForDisplay, getWithdrawalMethodsForCountry, type ApiCountry } from "@/lib/countries";
 import { Loader2, Plus, Trash2, CreditCard, ChevronLeft, ChevronRight, ChevronDown, Shield, Check, Search, X } from "lucide-react";
 import emptyIllustration from "@assets/illustration-8_1784762965573.png";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -679,9 +679,10 @@ export default function WalletPage() {
     queryKey: ["/api/wallets"],
   });
 
-  const { data: apiCountries = [] } = useQuery<ApiCountry[]>({
+  const { data: loadedCountries, isError: countriesError } = useQuery<ApiCountry[]>({
     queryKey: ["/api/countries"],
   });
+  const apiCountries = getCountriesForDisplay(loadedCountries, countriesError);
 
   const form = useForm<WalletForm>({
     resolver: zodResolver(walletSchema),
@@ -924,6 +925,9 @@ export default function WalletPage() {
                 />
               </div>
               <div className="country-picker-list">
+                {countriesError && (
+                  <p className="country-picker-empty" role="status">Liste locale temporaire affichée.</p>
+                )}
                 {activeCountries
                   .filter((country) => country.name.toLowerCase().includes(countrySearch.trim().toLowerCase()))
                   .map((country) => (

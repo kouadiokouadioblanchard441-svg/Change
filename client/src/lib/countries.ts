@@ -1,7 +1,7 @@
 import { getWithdrawalMethods } from "@shared/withdrawal-methods";
 
-// Countries are managed by the database and loaded from /api/countries.
-// Keep these arrays empty so stale country data can never flash while the API loads.
+// The API remains authoritative. These bootstrap entries are used only when its
+// request fails so public country pickers do not become unusable during an outage.
 export const COUNTRIES: Array<{
   code: string;
   name: string;
@@ -16,7 +16,12 @@ export const FALLBACK_COUNTRIES: Array<{
   currency: string;
   phonePrefix: string;
   operators: string[];
-}> = [];
+}> = [
+  { code: "TG", name: "Togo", currency: "XOF", phonePrefix: "228", operators: ["Togocel", "Moov Africa Togo"] },
+  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", phonePrefix: "225", operators: [] },
+  { code: "BF", name: "Burkina Faso", currency: "XOF", phonePrefix: "226", operators: ["Orange Burkina", "Moov Africa Burkina"] },
+  { code: "NE", name: "Niger", currency: "XOF", phonePrefix: "227", operators: ["NITA TRANSFERT", "AMANA TRANSFERT"] },
+];
 
 // Legacy compatibility - kept for places still using ELIGIBLE_COUNTRIES directly
 export const ELIGIBLE_COUNTRIES = FALLBACK_COUNTRIES.map(c => ({
@@ -38,6 +43,23 @@ export type ApiCountry = {
   isActive: boolean;
 };
 
+export const FALLBACK_API_COUNTRIES: ApiCountry[] = FALLBACK_COUNTRIES.map((country, index) => ({
+  id: index + 1,
+  code: country.code,
+  name: country.name,
+  currency: country.currency,
+  phonePrefix: country.phonePrefix,
+  operators: JSON.stringify(country.operators),
+  isActive: true,
+}));
+
+export function getCountriesForDisplay(
+  apiCountries: ApiCountry[] | undefined,
+  apiFailed = false,
+): ApiCountry[] {
+  return apiFailed ? FALLBACK_API_COUNTRIES : apiCountries ?? [];
+}
+
 export function parseOperators(operatorsJson: string): string[] {
   try {
     return JSON.parse(operatorsJson);
@@ -47,7 +69,7 @@ export function parseOperators(operatorsJson: string): string[] {
 }
 
 export function getCountryByCode(code: string, apiCountries?: ApiCountry[]) {
-  if (apiCountries && apiCountries.length > 0) {
+  if (apiCountries !== undefined) {
     // API data is loaded — only use it, never fall back to hardcoded data
     // This ensures disabled countries and updated operators are respected
     const c = apiCountries.find(c => c.code === code && c.isActive);

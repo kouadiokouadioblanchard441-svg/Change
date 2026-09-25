@@ -60,7 +60,7 @@ export default function LoginPage() {
   }, [apiCountries, selectedCountry, form]);
 
   const countryData = (() => {
-    if (apiCountries && apiCountries.length > 0) {
+    if (apiCountries !== undefined) {
       const c = apiCountries.find(ac => ac.code === selectedCountry && ac.isActive);
       if (c) return { phonePrefix: c.phonePrefix, name: c.name };
       return null;

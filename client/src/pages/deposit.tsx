@@ -8,7 +8,7 @@ import {
   ImageIcon, ArrowRight, Zap, RefreshCw, ExternalLink,
 } from "lucide-react";
 import { Link } from "wouter";
-import type { ApiCountry } from "@/lib/countries";
+import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
 import type { PaymentNumber } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -236,9 +236,10 @@ export default function DepositPage() {
 
   const country = depositCountry;
 
-  const { data: apiCountries = [] } = useQuery<ApiCountry[]>({
+  const { data: loadedCountries, isError: countriesError } = useQuery<ApiCountry[]>({
     queryKey: ["/api/countries"],
   });
+  const apiCountries = getCountriesForDisplay(loadedCountries, countriesError);
 
   const countryInfo = apiCountries.find(c => c.code === country && c.isActive);
   const currency = countryInfo?.currency || "FCFA";
@@ -1240,6 +1241,7 @@ export default function DepositPage() {
               <option key={item.code} value={item.code}>{item.name} ({item.currency})</option>
             ))}
           </select>
+          {countriesError && <p className="mt-2 text-xs text-amber-700">Liste locale temporaire affichée.</p>}
         </section>
 
         <button

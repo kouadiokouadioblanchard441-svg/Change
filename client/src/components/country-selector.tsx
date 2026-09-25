@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { ApiCountry } from "@/lib/countries";
+import { FALLBACK_API_COUNTRIES, type ApiCountry } from "@/lib/countries";
 import { Check, Loader2, Search, X } from "lucide-react";
 
 interface CountrySelectorProps {
@@ -61,7 +61,8 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
     onClose();
   };
 
-  const countries = (apiCountries || [])
+  const countrySource = isError ? FALLBACK_API_COUNTRIES : apiCountries || [];
+  const countries = countrySource
     .filter(c => c.isActive)
     .map(c => ({ code: c.code, name: c.name, phonePrefix: c.phonePrefix }))
     .filter(country => {
@@ -102,8 +103,6 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
               <Loader2 className="h-5 w-5 animate-spin" />
               <span>Chargement des pays...</span>
             </div>
-          ) : isError ? (
-            <p className="country-picker-empty">Impossible de charger les pays.</p>
           ) : countries.map((country) => {
             const selected = country.code === selectedCountryCode;
             return (
@@ -121,7 +120,12 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
               </button>
             );
           })}
-          {!isLoading && !isError && countries.length === 0 && <p className="country-picker-empty">{search ? "Aucun résultat" : "Aucun pays disponible"}</p>}
+          {!isLoading && isError && (
+            <p className="country-picker-empty" role="status">
+              Liste locale temporaire : le serveur des pays ne répond pas.
+            </p>
+          )}
+          {!isLoading && countries.length === 0 && <p className="country-picker-empty">{search ? "Aucun résultat" : "Aucun pays disponible"}</p>}
         </div>
       </section>
     </div>

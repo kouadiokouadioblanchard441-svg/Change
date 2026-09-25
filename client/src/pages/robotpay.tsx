@@ -5,7 +5,7 @@ import { Check, ChevronRight, ClipboardCheck, Copy, ExternalLink, ImageIcon, Loa
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import type { ApiCountry } from "@/lib/countries";
+import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
 import type { PaymentNumber } from "@shared/schema";
 
 type Provider = "ashtech" | "sendavapay";
@@ -62,7 +62,8 @@ export default function RobotPayPage() {
   const [paymentMessage, setPaymentMessage] = useState("");
   const [manualSubmitted, setManualSubmitted] = useState(false);
 
-  const { data: countries = [] } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
+  const { data: loadedCountries, isError: countriesError } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
+  const countries = getCountriesForDisplay(loadedCountries, countriesError);
   const { data: providerInfo, isLoading: providerLoading } = useQuery<ProviderInfo>({
     queryKey: ["/api/deposit/provider", country],
     queryFn: async () => {
