@@ -124,6 +124,31 @@ export function formatWallet(phone: string, country: string): string {
   return prefix + cleaned;
 }
 
+function getPublicBaseUrl(): string {
+  const configuredUrl = process.env.PUBLIC_APP_URL?.trim();
+  if (configuredUrl) {
+    const parsedUrl = new URL(configuredUrl);
+    if (process.env.NODE_ENV === "production" && parsedUrl.protocol !== "https:") {
+      throw new Error("PUBLIC_APP_URL doit utiliser HTTPS en production.");
+    }
+    return parsedUrl.origin;
+  }
+
+  const devDomain = process.env.REPLIT_DEV_DOMAIN?.trim();
+  if (process.env.NODE_ENV !== "production" && devDomain) {
+    return `https://${devDomain}`;
+  }
+
+  throw new Error("PUBLIC_APP_URL doit être configuré pour recevoir les retours SoleaPay.");
+}
+
+function buildReturnUrl(baseUrl: string, result: "success" | "failure", orderId: string): string {
+  const url = new URL("/deposit", baseUrl);
+  url.searchParams.set("soleaspayReturn", result);
+  url.searchParams.set("orderId", orderId);
+  return url.toString();
+}
+
 export async function initiatePayment(
   wallet: string,
   amount: number,
@@ -139,9 +164,7 @@ export async function initiatePayment(
   }
 
   const currency = getCurrency(country);
-  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-    : "https://intel.replit.app";
+  const baseUrl = getPublicBaseUrl();
 
   const requestBody: SoleaspayPaymentRequest = {
     wallet: formatWallet(wallet, country),
@@ -151,8 +174,8 @@ export async function initiatePayment(
     description: `Depot Intel #${orderId}`,
     payer: payerName,
     payerEmail,
-    successUrl: `${baseUrl}/deposit-success`,
-    failureUrl: `${baseUrl}/deposit-failed`,
+    successUrl: buildReturnUrl(baseUrl, "success", orderId),
+    failureUrl: buildReturnUrl(baseUrl, "failure", orderId),
   };
 
   const response = await fetch(`${SOLEASPAY_API_URL}/api/agent/bills/v3`, {

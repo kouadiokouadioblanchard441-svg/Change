@@ -16,6 +16,7 @@ import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 const TON_GREEN = "#FF7A14";
 const TON_GREEN_DARK = "#E85D00";
 const TON_GRADIENT = `linear-gradient(112deg, ${TON_GREEN} 0%, ${TON_GREEN_DARK} 100%)`;
+const SOLEASPAY_PENDING_DEPOSIT_KEY = "soleaspay-pending-deposit";
 
 const DEPOSIT_STEP_STYLES = `
   .deposit-step-shell {
@@ -406,6 +407,55 @@ export default function DepositPage() {
   }, [soleaspayPhone, user?.phone]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const returnStatus = params.get("soleaspayReturn");
+    if (returnStatus !== "success" && returnStatus !== "failure") return;
+
+    const returnedOrderId = params.get("orderId");
+    let resumed = false;
+    try {
+      const pendingValue = sessionStorage.getItem(SOLEASPAY_PENDING_DEPOSIT_KEY);
+      const pending = pendingValue ? JSON.parse(pendingValue) : null;
+      const pendingDepositId = Number(pending?.depositId);
+      const pendingOrderId = typeof pending?.orderId === "string" ? pending.orderId : "";
+      if (
+        Number.isInteger(pendingDepositId) &&
+        pendingDepositId > 0 &&
+        (!returnedOrderId || pendingOrderId === returnedOrderId)
+      ) {
+        setSoleaspayDepositId(pendingDepositId);
+        setSoleaspayStatus("pending");
+        setSoleaspayMessage(
+          returnStatus === "success"
+            ? "Retour de SoleaPay reçu. Vérification du paiement en cours..."
+            : "Retour de SoleaPay reçu. Vérification de l'état final du paiement...",
+        );
+        setSoleaspayPolling(true);
+        setStep("soleaspay-waiting");
+        resumed = true;
+      }
+    } catch (error) {
+      console.warn("[soleaspay] Could not resume pending deposit:", error);
+    }
+
+    if (!resumed) {
+      toast({
+        title: "Retour SoleaPay reçu",
+        description: "Consultez l'historique des dépôts pour vérifier le statut du paiement.",
+      });
+    }
+
+    params.delete("soleaspayReturn");
+    params.delete("orderId");
+    const search = params.toString();
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`,
+    );
+  }, [toast]);
+
+  useEffect(() => {
     if (step !== "soleaspay-waiting" || !soleaspayDepositId || !soleaspayPolling) return;
     const interval = setInterval(async () => {
       try {
@@ -416,6 +466,11 @@ export default function DepositPage() {
         if (data.status === "approved" || data.status === "rejected") {
           clearInterval(interval);
           setSoleaspayPolling(false);
+          try {
+            sessionStorage.removeItem(SOLEASPAY_PENDING_DEPOSIT_KEY);
+          } catch {
+            // The server-side payment status remains authoritative.
+          }
           if (data.status === "approved") {
             toast({ title: "Paiement confirmé !", description: "Votre solde a été crédité." });
             refreshUser();
@@ -543,6 +598,17 @@ export default function DepositPage() {
           variant: "destructive",
         });
         return;
+      }
+      try {
+        sessionStorage.setItem(
+          SOLEASPAY_PENDING_DEPOSIT_KEY,
+          JSON.stringify({
+            depositId: data.deposit.id,
+            orderId: data.deposit.soleaspayOrderId || "",
+          }),
+        );
+      } catch (error) {
+        console.warn("[soleaspay] Could not save pending deposit for return:", error);
       }
       setSoleaspayDepositId(data.deposit.id);
       setSoleaspayStatus("pending");
