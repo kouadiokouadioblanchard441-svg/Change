@@ -850,6 +850,22 @@ export default function DepositPage() {
     openRobotPay();
   };
 
+  const handleManualPayment = () => {
+    if (!amount || Number(amount) < MIN_DEPOSIT) {
+      toast({
+        title: "Montant invalide",
+        description: `Le minimum est de ${MIN_DEPOSIT.toLocaleString()} ${currency}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!depositCountry) {
+      toast({ title: "Pays requis", description: "Sélectionnez le pays du paiement.", variant: "destructive" });
+      return;
+    }
+    window.location.href = `/robotpay?mode=manual&amount=${encodeURIComponent(Number(amount))}&country=${encodeURIComponent(depositCountry)}`;
+  };
+
   const openRobotPay = () => {
     if (!depositCountry) {
       toast({ title: "Pays requis", description: "Sélectionnez le pays du paiement.", variant: "destructive" });
@@ -1250,6 +1266,14 @@ export default function DepositPage() {
           disabled={!depositCountry || inpayInitiateMutation.isPending || wpInitiateMutation.isPending}
         >
           Recharger maintenant
+        </button>
+        <button
+          type="button"
+          onClick={handleManualPayment}
+          disabled={!depositCountry}
+          className="mt-3 w-full rounded-xl border-2 border-[#E85D00] bg-white px-4 py-3 font-semibold text-[#E85D00] transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Paiement manuel
         </button>
 
         <section className="instructions" aria-label="Instructions de recharge">

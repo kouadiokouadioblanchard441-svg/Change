@@ -117,7 +117,7 @@ export async function seed() {
         name: "Côte d'Ivoire",
         currency: "XOF",
         phonePrefix: "225",
-        operators: JSON.stringify([]),
+        operators: JSON.stringify(["Wave"]),
         isActive: true,
       },
       {
@@ -405,6 +405,17 @@ export async function seed() {
       .values({ key: minimumWithdrawalMigrationKey, value: "true" })
       .onConflictDoNothing();
     console.log("Minimum withdrawal setting migrated to 800 FCFA");
+  }
+
+  const ivoryWaveMigrationKey = "migration_ci_wave_manual_method_applied";
+  if (!existingSettings.some((setting) => setting.key === ivoryWaveMigrationKey)) {
+    await db.update(countries)
+      .set({ operators: JSON.stringify(["Wave"]) })
+      .where(eq(countries.code, "CI"));
+    await db.insert(platformSettings)
+      .values({ key: ivoryWaveMigrationKey, value: "true" })
+      .onConflictDoNothing();
+    console.log("Côte d'Ivoire manual payment method set to Wave");
   }
 
   const currentGatewaySettings = new Map<string, string>(
