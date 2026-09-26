@@ -18,13 +18,22 @@ import type { Product } from "@shared/schema";
 
 const productSchema = z.object({
   name: z.string().min(2, "Nom requis"),
-  price: z.string().min(1, "Prix requis"),
-  dailyEarnings: z.string().min(1, "Gains journaliers requis"),
-  cycleDays: z.string().min(1, "Durée requise"),
+  price: z.string().regex(/^\d+$/, "Entrez un prix entier"),
+  dailyEarnings: z.string().regex(/^\d+$/, "Entrez un montant entier"),
+  cycleDays: z.string().regex(/^[1-9]\d*$/, "La durée doit être supérieure à zéro"),
   imageUrl: z.string().optional(),
-  sortOrder: z.string().min(1, "Ordre requis"),
+  sortOrder: z.string().regex(/^\d+$/, "Entrez un ordre entier"),
   isFree: z.boolean(),
   isActive: z.boolean(),
+}).superRefine((data, ctx) => {
+  const price = Number(data.price);
+  if (data.isFree ? price !== 0 : price <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["price"],
+      message: data.isFree ? "Un produit gratuit doit avoir un prix de 0 F" : "Le prix doit être supérieur à 0 F",
+    });
+  }
 });
 
 type ProductForm = z.infer<typeof productSchema>;
@@ -178,14 +187,14 @@ export default function AdminProducts() {
         <FormField control={form.control} name="price" render={({ field }) => (
           <FormItem>
             <FormLabel>Prix (F)</FormLabel>
-            <FormControl><Input {...field} type="number" placeholder="Ex: 15000" /></FormControl>
+          <FormControl><Input {...field} type="number" min="0" step="1" placeholder="Ex: 15000" /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
         <FormField control={form.control} name="dailyEarnings" render={({ field }) => (
           <FormItem>
             <FormLabel>Gains/jour (F)</FormLabel>
-            <FormControl><Input {...field} type="number" placeholder="Ex: 300" /></FormControl>
+          <FormControl><Input {...field} type="number" min="0" step="1" placeholder="Ex: 300" /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
@@ -193,7 +202,7 @@ export default function AdminProducts() {
       <FormField control={form.control} name="cycleDays" render={({ field }) => (
         <FormItem>
           <FormLabel>Durée (jours)</FormLabel>
-          <FormControl><Input {...field} type="number" /></FormControl>
+          <FormControl><Input {...field} type="number" min="1" step="1" /></FormControl>
           <FormMessage />
         </FormItem>
       )} />
@@ -201,14 +210,24 @@ export default function AdminProducts() {
         <FormField control={form.control} name="sortOrder" render={({ field }) => (
           <FormItem>
             <FormLabel>Ordre d’affichage</FormLabel>
-            <FormControl><Input {...field} type="number" min="0" /></FormControl>
+            <FormControl><Input {...field} type="number" min="0" step="1" /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
         <FormField control={form.control} name="isFree" render={({ field }) => (
           <FormItem className="flex items-center justify-between rounded-lg border p-3">
             <FormLabel>Produit gratuit</FormLabel>
-            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  const currentPrice = form.getValues("price");
+                  if (checked) form.setValue("price", "0", { shouldValidate: true });
+                  else if (currentPrice === "0") form.setValue("price", "", { shouldValidate: true });
+                }}
+              />
+            </FormControl>
           </FormItem>
         )} />
       </div>
@@ -344,6 +363,9 @@ export default function AdminProducts() {
           <DialogHeader>
             <DialogTitle>Modifier — {selectedProduct?.name}</DialogTitle>
           </DialogHeader>
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3">
+            Les changements de prix, de gains ou de durée peuvent aussi modifier les investissements déjà en cours.
+          </p>
           <Form {...editForm}>
             <ProductFormFields form={editForm} isPending={updateMutation.isPending} submitLabel="Enregistrer" />
           </Form>

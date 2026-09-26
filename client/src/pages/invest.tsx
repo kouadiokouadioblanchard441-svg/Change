@@ -69,7 +69,7 @@ export default function InvestPage() {
   const balance     = parseFloat(user.balance || "0");
   const country     = getCountryByCode(user.country);
   const currency    = country?.currency || "FCFA";
-  const paidProducts = products?.filter(p => !p.isFree) || [];
+  const paidProducts = products?.filter(p => !p.isFree && p.isActive) || [];
 
   return (
     <div className="flex flex-col min-h-full" style={{ background: "#f0f2f5" }}>
@@ -98,7 +98,7 @@ export default function InvestPage() {
           Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />)
         ) : paidProducts.length > 0 ? (
           paidProducts.map((product, idx) => {
-            const img = PRODUCT_IMAGES[idx % PRODUCT_IMAGES.length];
+            const img = product.imageUrl || PRODUCT_IMAGES[idx % PRODUCT_IMAGES.length];
             return (
               <div
                 key={product.id}
@@ -161,11 +161,11 @@ export default function InvestPage() {
       {/* ── Purchase confirm modal ── */}
       {confirmProduct && (() => {
         const prodIdx   = (products?.findIndex(p => p.id === confirmProduct.id) ?? 0);
-        const prodImg   = PRODUCT_IMAGES[prodIdx % PRODUCT_IMAGES.length];
+        const prodImg   = confirmProduct.imageUrl || PRODUCT_IMAGES[prodIdx % PRODUCT_IMAGES.length];
         const shortage  = confirmProduct.price - balance;
-        const daily     = Number(confirmProduct.dailyIncome  || 0);
-        const total     = Number(confirmProduct.totalReturn  || daily * Number(confirmProduct.cycleDays || 90));
-        const duration  = Number(confirmProduct.cycleDays || 90);
+        const daily     = Number(confirmProduct.dailyEarnings || 0);
+        const duration  = Number(confirmProduct.cycleDays);
+        const total     = Number(confirmProduct.totalReturn ?? daily * duration);
 
         return (
           <div

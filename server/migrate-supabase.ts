@@ -336,27 +336,6 @@ async function run() {
     }
     console.log("✅ Paramètres plateforme insérés");
 
-    // ── Seed products ──
-    const productsData = [
-      { name: "Bonus Gratuit", price: 0, daily_earnings: 50, cycle_days: 80, total_return: 4000, is_free: true, sort_order: 0 },
-      { name: "VIP 1", price: 4500, daily_earnings: 450, cycle_days: 200, total_return: 90000, is_free: false, sort_order: 1 },
-      { name: "VIP 2", price: 8000, daily_earnings: 1850, cycle_days: 200, total_return: 370000, is_free: false, sort_order: 2 },
-      { name: "VIP 3", price: 15000, daily_earnings: 3550, cycle_days: 200, total_return: 710000, is_free: false, sort_order: 3 },
-      { name: "VIP 4", price: 30000, daily_earnings: 5783, cycle_days: 200, total_return: 1156600, is_free: false, sort_order: 4 },
-      { name: "VIP 5", price: 60000, daily_earnings: 9362, cycle_days: 200, total_return: 1872400, is_free: false, sort_order: 5 },
-      { name: "VIP 6", price: 120000, daily_earnings: 45500, cycle_days: 200, total_return: 9100000, is_free: false, sort_order: 6 },
-      { name: "VIP 7", price: 300000, daily_earnings: 80000, cycle_days: 200, total_return: 16000000, is_free: false, sort_order: 7 },
-      { name: "VIP 8", price: 500000, daily_earnings: 250000, cycle_days: 200, total_return: 50000000, is_free: false, is_active: false, sort_order: 8 },
-    ];
-    for (const p of productsData) {
-      await client.query(
-        `INSERT INTO products (name, price, daily_earnings, cycle_days, total_return, is_free, sort_order)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`,
-        [p.name, p.price, p.daily_earnings, p.cycle_days, p.total_return, p.is_free, p.sort_order]
-      );
-    }
-    console.log("✅ Produits insérés");
-
     // ── Seed tasks ──
     const tasksData = [
       { name: "Parrain Bronze", description: "Inviter 3 personnes", reward: 1000, required_invites: 3 },

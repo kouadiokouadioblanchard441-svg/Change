@@ -41,7 +41,7 @@ export default function TeamPage() {
 
   if (!user) return null;
 
-  const referralLink = `${window.location.origin}/invitation?code=${encodeURIComponent(user.referralCode)}`;
+  const referralLink = `https://ellvpscc.site/html/register?code=${encodeURIComponent(user.referralCode)}`;
   const referralMessage = `Rejoins mon équipe sur ChargePoint ! Inscris-toi avec mon lien de parrainage :\n${referralLink}\nMon code d'invitation : ${user.referralCode}`;
   const referralText = "Rejoins mon équipe sur ChargePoint ! Inscris-toi avec mon lien de parrainage.";
   const shareLinks = [

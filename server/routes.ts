@@ -68,7 +68,6 @@ import express from "express";
 const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
 const MAX_LOGIN_ATTEMPTS = 5;
 const BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-const MIN_PRODUCT_PURCHASE = 4500;
 
 function getClientKey(req: Request): string {
   const forwarded = req.headers["x-forwarded-for"];
@@ -263,7 +262,7 @@ const INPAY_MERCHANT_SETTING_KEYS = new Set(
 const PUBLIC_SETTING_KEYS = new Set([
   "supportLink", "supportType", "supportLabel",
   "support2Link", "support2Type", "support2Label",
-  "channelLink", "channelType", "channelLabel",
+  "channelLink", "channelType", "channelLabel", "popupButtonLabel",
   "groupLink", "groupType", "groupLabel", "noticeText",
   "supportEnabled", "support2Enabled", "channelEnabled", "groupEnabled",
   "signupBonus", "minDeposit", "minWithdrawal", "withdrawalFees",
@@ -567,9 +566,9 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Utilisez /claim-free pour ce produit" });
       }
 
-      if (product.price < MIN_PRODUCT_PURCHASE) {
+      if (!Number.isInteger(product.price) || product.price <= 0) {
         return res.status(400).json({
-          message: `Le montant minimum d'achat est de ${MIN_PRODUCT_PURCHASE.toLocaleString()} FCFA`,
+          message: "Le prix de ce produit doit être supérieur à zéro.",
         });
       }
 
@@ -2976,23 +2975,38 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, price, dailyEarnings, cycleDays, imageUrl, sortOrder, isFree, isActive } = req.body;
-      if (!name || !price || !dailyEarnings || !cycleDays) {
-        return res.status(400).json({ message: "Champs requis manquants" });
+      const { name, price, dailyEarnings, cycleDays, imageUrl, sortOrder, isFree, isActive } = req.body ?? {};
+      const isFreeProduct = isFree === true || isFree === "true";
+      const priceInt = Number(price);
+      const dailyInt = Number(dailyEarnings);
+      const cycleInt = Number(cycleDays);
+      const sortOrderInt = sortOrder === undefined ? 0 : Number(sortOrder);
+      if (
+        typeof name !== "string" || !name.trim() ||
+        !Number.isInteger(priceInt) || priceInt < 0 ||
+        (isFreeProduct ? priceInt !== 0 : priceInt <= 0) ||
+        !Number.isInteger(dailyInt) || dailyInt < 0 ||
+        !Number.isInteger(cycleInt) || cycleInt <= 0 ||
+        !Number.isInteger(sortOrderInt) || sortOrderInt < 0 ||
+        (imageUrl !== undefined && imageUrl !== null && typeof imageUrl !== "string")
+      ) {
+        return res.status(400).json({
+          message: "Vérifiez le nom, le prix, les gains, la durée et l’ordre du produit.",
+        });
       }
-      const priceInt = parseInt(price);
-      const dailyInt = parseInt(dailyEarnings);
-      const cycleInt = parseInt(cycleDays);
+      if (isActive !== undefined && typeof isActive !== "boolean") {
+        return res.status(400).json({ message: "La visibilité du produit est invalide." });
+      }
       const product = await storage.createProduct({
-        name,
+        name: name.trim(),
         price: priceInt,
         dailyEarnings: dailyInt,
         cycleDays: cycleInt,
         totalReturn: dailyInt * cycleInt,
-        imageUrl: imageUrl || null,
-        isFree: isFree === true || isFree === "true",
-        isActive: isActive !== false && isActive !== "false",
-        sortOrder: Number.isFinite(parseInt(sortOrder)) ? parseInt(sortOrder) : 0,
+        imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
+        isFree: isFreeProduct,
+        isActive: isActive !== false,
+        sortOrder: sortOrderInt,
       });
       await storage.logAdminAction(req.session.userId!, "create_product", null, `Produit ${product.name} créé`);
       res.json(product);
@@ -3003,7 +3017,58 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
-      const product = await storage.updateProduct(parseInt(req.params.id), req.body);
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ message: "Identifiant de produit invalide." });
+      }
+      const current = await storage.getProduct(id);
+      if (!current) {
+        return res.status(404).json({ message: "Produit introuvable." });
+      }
+
+      const body = req.body ?? {};
+      const editableKeys = new Set([
+        "name", "price", "dailyEarnings", "cycleDays", "totalReturn",
+        "imageUrl", "sortOrder", "isFree", "isActive",
+      ]);
+      const unknownKeys = Object.keys(body).filter((key) => !editableKeys.has(key));
+      if (unknownKeys.length > 0) {
+        return res.status(400).json({ message: `Champ(s) produit non autorisé(s) : ${unknownKeys.join(", ")}` });
+      }
+
+      const name = body.name === undefined ? current.name : body.name;
+      const price = Number(body.price === undefined ? current.price : body.price);
+      const dailyEarnings = Number(body.dailyEarnings === undefined ? current.dailyEarnings : body.dailyEarnings);
+      const cycleDays = Number(body.cycleDays === undefined ? current.cycleDays : body.cycleDays);
+      const sortOrder = Number(body.sortOrder === undefined ? current.sortOrder : body.sortOrder);
+      const isFree = body.isFree === undefined ? current.isFree : body.isFree;
+      const isActive = body.isActive === undefined ? current.isActive : body.isActive;
+      const imageUrl = body.imageUrl === undefined ? current.imageUrl : body.imageUrl;
+      if (
+        typeof name !== "string" || !name.trim() ||
+        !Number.isInteger(price) || price < 0 ||
+        (isFree ? price !== 0 : price <= 0) ||
+        !Number.isInteger(dailyEarnings) || dailyEarnings < 0 ||
+        !Number.isInteger(cycleDays) || cycleDays <= 0 ||
+        !Number.isInteger(sortOrder) || sortOrder < 0 ||
+        typeof isFree !== "boolean" ||
+        typeof isActive !== "boolean" ||
+        (imageUrl !== null && typeof imageUrl !== "string")
+      ) {
+        return res.status(400).json({ message: "Les valeurs du produit sont invalides." });
+      }
+
+      const product = await storage.updateProduct(id, {
+        name: name.trim(),
+        price,
+        dailyEarnings,
+        cycleDays,
+        totalReturn: dailyEarnings * cycleDays,
+        imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
+        sortOrder,
+        isFree,
+        isActive,
+      });
       await storage.logAdminAction(req.session.userId!, "update_product", null, `Produit ${product.id} modifié`);
       res.json(product);
     } catch (error: any) {
@@ -3144,9 +3209,16 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.post("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
-      const entries = Object.entries(req.body);
+      const entries = Object.entries(req.body ?? {});
+      const unknownKeys = entries
+        .map(([key]) => key)
+        .filter((key) => !ADMIN_SETTING_KEYS.has(key));
+      if (unknownKeys.length > 0) {
+        return res.status(400).json({
+          message: `Paramètre(s) non reconnu(s) : ${unknownKeys.join(", ")}`,
+        });
+      }
       for (const [key, value] of entries) {
-        if (!ADMIN_SETTING_KEYS.has(key)) continue;
         if (SENSITIVE_SETTING_KEYS.has(key) && (value === "" || value === MASKED_SETTING_VALUE)) continue;
         await storage.setSetting(key, value as string, req.session.userId);
       }

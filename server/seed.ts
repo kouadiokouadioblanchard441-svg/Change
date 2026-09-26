@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, products, tasks, paymentChannels, platformSettings, countries, stakingProducts } from "@shared/schema";
+import { users, tasks, paymentChannels, platformSettings, countries } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { eq, sql } from "drizzle-orm";
 
@@ -145,157 +145,7 @@ export async function seed() {
     console.log(`Countries skipped — ${existingCountries.length} existing countries preserved`);
   }
 
-  // Seed products only if table is empty (first install only — never overwrite admin changes)
-  const existingProducts = await db.select().from(products);
-  if (existingProducts.length === 0) {
-    const defaultProducts = [
-      { name: "Bonus Gratuit", price: 0, dailyEarnings: 50, cycleDays: 1, totalReturn: 50, isFree: true, sortOrder: 0 },
-      { name: "VIP 1", price: 4500, dailyEarnings: 450, cycleDays: 200, totalReturn: 90000, sortOrder: 1 },
-      { name: "VIP 2", price: 8000, dailyEarnings: 1850, cycleDays: 200, totalReturn: 370000, sortOrder: 2 },
-      { name: "VIP 3", price: 15000, dailyEarnings: 3550, cycleDays: 200, totalReturn: 710000, sortOrder: 3 },
-      { name: "VIP 4", price: 30000, dailyEarnings: 5783, cycleDays: 200, totalReturn: 1156600, sortOrder: 4 },
-      { name: "VIP 5", price: 60000, dailyEarnings: 9362, cycleDays: 200, totalReturn: 1872400, sortOrder: 5 },
-      { name: "VIP 6", price: 120000, dailyEarnings: 45500, cycleDays: 200, totalReturn: 9100000, sortOrder: 6 },
-      { name: "VIP 7", price: 300000, dailyEarnings: 80000, cycleDays: 200, totalReturn: 16000000, sortOrder: 7 },
-      { name: "VIP 8", price: 500000, dailyEarnings: 250000, cycleDays: 200, totalReturn: 50000000, isActive: false, sortOrder: 8 },
-    ];
-    await db.insert(products).values(defaultProducts);
-    console.log("Products seeded (first install)");
-  } else {
-    console.log(`Products skipped — ${existingProducts.length} existing products preserved`);
-
-    // Migrate the previously seeded VIP durations without overwriting later admin changes.
-    for (const product of existingProducts) {
-      if (product.price === 4500) {
-        await db.update(products)
-          .set({
-            dailyEarnings: 450,
-            totalReturn: 90000,
-          })
-          .where(eq(products.id, product.id));
-        console.log(`Product earnings updated: ${product.name} -> 450 FCFA/day`);
-        continue;
-      }
-
-      if (product.name === "VIP 2") {
-        await db.update(products)
-          .set({
-            price: 8000,
-            dailyEarnings: 1850,
-            cycleDays: 200,
-            totalReturn: 370000,
-          })
-          .where(eq(products.id, product.id));
-        console.log("VIP 2 updated: 8000 FCFA -> 1850 FCFA/day");
-        continue;
-      }
-
-      if (product.name === "VIP 3") {
-        await db.update(products)
-          .set({
-            price: 15000,
-            dailyEarnings: 3550,
-            cycleDays: 200,
-            totalReturn: 710000,
-          })
-          .where(eq(products.id, product.id));
-        console.log("VIP 3 updated: 15000 FCFA -> 3550 FCFA/day");
-        continue;
-      }
-
-      if (product.name === "VIP 4") {
-        await db.update(products)
-          .set({
-            price: 30000,
-            dailyEarnings: 5783,
-            cycleDays: 200,
-            totalReturn: 1156600,
-          })
-          .where(eq(products.id, product.id));
-        console.log("VIP 4 updated: 30000 FCFA -> 5783 FCFA/day");
-        continue;
-      }
-
-      if (product.name === "VIP 5") {
-        await db.update(products)
-          .set({
-            price: 60000,
-            dailyEarnings: 9362,
-            cycleDays: 200,
-            totalReturn: 1872400,
-          })
-          .where(eq(products.id, product.id));
-        console.log("VIP 5 updated: 60000 FCFA -> 9362 FCFA/day");
-        continue;
-      }
-
-      if (product.name === "VIP 6") {
-        await db.update(products)
-          .set({
-            price: 120000,
-            dailyEarnings: 45500,
-            cycleDays: 200,
-            totalReturn: 9100000,
-          })
-          .where(eq(products.id, product.id));
-        console.log("VIP 6 updated: 120000 FCFA -> 45500 FCFA/day");
-        continue;
-      }
-
-      if (product.name === "VIP 7") {
-        await db.update(products)
-          .set({
-            price: 300000,
-            dailyEarnings: 80000,
-            cycleDays: 200,
-            totalReturn: 16000000,
-          })
-          .where(eq(products.id, product.id));
-        console.log("VIP 7 updated: 300000 FCFA -> 80000 FCFA/day");
-        continue;
-      }
-
-      if (product.name === "VIP 8") {
-        await db.update(products)
-          .set({
-            price: 500000,
-            dailyEarnings: 250000,
-            cycleDays: 200,
-            totalReturn: 50000000,
-            isActive: false,
-          })
-          .where(eq(products.id, product.id));
-        console.log("VIP 8 updated and blocked: 500000 FCFA -> 250000 FCFA/day");
-        continue;
-      }
-
-      if (
-        /^VIP\s*\d+$/i.test(product.name) &&
-        (product.cycleDays === 80 || product.cycleDays === 90)
-      ) {
-        await db.update(products)
-          .set({
-            cycleDays: 200,
-            totalReturn: product.dailyEarnings * 200,
-          })
-          .where(eq(products.id, product.id));
-        console.log(`VIP duration updated: ${product.name} -> 200 days`);
-      }
-    }
-
-    if (!existingProducts.some((product) => product.name === "VIP 8")) {
-      await db.insert(products).values({
-        name: "VIP 8",
-        price: 500000,
-        dailyEarnings: 250000,
-        cycleDays: 200,
-        totalReturn: 50000000,
-        isActive: false,
-        sortOrder: 8,
-      });
-      console.log("VIP 8 added and blocked: 500000 FCFA -> 250000 FCFA/day");
-    }
-  }
+  // Product and staking catalogs are administered in the panel; do not seed hardcoded catalog entries.
 
   // Seed tasks only if table is empty (first install only — never overwrite admin changes)
   const existingTasks = await db.select().from(tasks);
@@ -466,21 +316,6 @@ export async function seed() {
     console.log("Customized payment-provider settings preserved");
   }
   console.log("Settings check complete");
-
-  // Seed staking products only if table is empty (first install only — never overwrite admin changes)
-  const existingStakingProducts = await db.select().from(stakingProducts);
-  if (existingStakingProducts.length === 0) {
-    await db.insert(stakingProducts).values([
-      { name: "Produit 1", description: "5% par jour pendant 3 jours. Capital récupérable à la fin.", price: 2000, returnAmount: 2300, lockDays: 3, isActive: true },
-      { name: "Produit 2", description: "5% par jour pendant 7 jours. Capital récupérable à la fin.", price: 5000, returnAmount: 6750, lockDays: 7, isActive: true },
-      { name: "Produit 3", description: "5% par jour pendant 12 jours. Capital récupérable à la fin.", price: 10000, returnAmount: 16000, lockDays: 12, isActive: true },
-      { name: "Produit 4", description: "5% par jour pendant 16 jours. Capital récupérable à la fin.", price: 20000, returnAmount: 36000, lockDays: 16, isActive: true },
-      { name: "Produit 5", description: "5% par jour pendant 20 jours. Capital récupérable à la fin.", price: 50000, returnAmount: 100000, lockDays: 20, isActive: true },
-    ]);
-    console.log("Staking products seeded (first install)");
-  } else {
-    console.log(`Staking products skipped — ${existingStakingProducts.length} existing staking products preserved`);
-  }
 
   console.log("Database seeding complete!");
 }

@@ -35,8 +35,7 @@ export default function RegisterPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const params = new URLSearchParams(searchString);
-  // The current invitation format is /invitation?invite?code=ABC123.
-  // Because the format contains a second "?", parse that part explicitly.
+  // Referral links use /html/register?code=ABC123.
   const currentInvitationMatch = searchString.match(/[?&]code=([^&?#]+)/i);
   const refCode = currentInvitationMatch?.[1]
     || params.get("money")
