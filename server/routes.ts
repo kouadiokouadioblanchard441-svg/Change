@@ -239,7 +239,8 @@ declare module "express-session" {
 }
 
 const PgSession = ConnectPgSimple(session);
-const sessionDatabaseUrl = process.env.SUPABASE_NEW_DATABASE_URL;
+const sessionDatabaseUrl =
+  process.env.SUPABASE_NEW_DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
 const sessionSecret = process.env.SESSION_SECRET;
 
 if (!sessionDatabaseUrl) {
