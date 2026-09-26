@@ -11,6 +11,12 @@ import type { PaymentNumber } from "@shared/schema";
 type Provider = "ashtech" | "sendavapay";
 type Operator = { id?: string; name?: string; operator?: string; slug?: string; code?: string; requiresOtp?: boolean; status?: string; provider?: Provider; manualNumber?: PaymentNumber; manualOnly?: boolean };
 type ProviderInfo = { provider: Provider; name: string; providers?: Array<{ provider: Provider; name: string }> };
+const DEMO_RECIPIENT_NUMBER_BY_COUNTRY: Record<string, string> = {
+  CI: "+225 00 00 00 00 00",
+  TG: "+228 00 00 00 00",
+  BF: "+226 00 00 00 00",
+  NE: "+227 00 00 00 00",
+};
 
 function Stepper({ step }: { step: number }) {
   return (
@@ -43,6 +49,7 @@ export default function RobotPayPage() {
   const withdrawalAmount = Number(params.get("withdrawalAmount") || 0) || undefined;
   const isWithdrawalFeePayment = Boolean(feePaymentId);
   const manualMode = params.get("mode") === "manual" && !isWithdrawalFeePayment;
+  const requestedManualMethod = params.get("method")?.trim() || "";
   // 0 = operator, 1 = phone, 2 = confirmation, 3 = success
   const [step, setStep] = useState(0);
   const [phone, setPhone] = useState("");
@@ -81,6 +88,7 @@ export default function RobotPayPage() {
   const countryInfo = countries.find(c => c.code === country && c.isActive);
   const currency = countryInfo?.currency || "FCFA";
   const phonePrefix = countryInfo && "phonePrefix" in countryInfo ? countryInfo.phonePrefix : "";
+  const demoRecipientNumber = DEMO_RECIPIENT_NUMBER_BY_COUNTRY[country] || `+${phonePrefix} 00 00 00 00`;
   const paymentPhone = phone.trim().startsWith("+")
     ? phone.trim()
     : phonePrefix
@@ -152,16 +160,19 @@ export default function RobotPayPage() {
     ) === index
   );
   const parsedCountryMethods: unknown = parseOperators(countryInfo?.operators || "[]");
-  const manualCountryMethods = manualMode && Array.isArray(parsedCountryMethods)
-    ? [...new Set(
+  const manualCountryMethods = Array.isArray(parsedCountryMethods)
+    ? Array.from(new Set(
         parsedCountryMethods
           .filter((name): name is string => typeof name === "string")
           .map(name => name.trim())
           .filter(Boolean),
-      )]
+      ))
     : [];
   const manualCountryOperators: Operator[] = manualCountryMethods.map((name, index) => {
-    const manualNumber = manualNumbers.find(number => operatorNamesMatch(name, number.operatorName));
+    const manualNumber = manualNumbers.find(number =>
+      operatorNamesMatch(name, number.operatorName) &&
+      Boolean(number.phone?.trim() || number.paymentLink?.trim()),
+    );
     return {
       id: `manual-method-${country}-${index}`,
       name,
@@ -169,32 +180,35 @@ export default function RobotPayPage() {
       manualOnly: !manualNumber,
     };
   });
-  const additionalManualOperators: Operator[] = manualNumbers
-    .filter(number => !manualCountryMethods.some(name => operatorNamesMatch(name, number.operatorName)))
-    .map(number => ({
-      id: `manual-${number.id}`,
-      name: number.operatorName,
-      manualNumber: number,
-    }));
   const automaticAndManualOperators = [
     ...uniqueAutomaticOperators.map(automatic => {
-      const manualNumber = manualNumbers.find(number => matchesManualOperator(automatic, number));
+      const manualNumber = manualNumbers.find(number =>
+        matchesManualOperator(automatic, number) &&
+        Boolean(number.phone?.trim() || number.paymentLink?.trim()),
+      );
       return manualNumber ? { ...automatic, manualNumber } : automatic;
     }),
-    ...manualNumbers
-      .filter(number => !uniqueAutomaticOperators.some(automatic => matchesManualOperator(automatic, number)))
-      .map(number => ({
-        id: `manual-${number.id}`,
-        name: number.operatorName,
-        manualNumber: number,
-      })),
+    ...manualCountryOperators.filter(method =>
+      !uniqueAutomaticOperators.some(automatic =>
+        getOperatorIdentifiers(automatic).some(name => operatorNamesMatch(name, method.name)),
+      ),
+    ),
   ];
   const operators = manualMode
-    ? [...manualCountryOperators, ...additionalManualOperators]
+    ? manualCountryOperators
     : automaticAndManualOperators;
   const loadingOperators = manualMode
     ? manualNumbersLoading || countriesLoading
     : manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading;
+
+  useEffect(() => {
+    if (!manualMode || !requestedManualMethod || loadingOperators || step !== 0) return;
+    const requested = operators.find(item => operatorNamesMatch(item.name, requestedManualMethod));
+    if (requested) {
+      setOperator(requested);
+      setStep(1);
+    }
+  }, [manualMode, requestedManualMethod, loadingOperators, operators, step]);
 
   const sendavaMutation = useMutation({
     mutationFn: async () => {
@@ -297,7 +311,7 @@ export default function RobotPayPage() {
   const submitPhone = () => {
     if (operator?.manualOnly) {
       toast({
-        title: "Moyen manuel non configuré",
+        title: "Méthode non configurée",
         description: "Aucun numéro ou lien destinataire n’est configuré pour ce moyen.",
         variant: "destructive",
       });
@@ -329,7 +343,7 @@ export default function RobotPayPage() {
        await navigator.clipboard.writeText(value);
        toast({ title: number.paymentLink ? "Lien copié" : "Numéro copié", description: value });
     } catch {
-       toast({ title: number.paymentLink || number.phone || "", description: number.paymentLink ? "Ouvrez le lien pour payer" : "Copiez ce numéro manuellement" });
+       toast({ title: number.paymentLink || number.phone || "", description: number.paymentLink ? "Ouvrez le lien pour payer" : "Copiez ce numéro pour effectuer le transfert" });
     }
   };
 
@@ -373,14 +387,14 @@ export default function RobotPayPage() {
                 </button>
               )}
               <p className="px-1 text-xl text-white">
-                {manualMode ? "Sélectionnez un moyen de paiement manuel :" : "Sélectionnez le mode de paiement :"}
+                {manualMode ? "Sélectionnez un opérateur :" : "Sélectionnez le mode de paiement :"}
               </p>
               {loadingOperators ? (
                 <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-500" />
               ) : operators.length === 0 ? (
                 <p className="text-center text-gray-500">
                   {manualMode
-                    ? "Aucun moyen manuel n’est disponible pour ce pays."
+                    ? "Aucune méthode de réception n’est disponible pour ce pays."
                     : "Aucun opérateur disponible pour ce pays."}
                 </p>
               ) : (
@@ -398,10 +412,10 @@ export default function RobotPayPage() {
                         <span className="block text-xs text-gray-500">
                           {op.manualNumber
                             ? op.manualNumber.paymentLink
-                              ? "Paiement manuel par lien"
-                              : "Paiement manuel par numéro"
+                              ? "Paiement par lien"
+                              : "Paiement par numéro"
                             : op.manualOnly
-                              ? "Moyen manuel — instructions à configurer"
+                              ? "Informations de réception à configurer"
                               : "Paiement automatique"}
                         </span>
                       </span>
@@ -418,9 +432,15 @@ export default function RobotPayPage() {
                 <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                   <p className="font-semibold">{operator.name} est disponible pour ce pays.</p>
                   <p className="mt-2">
-                    Aucun numéro ni lien destinataire n’est configuré. Vous pouvez consulter ce parcours, mais
-                    l’envoi d’un dépôt restera désactivé jusqu’à la configuration des instructions de paiement.
+                    Aucune coordonnée réelle n’est configurée. Le numéro ci-dessous est un exemple fictif et
+                    inactif : il ne permet pas de payer. L’envoi d’un dépôt reste désactivé jusqu’à la configuration
+                    d’instructions de réception réelles.
                   </p>
+                  <div className="mt-3 rounded-md border border-amber-200 bg-white p-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Numéro fictif de démonstration</p>
+                    <p className="mt-1 font-mono text-lg font-bold text-gray-700">{demoRecipientNumber}</p>
+                    <p className="mt-1 text-xs font-semibold text-red-700">INACTIF — ne pas envoyer d’argent</p>
+                  </div>
                 </div>
               ) : (
                 <>
