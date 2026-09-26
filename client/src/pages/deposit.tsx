@@ -154,7 +154,6 @@ type Step =
   | "sv-waiting"
   | "sv-otp"
   | "sv-redirect"
-  | "soleaspay-operator"
   | "soleaspay-waiting"
   | "westpay"
   | "ashtech-operator"
@@ -167,12 +166,6 @@ interface SvOperator {
   name: string;
   requiresOtp: boolean;
   status: string;
-}
-
-interface SoleaspayServiceResponse {
-  enabled: boolean;
-  services: Record<string, Record<string, number>>;
-  enabledCountries: string[];
 }
 
 interface AshtechCountry {
@@ -215,8 +208,6 @@ export default function DepositPage() {
   const [svPolling, setSvPolling] = useState(false);
 
   // SoleaPay state
-  const [soleaspayOperator, setSoleaspayOperator] = useState("");
-  const [soleaspayPhone, setSoleaspayPhone] = useState(user?.phone || "");
   const [soleaspayDepositId, setSoleaspayDepositId] = useState<number | null>(null);
   const [soleaspayStatus, setSoleaspayStatus] = useState("");
   const [soleaspayMessage, setSoleaspayMessage] = useState("");
@@ -308,19 +299,6 @@ export default function DepositPage() {
   });
   const svOperators = (svOperatorsData?.data || []).filter(op => op.status === "online");
 
-  const { data: soleaspayServiceData, isLoading: soleaspayServicesLoading } = useQuery<SoleaspayServiceResponse>({
-    queryKey: ["/api/soleaspay/services"],
-    queryFn: async () => {
-      const res = await fetch("/api/soleaspay/services", { credentials: "include" });
-      if (!res.ok) throw new Error("Impossible de charger les opérateurs SoleaPay");
-      return res.json();
-    },
-    enabled: step === "soleaspay-operator" && soleaspayAvailable,
-  });
-  const soleaspayOperators = Object.keys(
-    soleaspayServiceData?.services?.[country.toUpperCase()] || {},
-  );
-
   const { data: ashtechCountries = [], isLoading: ashtechCountriesLoading } = useQuery<AshtechCountry[]>({
     queryKey: ["/api/ashtechpay/countries"],
     queryFn: async () => {
@@ -402,10 +380,6 @@ export default function DepositPage() {
     }, 5000);
     return () => clearInterval(interval);
   }, [step, ashtechDepositId, ashtechPolling]);
-
-  useEffect(() => {
-    if (!soleaspayPhone && user?.phone) setSoleaspayPhone(user.phone);
-  }, [soleaspayPhone, user?.phone]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -570,60 +544,6 @@ export default function DepositPage() {
       }
     }
   }, []);
-
-  const soleaspayInitiateMutation = useMutation({
-    mutationFn: async () => {
-      const phone = soleaspayPhone.trim() || user?.phone || "";
-      if (!soleaspayOperator || !phone) {
-        throw new Error("Sélectionnez un opérateur et saisissez votre numéro Mobile Money");
-      }
-      const res = await apiRequest("POST", "/api/deposits", {
-        amount: Number(amount),
-        accountName: user?.fullName || "",
-        accountNumber: phone,
-        paymentMethod: soleaspayOperator,
-        country,
-        useSoleaspay: true,
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Dépôt SoleaPay non enregistré");
-      }
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (!data.deposit?.id) {
-        toast({
-          title: "Dépôt SoleaPay non enregistré",
-          description: "Le serveur n'a pas retourné de référence de dépôt.",
-          variant: "destructive",
-        });
-        return;
-      }
-      try {
-        sessionStorage.setItem(
-          SOLEASPAY_PENDING_DEPOSIT_KEY,
-          JSON.stringify({
-            depositId: data.deposit.id,
-            orderId: data.deposit.soleaspayOrderId || "",
-          }),
-        );
-      } catch (error) {
-        console.warn("[soleaspay] Could not save pending deposit for return:", error);
-      }
-      setSoleaspayDepositId(data.deposit.id);
-      setSoleaspayStatus("pending");
-      setSoleaspayMessage(data.message || "Validez la demande de paiement sur votre téléphone.");
-      setSoleaspayPolling(true);
-      setStep("soleaspay-waiting");
-      queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
-    },
-    onError: (error: any) => toast({
-      title: `Dépôt ${soleaspayChannelName} non enregistré`,
-      description: error.message,
-      variant: "destructive",
-    }),
-  });
 
   const wpInitiateMutation = useMutation({
     mutationFn: async () => {
@@ -856,8 +776,7 @@ export default function DepositPage() {
       return;
     }
     if (soleaspayAvailable) {
-      setSoleaspayOperator("");
-      setStep("soleaspay-operator");
+      window.location.href = `/robotpay?amount=${encodeURIComponent(Number(amount))}&country=${encodeURIComponent(depositCountry)}&provider=soleaspay`;
       return;
     }
     if (inpayAvailable) {
@@ -1581,87 +1500,6 @@ export default function DepositPage() {
     </div>
   );
 
-  // ── SOLEAPAY: Select operator and phone ────────────────────────────────────
-  if (step === "soleaspay-operator") return (
-    <div className="deposit-step-shell">
-      <DepositStepStyles />
-      <header className="deposit-step-header">
-        <button className="deposit-step-back" onClick={() => setStep("amount")}>
-          <ChevronLeft className="w-5 h-5" />
-          <span className="font-semibold text-base">Retour</span>
-        </button>
-        <Link href="/history">
-          <button className="deposit-step-history">Historique</button>
-        </Link>
-      </header>
-
-      <div className="deposit-step-summary mx-4 mt-4 p-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-gray-500">Montant à déposer</p>
-          <p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p>
-        </div>
-        <span className="text-xs font-semibold text-gray-600">{country}</span>
-      </div>
-
-      <div className="deposit-step-content space-y-5 pb-10">
-        <div>
-          <p className="text-sm font-semibold text-gray-800 mb-2">Opérateur Mobile Money</p>
-          {soleaspayServicesLoading ? (
-            <div className="flex items-center gap-2 py-4 text-sm text-gray-500">
-              <Loader2 className="w-4 h-4 animate-spin" /> Chargement des opérateurs…
-            </div>
-          ) : soleaspayOperators.length ? (
-            <div className="grid grid-cols-2 gap-3">
-              {soleaspayOperators.map((operator) => (
-                <button
-                  key={operator}
-                  type="button"
-                  onClick={() => setSoleaspayOperator(operator)}
-                  className={`deposit-step-card p-4 text-sm font-semibold ${
-                    soleaspayOperator === operator ? "deposit-step-card-orange" : ""
-                  }`}
-                >
-                  {operator}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              Aucun opérateur SoleaPay n'est disponible pour ce pays.
-            </p>
-          )}
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-gray-800 mb-2">Numéro Mobile Money</p>
-          <div className="deposit-step-field flex items-center overflow-hidden">
-            <Phone className="w-4 h-4 text-gray-400 ml-4 flex-shrink-0" />
-            <input
-              type="tel"
-              inputMode="tel"
-              value={soleaspayPhone}
-              onChange={(event) => setSoleaspayPhone(event.target.value)}
-              placeholder="Numéro sur lequel recevoir la demande"
-              className="flex-1 px-3 py-4 text-sm text-gray-700 outline-none bg-transparent"
-            />
-          </div>
-        </div>
-
-        <button
-          type="button"
-          disabled={!soleaspayOperator || !(soleaspayPhone.trim() || user?.phone) || soleaspayInitiateMutation.isPending}
-          onClick={() => soleaspayInitiateMutation.mutate()}
-          className="deposit-step-primary w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50"
-          style={{ background: TON_GRADIENT }}
-        >
-          {soleaspayInitiateMutation.isPending
-            ? <><Loader2 className="w-5 h-5 animate-spin" /> Préparation du paiement…</>
-            : <>Continuer avec {soleaspayChannelName}</>}
-        </button>
-      </div>
-    </div>
-  );
-
   if (step === "soleaspay-waiting") return (
     <div className="deposit-step-shell flex flex-col">
       <DepositStepStyles />
@@ -1694,7 +1532,7 @@ export default function DepositPage() {
                 setSoleaspayDepositId(null);
                 setSoleaspayStatus("");
                 setSoleaspayPolling(false);
-                setStep("soleaspay-operator");
+                window.location.href = `/robotpay?amount=${encodeURIComponent(Number(amount))}&country=${encodeURIComponent(country)}&provider=soleaspay`;
               }}
               className="deposit-step-primary flex-1 py-3 text-sm"
               style={{ background: TON_GRADIENT }}
