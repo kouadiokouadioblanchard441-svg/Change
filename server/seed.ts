@@ -345,7 +345,7 @@ export async function seed() {
     { key: "channelEnabled", value: "true" },
     { key: "groupEnabled", value: "true" },
     { key: "minDeposit", value: "3500" },
-    { key: "minWithdrawal", value: "1200" },
+    { key: "minWithdrawal", value: "800" },
     { key: "withdrawalFees", value: "20" },
     { key: "withdrawalStartHour", value: "9" },
     { key: "withdrawalEndHour", value: "17" },
@@ -394,6 +394,17 @@ export async function seed() {
     } else {
       console.log(`Setting preserved: ${existing.key}${isSensitive ? "" : ` = ${existing.value}`}`);
     }
+  }
+
+  const minimumWithdrawalMigrationKey = "migration_min_withdrawal_800_applied";
+  if (!existingSettings.some((setting) => setting.key === minimumWithdrawalMigrationKey)) {
+    await db.update(platformSettings)
+      .set({ value: "800", modifiedAt: new Date() })
+      .where(eq(platformSettings.key, "minWithdrawal"));
+    await db.insert(platformSettings)
+      .values({ key: minimumWithdrawalMigrationKey, value: "true" })
+      .onConflictDoNothing();
+    console.log("Minimum withdrawal setting migrated to 800 FCFA");
   }
 
   const currentGatewaySettings = new Map<string, string>(

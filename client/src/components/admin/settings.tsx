@@ -131,7 +131,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       groupEnabled: true,
       signupBonus: "1000",
       minDeposit: "3500",
-      minWithdrawal: "1200",
+      minWithdrawal: "800",
       withdrawalFees: "20",
       maxWithdrawalsPerDay: "1",
       withdrawalStartHour: "9",
@@ -180,7 +180,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         groupEnabled: settings.groupEnabled !== "false",
         signupBonus: settings.signupBonus || "1000",
         minDeposit: settings.minDeposit || "3500",
-        minWithdrawal: settings.minWithdrawal || "1200",
+        minWithdrawal: settings.minWithdrawal || "800",
         withdrawalFees: settings.withdrawalFees || "20",
         maxWithdrawalsPerDay: settings.maxWithdrawalsPerDay || "1",
         withdrawalStartHour: settings.withdrawalStartHour || "9",
@@ -237,6 +237,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/settings/links"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/withdrawal"] });
       toast({ title: "Paramètres enregistrés !" });
     },
     onError: (error: any) => {

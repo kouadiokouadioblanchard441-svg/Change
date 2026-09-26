@@ -111,7 +111,7 @@ export default function HomePage() {
     return Number.isFinite(value) ? value : fallback;
   };
   const minimumDeposit = Math.max(3500, parseIntegerSetting("minDeposit", 3500));
-  const minimumWithdrawal = parseIntegerSetting("minWithdrawal", 1200);
+  const minimumWithdrawal = parseIntegerSetting("minWithdrawal", 800);
   const withdrawalFee = parseDecimalSetting("withdrawalFees", 20);
   const withdrawalStartHour = parseIntegerSetting("withdrawalStartHour", 9);
   const withdrawalEndHour = parseIntegerSetting("withdrawalEndHour", 17);

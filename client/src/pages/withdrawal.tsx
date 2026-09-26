@@ -51,7 +51,7 @@ export default function WithdrawalPage() {
     refetchOnMount: true,
   });
 
-  const minWithdrawal = withdrawalSettings?.minWithdrawal ?? 1200;
+  const minWithdrawal = withdrawalSettings?.minWithdrawal ?? 800;
   const withdrawalFee = withdrawalSettings?.withdrawalFees ?? 20;
   const withdrawalStartHour = withdrawalSettings?.withdrawalStartHour ?? 9;
   const withdrawalEndHour = withdrawalSettings?.withdrawalEndHour ?? 17;

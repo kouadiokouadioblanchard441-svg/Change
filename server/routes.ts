@@ -2162,7 +2162,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
 
       const settingsForWithdrawal = await storage.getSettings();
-      const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "1200");
+      const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "800");
       const withdrawalPrepaymentEnabled = settingsForWithdrawal.withdrawalPrepaymentEnabled === "true";
       if (!Number.isInteger(numericAmount) || numericAmount < minWithdrawal) {
         return res.status(400).json({ message: `Montant minimum: ${minWithdrawal} FCFA` });
@@ -2553,7 +2553,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         withdrawalStartHour: parseInt(settings.withdrawalStartHour || "9"),
         withdrawalEndHour: parseInt(settings.withdrawalEndHour || "17"),
         maxWithdrawalsPerDay: parseInt(settings.maxWithdrawalsPerDay || "1"),
-        minWithdrawal: parseInt(settings.minWithdrawal || "1200"),
+        minWithdrawal: parseInt(settings.minWithdrawal || "800"),
         withdrawalPrepaymentEnabled: settings.withdrawalPrepaymentEnabled === "true",
       });
     } catch (error: any) {

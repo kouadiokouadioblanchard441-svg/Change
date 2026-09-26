@@ -42,6 +42,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
     withdrawalStartHour: number;
     withdrawalEndHour: number;
     maxWithdrawalsPerDay: number;
+    minWithdrawal: number;
     withdrawalPrepaymentEnabled: boolean;
   }>({
     queryKey: ["/api/settings/withdrawal"],
@@ -93,6 +94,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
   const fees = withdrawalSettings?.withdrawalFees || 20;
   const startHour = withdrawalSettings?.withdrawalStartHour || 8;
   const endHour = withdrawalSettings?.withdrawalEndHour || 17;
+  const minWithdrawal = withdrawalSettings?.minWithdrawal ?? 800;
   const withdrawalPrepaymentEnabled = withdrawalSettings?.withdrawalPrepaymentEnabled ?? false;
   const country = getCountryByCode(user.country);
 
@@ -111,8 +113,8 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
 
   const handlePayPrepayment = async () => {
     if (!withdrawalPrepaymentEnabled) return;
-    if (amount < 1200) {
-      toast({ title: "Montant invalide", description: "Le montant minimum est de 1200 FCFA", variant: "destructive" });
+    if (amount < minWithdrawal) {
+      toast({ title: "Montant invalide", description: `Le montant minimum est de ${formatCurrency(minWithdrawal, user.country)}`, variant: "destructive" });
       return;
     }
     setIsPreparingPayment(true);
@@ -235,7 +237,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
         <DialogHeader className="withdraw-modal-header">
           <DialogTitle className="withdraw-modal-heading">Retrait</DialogTitle>
           <DialogDescription className="withdraw-modal-subtitle">
-            Minimum: {formatCurrency(1200, user.country)} | Frais: {fees}%
+            Minimum: {formatCurrency(minWithdrawal, user.country)} | Frais: {fees}%
           </DialogDescription>
           <div className="withdraw-modal-balance">
             <div>
@@ -303,7 +305,8 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
                       <Input
                         {...field}
                         type="number"
-                        placeholder="Minimum 1200"
+                        min={minWithdrawal}
+                        placeholder={`Minimum ${minWithdrawal.toLocaleString("fr-FR")}`}
                         data-testid="input-withdraw-amount"
                       />
                     </FormControl>
@@ -312,7 +315,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
                 )}
               />
 
-              {amount >= 1200 && (
+              {amount >= minWithdrawal && (
                 <div className="bg-muted rounded-lg p-3 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Montant</span>
@@ -341,7 +344,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
                     variant="outline"
                     className="w-full border-amber-400 bg-white text-amber-900 hover:bg-amber-100"
                     onClick={handlePayPrepayment}
-                    disabled={isPreparingPayment || amount < 1200}
+                    disabled={isPreparingPayment || amount < minWithdrawal}
                   >
                     {isPreparingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Payer"}
                   </Button>
@@ -351,7 +354,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={withdrawMutation.isPending || amount < 1200 || amount > balance}
+                disabled={withdrawMutation.isPending || amount < minWithdrawal || amount > balance}
                 data-testid="button-submit-withdraw"
               >
                 {withdrawMutation.isPending ? (
