@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getCountryByCode } from "@/lib/countries";
-import { Bell, ChevronRight, Send } from "lucide-react";
+import { ChevronRight, Send } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import "./home.css";
 
@@ -243,7 +243,7 @@ export default function HomePage() {
             <img src={chargePointLogo} alt="" />
           </DialogClose>
           <div className="cp-dialog-mark" aria-hidden="true">
-            <Bell size={31} />
+            <img src={chargePointLogo} alt="" />
           </div>
           <div className="cp-dialog-copy">
             <DialogTitle className="cp-dialog-title">Message de bienvenue ChargePoint</DialogTitle>

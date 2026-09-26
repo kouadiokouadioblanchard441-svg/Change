@@ -82,7 +82,7 @@
 .cp-dialog-brand-close:active { transform:translateY(2px); box-shadow:0 1px 0 #111827; }
 .cp-dialog-brand-close:focus-visible { outline:3px solid #FF7A14; outline-offset:3px; }
 .cp-dialog-mark { position:absolute; z-index:2; top:-30px; left:50%; display:grid; width:64px; height:64px; place-items:center; transform:translateX(-50%); border:2px solid #111827; border-radius:13px; background:#FF7A14; color:#111827; box-shadow:0 4px 0 #111827,0 7px 13px rgba(17,24,39,.16); }
-.cp-dialog-mark svg { stroke-width:2.5; }
+.cp-dialog-mark img { display:block; width:calc(100% - 12px); height:calc(100% - 12px); border-radius:50%; background:#fff; object-fit:cover; }
 .cp-dialog-copy { display:flex; flex:1; min-height:0; flex-direction:column; margin:0; padding:40px 18px 14px; overflow-y:auto; overscroll-behavior:contain; color:#111827; scrollbar-color:#d0d4d8 transparent; scrollbar-width:thin; }
 .cp-dialog-title { margin:0; color:#111827; font:700 22px/1.18 "Inter",Arial,sans-serif; letter-spacing:-.035em; text-align:center; }
 .cp-dialog-message { flex:none; margin:11px 0 0; color:#3f454b; font:500 13px/1.48 "Inter",Arial,sans-serif; text-align:center; }
