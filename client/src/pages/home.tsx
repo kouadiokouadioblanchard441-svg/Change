@@ -238,7 +238,7 @@ export default function HomePage() {
       </main>
 
       <Dialog open={welcomePopupOpen} onOpenChange={setWelcomePopupOpen}>
-        <DialogContent className="cp-dialog" overlayClassName="cp-dialog-overlay">
+        <DialogContent className="cp-dialog z-[60]" overlayClassName="cp-dialog-overlay">
           <DialogClose className="cp-dialog-brand-close" aria-label="Fermer le popup">
             <img src={chargePointLogo} alt="" />
           </DialogClose>
