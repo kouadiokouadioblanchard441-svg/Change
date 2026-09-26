@@ -8,7 +8,7 @@ import {
   ImageIcon, ArrowRight, Zap, RefreshCw, ExternalLink,
 } from "lucide-react";
 import { Link } from "wouter";
-import { getCountriesForDisplay, parseOperators, type ApiCountry } from "@/lib/countries";
+import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
 import type { PaymentNumber } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -295,24 +295,6 @@ export default function DepositPage() {
     },
     enabled: !!country,
   });
-  const normalizePaymentMethod = (value: unknown) =>
-    String(value || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-  const countryManualMethods = Array.from(new Set(
-    parseOperators(countryInfo?.operators || "[]")
-      .filter((name): name is string => typeof name === "string")
-      .map(name => name.trim())
-      .filter(Boolean),
-  )).map(name => ({
-    name,
-    configured: paymentNumbersList.some(number =>
-      normalizePaymentMethod(number.operatorName) === normalizePaymentMethod(name) &&
-      Boolean(number.phone?.trim() || number.paymentLink?.trim()),
-    ),
-  }));
 
   // SendavaPay: load operators for selected country
   const { data: svOperatorsData, isLoading: svOperatorsLoading } = useQuery<{ success: boolean; data: SvOperator[] }>({
@@ -513,7 +495,7 @@ export default function DepositPage() {
       setTimeout(() => setCopiedId(null), 2000);
       toast({ title: number.paymentLink ? "Lien copié !" : "Numéro copié !", description: `${value} copié` });
     } catch {
-      toast({ title: number.paymentLink || "Numéro: " + number.phone, description: number.paymentLink ? "Ouvrez le lien pour payer" : "Copiez ce numéro pour effectuer le transfert" });
+      toast({ title: number.paymentLink || "Numéro: " + number.phone, description: number.paymentLink ? "Ouvrez le lien pour payer" : "Copiez ce numéro manuellement" });
     }
   };
 
@@ -853,7 +835,19 @@ export default function DepositPage() {
       });
       return;
     }
-    setStep("select");
+    if (
+      inpayAvailable &&
+      (!Number.isInteger(Number(amount)) || Number(amount) % 5 !== 0)
+    ) {
+      toast({
+        title: "Montant InPay invalide",
+        description: "Utilisez un montant entier multiple de 5 : 300, 305, 310…",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    openRobotPay();
   };
 
   const openRobotPay = () => {
@@ -867,14 +861,6 @@ export default function DepositPage() {
       return;
     }
     if (inpayAvailable) {
-      if (!Number.isInteger(Number(amount)) || Number(amount) % 5 !== 0) {
-        toast({
-          title: "Montant InPay invalide",
-          description: "Utilisez un montant entier multiple de 5 : 300, 305, 310…",
-          variant: "destructive",
-        });
-        return;
-      }
       inpayInitiateMutation.mutate();
       return;
     }
@@ -889,10 +875,6 @@ export default function DepositPage() {
       return;
     }
     window.location.href = `/robotpay?amount=${encodeURIComponent(Number(amount))}&country=${encodeURIComponent(depositCountry)}`;
-  };
-
-  const openManualMethod = (method: string) => {
-    window.location.href = `/robotpay?mode=manual&method=${encodeURIComponent(method)}&amount=${encodeURIComponent(Number(amount))}&country=${encodeURIComponent(depositCountry)}`;
   };
 
   const getOperatorIcon = (name: string): string | null => {
@@ -1269,6 +1251,7 @@ export default function DepositPage() {
         >
           Recharger maintenant
         </button>
+
         <section className="instructions" aria-label="Instructions de recharge">
           <h2 className="instructions-title">Instructions de Recharge :</h2>
           <p className="instruction"><strong>Montant minimum de recharge :</strong> {MIN_DEPOSIT.toLocaleString("fr-FR")} {currency}</p>
@@ -1280,25 +1263,19 @@ export default function DepositPage() {
     </main>
   );
 
-  // ── STEP 2: Choose a payment method ───────────────────────────────────────
+  // ── Compatibility redirect for old in-app navigation ──────────────────────
   if (step === "select") return (
     <div className="deposit-step-shell">
       <DepositStepStyles />
       <header className="deposit-step-header">
         <button className="deposit-step-back" onClick={() => setStep("amount")}>
-          <ChevronLeft className="h-5 w-5" /><span className="font-semibold text-base">Modifier le montant</span>
+          <ChevronLeft className="h-5 w-5" /><span className="font-semibold text-base">Choisir le pays</span>
         </button>
         <Link href="/history"><button className="deposit-step-history">Historique</button></Link>
       </header>
       <div className="deposit-step-summary mx-4 mt-4 flex items-center justify-between p-4">
-        <div>
-          <p className="text-xs text-gray-500">Montant à déposer</p>
-          <p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} {currency}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-500">Pays</p>
-          <p className="font-semibold text-gray-800">{countryInfo?.name || country || "Non sélectionné"}</p>
-        </div>
+        <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} FCFA</p></div>
+        <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
       </div>
       <div className="deposit-step-content">
         <div className="deposit-step-card deposit-step-card-orange p-4">
@@ -1307,57 +1284,14 @@ export default function DepositPage() {
             <option value="">Sélectionnez un pays</option>
             {activeDepositCountries.map(c => <option key={c.code} value={c.code}>{c.name} ({c.currency})</option>)}
           </select>
-          <p className="mt-2 text-xs text-gray-500">Choisissez une méthode ci-dessous pour continuer.</p>
+          <p className="mt-2 text-xs text-gray-500">Seuls les pays activés par l’administration sont affichés.</p>
         </div>
-        {!depositCountry ? (
-          <p className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-            Sélectionnez d’abord un pays pour afficher les méthodes disponibles.
-          </p>
-        ) : (
-          <div className="mt-5 space-y-3">
-            <p className="px-1 text-sm font-bold text-gray-900">Moyens de paiement disponibles</p>
-            <button
-              type="button"
-              onClick={openRobotPay}
-              disabled={inpayInitiateMutation.isPending || wpInitiateMutation.isPending}
-              className="deposit-step-card flex w-full items-center justify-between p-4 text-left transition-colors hover:border-[#FF7A14] disabled:opacity-60"
-            >
-              <span>
-                <span className="block font-bold text-gray-900">Paiement automatique</span>
-                <span className="mt-1 block text-xs text-gray-500">Choisissez un opérateur et validez le paiement depuis votre téléphone.</span>
-              </span>
-              <ArrowRight className="ml-3 h-5 w-5 shrink-0 text-[#E85D00]" />
-            </button>
-            {numbersLoading ? (
-              <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#E85D00]" />
-            ) : countryManualMethods.map(method => (
-              <button
-                key={method.name}
-                type="button"
-                onClick={() => openManualMethod(method.name)}
-                className="deposit-step-card flex w-full items-center justify-between p-4 text-left transition-colors hover:border-[#FF7A14]"
-              >
-                <span>
-                  <span className="block font-bold text-gray-900">{method.name}</span>
-                  <span className={`mt-1 block text-xs ${method.configured ? "text-gray-500" : "text-amber-700"}`}>
-                    {method.configured ? "Paiement par transfert" : "Instructions de réception à configurer"}
-                  </span>
-                </span>
-                <ArrowRight className="ml-3 h-5 w-5 shrink-0 text-[#E85D00]" />
-              </button>
-            ))}
-            {!numbersLoading && countryManualMethods.length === 0 && (
-              <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500">
-                Aucune méthode de réception n’est disponible pour ce pays.
-              </p>
-            )}
-          </div>
-        )}
+        <button onClick={openRobotPay} disabled={!depositCountry} className="deposit-step-primary mt-5 w-full py-3 disabled:opacity-50">Continuer vers le paiement</button>
       </div>
     </div>
   );
 
-  // ── STEP 3: Deposit instructions ──────────────────────────────────────────
+  // ── STEP 3: Manual deposit form ────────────────────────────────────────────
   if (step === "form" && selectedNumber) return (
     <div className="deposit-step-shell">
       <DepositStepStyles />

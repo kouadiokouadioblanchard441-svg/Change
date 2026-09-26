@@ -5,11 +5,11 @@ import { Check, ChevronRight, ClipboardCheck, Copy, ExternalLink, ImageIcon, Loa
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { getCountriesForDisplay, parseOperators, type ApiCountry } from "@/lib/countries";
+import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
 import type { PaymentNumber } from "@shared/schema";
 
 type Provider = "ashtech" | "sendavapay";
-type Operator = { id?: string; name?: string; operator?: string; slug?: string; code?: string; requiresOtp?: boolean; status?: string; provider?: Provider; manualNumber?: PaymentNumber; manualOnly?: boolean };
+type Operator = { id?: string; name?: string; operator?: string; slug?: string; code?: string; requiresOtp?: boolean; status?: string; provider?: Provider; manualNumber?: PaymentNumber };
 type ProviderInfo = { provider: Provider; name: string; providers?: Array<{ provider: Provider; name: string }> };
 
 function Stepper({ step }: { step: number }) {
@@ -42,8 +42,6 @@ export default function RobotPayPage() {
   const feePaymentId = Number(params.get("feePaymentId") || 0) || undefined;
   const withdrawalAmount = Number(params.get("withdrawalAmount") || 0) || undefined;
   const isWithdrawalFeePayment = Boolean(feePaymentId);
-  const manualMode = params.get("mode") === "manual" && !isWithdrawalFeePayment;
-  const requestedManualMethod = params.get("method")?.trim() || "";
   // 0 = operator, 1 = phone, 2 = confirmation, 3 = success
   const [step, setStep] = useState(0);
   const [phone, setPhone] = useState("");
@@ -64,7 +62,7 @@ export default function RobotPayPage() {
   const [paymentMessage, setPaymentMessage] = useState("");
   const [manualSubmitted, setManualSubmitted] = useState(false);
 
-  const { data: loadedCountries, isError: countriesError, isLoading: countriesLoading } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
+  const { data: loadedCountries, isError: countriesError } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
   const countries = getCountriesForDisplay(loadedCountries, countriesError);
   const { data: providerInfo, isLoading: providerLoading } = useQuery<ProviderInfo>({
     queryKey: ["/api/deposit/provider", country],
@@ -74,7 +72,7 @@ export default function RobotPayPage() {
       if (!res.ok) throw new Error(data.message || "Aucun canal automatique disponible");
       return data;
     },
-    enabled: !!country && !manualMode,
+    enabled: !!country,
   });
   const provider = providerInfo?.provider || "sendavapay";
   const activeProvider = operator?.provider || provider;
@@ -101,12 +99,12 @@ export default function RobotPayPage() {
   const { data: sendavaData, isLoading: sendavaLoading } = useQuery<{ success: boolean; data: Operator[] }>({
     queryKey: ["/api/sendavapay/operators", country],
     queryFn: async () => (await fetch(`/api/sendavapay/operators/${country}`, { credentials: "include" })).json(),
-    enabled: !manualMode && !!providerInfo && availableProviders.some(item => item.provider === "sendavapay") && !!country,
+    enabled: !!providerInfo && availableProviders.some(item => item.provider === "sendavapay") && !!country,
   });
   const { data: ashtechData, isLoading: ashtechLoading } = useQuery<any[]>({
     queryKey: ["/api/ashtechpay/countries"],
     queryFn: async () => (await fetch("/api/ashtechpay/countries", { credentials: "include" })).json(),
-    enabled: !manualMode && !!providerInfo && availableProviders.some(item => item.provider === "ashtech"),
+    enabled: !!providerInfo && availableProviders.some(item => item.provider === "ashtech"),
   });
   const ashtechCountryList = Array.isArray(ashtechData)
     ? ashtechData
@@ -152,56 +150,20 @@ export default function RobotPayPage() {
       )
     ) === index
   );
-  const parsedCountryMethods: unknown = parseOperators(countryInfo?.operators || "[]");
-  const manualCountryMethods = Array.isArray(parsedCountryMethods)
-    ? Array.from(new Set(
-        parsedCountryMethods
-          .filter((name): name is string => typeof name === "string")
-          .map(name => name.trim())
-          .filter(Boolean),
-      ))
-    : [];
-  const manualCountryOperators: Operator[] = manualCountryMethods.map((name, index) => {
-    const manualNumber = manualNumbers.find(number =>
-      operatorNamesMatch(name, number.operatorName) &&
-      Boolean(number.phone?.trim() || number.paymentLink?.trim()),
-    );
-    return {
-      id: `manual-method-${country}-${index}`,
-      name,
-      manualNumber,
-      manualOnly: !manualNumber,
-    };
-  });
-  const automaticAndManualOperators = [
+  const operators = [
     ...uniqueAutomaticOperators.map(automatic => {
-      const manualNumber = manualNumbers.find(number =>
-        matchesManualOperator(automatic, number) &&
-        Boolean(number.phone?.trim() || number.paymentLink?.trim()),
-      );
+      const manualNumber = manualNumbers.find(number => matchesManualOperator(automatic, number));
       return manualNumber ? { ...automatic, manualNumber } : automatic;
     }),
-    ...manualCountryOperators.filter(method =>
-      !uniqueAutomaticOperators.some(automatic =>
-        getOperatorIdentifiers(automatic).some(name => operatorNamesMatch(name, method.name)),
-      ),
-    ),
+    ...manualNumbers
+      .filter(number => !uniqueAutomaticOperators.some(automatic => matchesManualOperator(automatic, number)))
+      .map(number => ({
+        id: `manual-${number.id}`,
+        name: number.operatorName,
+        manualNumber: number,
+      })),
   ];
-  const operators = manualMode
-    ? manualCountryOperators
-    : automaticAndManualOperators;
-  const loadingOperators = manualMode
-    ? manualNumbersLoading || countriesLoading
-    : manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading;
-
-  useEffect(() => {
-    if (!manualMode || !requestedManualMethod || loadingOperators || step !== 0) return;
-    const requested = operators.find(item => operatorNamesMatch(item.name, requestedManualMethod));
-    if (requested) {
-      setOperator(requested);
-      setStep(1);
-    }
-  }, [manualMode, requestedManualMethod, loadingOperators, operators, step]);
+  const loadingOperators = manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading;
 
   const sendavaMutation = useMutation({
     mutationFn: async () => {
@@ -302,14 +264,6 @@ export default function RobotPayPage() {
   }, [step, depositId, status, activeProvider]);
 
   const submitPhone = () => {
-    if (operator?.manualOnly) {
-      toast({
-        title: "Méthode non configurée",
-        description: "Aucun numéro ou lien destinataire n’est configuré pour ce moyen.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (!phone.trim()) { toast({ title: "Numéro requis", description: "Saisissez le numéro Mobile Money utilisé.", variant: "destructive" }); return; }
     if (!operator) { toast({ title: "Opérateur requis", description: "Sélectionnez votre opérateur.", variant: "destructive" }); return; }
     if (operator.manualNumber) manualMutation.mutate();
@@ -336,7 +290,7 @@ export default function RobotPayPage() {
        await navigator.clipboard.writeText(value);
        toast({ title: number.paymentLink ? "Lien copié" : "Numéro copié", description: value });
     } catch {
-       toast({ title: number.paymentLink || number.phone || "", description: number.paymentLink ? "Ouvrez le lien pour payer" : "Copiez ce numéro pour effectuer le transfert" });
+       toast({ title: number.paymentLink || number.phone || "", description: number.paymentLink ? "Ouvrez le lien pour payer" : "Copiez ce numéro manuellement" });
     }
   };
 
@@ -371,66 +325,17 @@ export default function RobotPayPage() {
           <p className="text-4xl font-bold">{amount.toLocaleString()} <span className="text-2xl font-normal">{currency}</span></p>
         </div>
         <section className={step === 0 ? "space-y-5" : "rounded-xl bg-white p-5 shadow-xl sm:p-8"}>
-          {step > 0 && !operator?.manualOnly && <Stepper step={Math.max(0, Math.min(2, step - 1))} />}
+          {step > 0 && <Stepper step={Math.max(0, Math.min(2, step - 1))} />}
           {step === 0 && (
             <div className="space-y-5">
-              {manualMode && (
-                <button type="button" onClick={() => navigate("/deposit")} className="text-sm font-semibold text-white underline">
-                  ← Retour au dépôt
-                </button>
-              )}
-              <p className="px-1 text-xl text-white">
-                {manualMode ? "Sélectionnez un opérateur :" : "Sélectionnez le mode de paiement :"}
-              </p>
-              {loadingOperators ? (
-                <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-500" />
-              ) : operators.length === 0 ? (
-                <p className="text-center text-gray-500">
-                  {manualMode
-                    ? "Aucune méthode de réception n’est disponible pour ce pays."
-                    : "Aucun opérateur disponible pour ce pays."}
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {operators.map((op, i) => (
-                    <button
-                      key={`${op.id || op.name}-${i}`}
-                      onClick={() => chooseOperator(op)}
-                      className={`flex w-full items-center justify-between rounded-lg border-2 px-4 py-4 text-left ${
-                        operator === op ? "border-[#2885d8] bg-blue-50" : "border-gray-100 bg-white shadow-sm"
-                      }`}
-                    >
-                      <span>
-                        <span className="block text-lg font-semibold text-[#14538a]">{op.name}</span>
-                        <span className="block text-xs text-gray-500">
-                          {op.manualNumber
-                            ? op.manualNumber.paymentLink
-                              ? "Paiement par lien"
-                              : "Paiement par numéro"
-                            : op.manualOnly
-                              ? "Informations de réception à configurer"
-                              : "Paiement automatique"}
-                        </span>
-                      </span>
-                      <ChevronRight className="text-gray-400" />
-                    </button>
-                  ))}
-                </div>
+              <p className="px-1 text-xl text-white">Sélectionnez le mode de paiement :</p>
+               {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-blue-500" /> : operators.length === 0 ? <p className="text-center text-gray-500">Aucun opérateur disponible pour ce pays.</p> : (
+                 <div className="space-y-3">{operators.map((op, i) => <button key={`${op.id || op.name}-${i}`} onClick={() => chooseOperator(op)} className={`w-full flex items-center justify-between rounded-lg px-4 py-4 border-2 text-left ${operator === op ? "border-[#2885d8] bg-blue-50" : "border-gray-100 bg-white shadow-sm"}`}><span><span className="block font-semibold text-lg text-[#14538a]">{op.name}</span><span className="block text-xs text-gray-500">{op.manualNumber ? (op.manualNumber.paymentLink ? "Paiement par lien" : "Paiement par numéro") : "Paiement automatique"}</span></span><ChevronRight className="text-gray-400" /></button>)}</div>
               )}
             </div>
           )}
           {step === 1 && (
             <div className="space-y-5">
-              {operator?.manualOnly ? (
-                <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-                  <p className="font-semibold">{operator.name} est disponible pour ce pays.</p>
-                  <p className="mt-2">
-                    Aucune coordonnée de réception n’est configurée. L’envoi d’un dépôt reste désactivé jusqu’à
-                    la configuration d’instructions de réception.
-                  </p>
-                </div>
-              ) : (
-                <>
               <div className="bg-[#ffe0a0] px-3 py-2 text-sm leading-tight text-[#e65b28]">Veuillez sélectionner la même option que votre méthode de transfert.</div>
               {operator?.manualNumber && (
                 <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-left">
@@ -487,11 +392,9 @@ export default function RobotPayPage() {
                   </div>
                 </div>
               )}
-                </>
-              )}
               <div className="flex items-center justify-center gap-5 pt-3">
                 <button onClick={() => { setOperator(null); setStep(0); }} className="w-[43%] rounded-md bg-[#78b9df] py-3 font-semibold text-white shadow-sm">&lt; Retour</button>
-                <button onClick={submitPhone} disabled={busy || operator?.manualOnly || !phone.trim() || (!!operator?.manualNumber && !screenshot)} className="w-[43%] rounded-md bg-[#078ee8] py-3 font-semibold text-white shadow-sm disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualOnly ? "Instructions à configurer" : operator?.manualNumber ? "Envoyer la demande" : "Suivant >"}</button>
+                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !screenshot)} className="w-[43%] rounded-md bg-[#078ee8] py-3 font-semibold text-white shadow-sm disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : "Suivant >"}</button>
               </div>
             </div>
           )}
