@@ -2,7 +2,7 @@
 - [WestPay Integration](westpay-integration.md) — Redirect-based deposit flow + HMAC webhook; per-country API keys for withdrawals; secrets only (never in code/DB).
 - [SendavaPay integration](sendavapay-integration.md) — Payin deposit flow: backend creates+initiates, user phone auto-used, OTP/redirect handled, webhook HMAC verified.
 - [Imported database setup](imported-database-setup.md) — Preserve an existing Replit session table when applying a first-run Drizzle schema.
-- [Plesk GitHub deployment](plesk-github-deployment.md) — Plesk pulls a committed dist build and starts dist/index.cjs relative to the application root.
+- [Plesk and GitHub](plesk-github-deployment.md) — Plesk deploys the committed dist build; Replit Git Provider auth is separate from the GitHub connector.
 - [Login privacy](login-privacy.md) — Do not persist passwords or phone numbers in browser storage; privacy scans classify remembered phone numbers as sensitive.
 - [Page branding scope](ton-green-theme.md) — Home is a pure-white ChargePoint app dashboard with separate functional sections; untouched legacy pages keep their styles.
 - [ChargePoint orange](chargepoint-brand.md) — Official brand orange is #FF7A14; use dark text for readable orange buttons.

@@ -20,3 +20,9 @@ The August ZIP uses `SUPABASE_DATABASE_URL`, while the current Plesk Node enviro
 **Why:** The legacy archive can fail at startup against the current Plesk environment, even when the newly named database variable is configured and reachable.
 
 **How to apply:** Do not deploy the August archive as a substitute for the current build unless its legacy database variable is deliberately mapped to the intended production database and the older schema/application compatibility is confirmed.
+
+Replit's workspace Git Provider authentication is separate from its connected GitHub integration. A working GitHub connector does not prove that native `git push` credentials are valid; authentication failures should be repaired through Replit account Settings → Git Providers, not Connected Services.
+
+**Why:** GitHub API access through the connector succeeded while the workspace's configured Git remote rejected its native push credentials.
+
+**How to apply:** When `git push --dry-run` fails authentication against the configured upstream, reconnect the Git Provider before changing application code or asking the user to paste a token.
