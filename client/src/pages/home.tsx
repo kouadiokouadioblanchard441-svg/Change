@@ -250,18 +250,21 @@ export default function HomePage() {
             <DialogDescription className="cp-dialog-message">
               Bienvenue sur ChargePoint. Avant toute opération, veuillez consulter les principales conditions applicables aux dépôts, aux retraits et aux bonus.
             </DialogDescription>
+            {groupLink && (
+              <section className="cp-dialog-group-card" aria-label="Groupe de discussion">
+                <h3 className="cp-dialog-group-title">Groupe de discussion</h3>
+                <a className="cp-dialog-telegram" href={groupLink} target="_blank" rel="noreferrer" onClick={() => setWelcomePopupOpen(false)}>
+                  <Send size={18} aria-hidden="true" />
+                  <span>{popupButtonLabel}</span>
+                  <ChevronRight size={19} aria-hidden="true" />
+                </a>
+              </section>
+            )}
             <ol className="cp-dialog-list">
               {popupRules.map((rule) => <li key={rule}>{rule}</li>)}
             </ol>
           </div>
           <div className="cp-dialog-actions">
-            {groupLink && (
-              <a className="cp-dialog-telegram" href={groupLink} target="_blank" rel="noreferrer" onClick={() => setWelcomePopupOpen(false)}>
-                <Send size={18} aria-hidden="true" />
-                <span>{popupButtonLabel}</span>
-                <ChevronRight size={19} aria-hidden="true" />
-              </a>
-            )}
             <button className="cp-dialog-close" type="button" onClick={() => setWelcomePopupOpen(false)}>D’ACCORD</button>
           </div>
         </DialogContent>
