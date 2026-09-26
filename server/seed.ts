@@ -346,7 +346,7 @@ export async function seed() {
     { key: "groupEnabled", value: "true" },
     { key: "minDeposit", value: "3500" },
     { key: "minWithdrawal", value: "800" },
-    { key: "withdrawalFees", value: "20" },
+    { key: "withdrawalFees", value: "16" },
     { key: "withdrawalStartHour", value: "9" },
     { key: "withdrawalEndHour", value: "17" },
     { key: "maxWithdrawalsPerDay", value: "1" },
@@ -394,6 +394,17 @@ export async function seed() {
     } else {
       console.log(`Setting preserved: ${existing.key}${isSensitive ? "" : ` = ${existing.value}`}`);
     }
+  }
+
+  const withdrawalFeesMigrationKey = "migration_withdrawal_fees_16_applied";
+  if (!existingSettings.some((setting) => setting.key === withdrawalFeesMigrationKey)) {
+    await db.update(platformSettings)
+      .set({ value: "16", modifiedAt: new Date() })
+      .where(eq(platformSettings.key, "withdrawalFees"));
+    await db.insert(platformSettings)
+      .values({ key: withdrawalFeesMigrationKey, value: "true" })
+      .onConflictDoNothing();
+    console.log("Withdrawal fee setting migrated to 16%");
   }
 
   const minimumWithdrawalMigrationKey = "migration_min_withdrawal_800_applied";

@@ -15,7 +15,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
   const signupBonus = settings?.signupBonus || "1000";
   const minDeposit = settings?.minDeposit || "3500";
   const minWithdrawal = settings?.minWithdrawal || "800";
-  const withdrawalFees = settings?.withdrawalFees || "20";
+  const withdrawalFees = settings?.withdrawalFees || "16";
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
   const withdrawalEndHour = settings?.withdrawalEndHour || "17";
   const maxWithdrawalsPerDay = settings?.maxWithdrawalsPerDay || "1";

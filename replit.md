@@ -129,7 +129,7 @@ The "Start application" workflow runs `npm run dev` and serves the app on port 5
 ## Business Rules
 - **Signup Bonus**: 1000 FCFA
 - **Free Daily Product**: 50 FCFA per day
-- **Withdrawal Fees**: 15%
+- **Withdrawal Fees**: 16%
 - **Minimum Deposit**: 3000 FCFA
 - **Minimum Withdrawal**: 1200 FCFA
 - **Withdrawal Hours**: 8h-17h (9h-18h for Cameroon/Benin)

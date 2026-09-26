@@ -112,7 +112,7 @@ export default function HomePage() {
   };
   const minimumDeposit = Math.max(3500, parseIntegerSetting("minDeposit", 3500));
   const minimumWithdrawal = parseIntegerSetting("minWithdrawal", 800);
-  const withdrawalFee = parseDecimalSetting("withdrawalFees", 20);
+  const withdrawalFee = parseDecimalSetting("withdrawalFees", 16);
   const withdrawalStartHour = parseIntegerSetting("withdrawalStartHour", 9);
   const withdrawalEndHour = parseIntegerSetting("withdrawalEndHour", 17);
   const maxWithdrawalsPerDay = parseIntegerSetting("maxWithdrawalsPerDay", 1);
