@@ -134,7 +134,7 @@ The "Start application" workflow runs `npm run dev` and serves the app on port 5
 - **Minimum Withdrawal**: 1200 FCFA
 - **Withdrawal Hours**: 8h-17h (9h-18h for Cameroon/Benin)
 - **Max Withdrawals/Day**: 2
-- **Referral Commissions**: Level 1 (27%), Level 2 (2%), Level 3 (1%)
+- **Referral Commissions**: Level 1 (25%), Level 2 (4%), Level 3 (1%)
 - **Product Cycle**: 80 days by default
 
 ## Supported Countries
