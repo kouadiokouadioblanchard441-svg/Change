@@ -11,12 +11,6 @@ import type { PaymentNumber } from "@shared/schema";
 type Provider = "ashtech" | "sendavapay";
 type Operator = { id?: string; name?: string; operator?: string; slug?: string; code?: string; requiresOtp?: boolean; status?: string; provider?: Provider; manualNumber?: PaymentNumber; manualOnly?: boolean };
 type ProviderInfo = { provider: Provider; name: string; providers?: Array<{ provider: Provider; name: string }> };
-const DEMO_RECIPIENT_NUMBER_BY_COUNTRY: Record<string, string> = {
-  CI: "+225 00 00 00 00 00",
-  TG: "+228 00 00 00 00",
-  BF: "+226 00 00 00 00",
-  NE: "+227 00 00 00 00",
-};
 
 function Stepper({ step }: { step: number }) {
   return (
@@ -88,7 +82,6 @@ export default function RobotPayPage() {
   const countryInfo = countries.find(c => c.code === country && c.isActive);
   const currency = countryInfo?.currency || "FCFA";
   const phonePrefix = countryInfo && "phonePrefix" in countryInfo ? countryInfo.phonePrefix : "";
-  const demoRecipientNumber = DEMO_RECIPIENT_NUMBER_BY_COUNTRY[country] || `+${phonePrefix} 00 00 00 00`;
   const paymentPhone = phone.trim().startsWith("+")
     ? phone.trim()
     : phonePrefix
@@ -432,15 +425,9 @@ export default function RobotPayPage() {
                 <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                   <p className="font-semibold">{operator.name} est disponible pour ce pays.</p>
                   <p className="mt-2">
-                    Aucune coordonnée réelle n’est configurée. Le numéro ci-dessous est un exemple fictif et
-                    inactif : il ne permet pas de payer. L’envoi d’un dépôt reste désactivé jusqu’à la configuration
-                    d’instructions de réception réelles.
+                    Aucune coordonnée de réception n’est configurée. L’envoi d’un dépôt reste désactivé jusqu’à
+                    la configuration d’instructions de réception.
                   </p>
-                  <div className="mt-3 rounded-md border border-amber-200 bg-white p-3">
-                    <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Numéro fictif de démonstration</p>
-                    <p className="mt-1 font-mono text-lg font-bold text-gray-700">{demoRecipientNumber}</p>
-                    <p className="mt-1 text-xs font-semibold text-red-700">INACTIF — ne pas envoyer d’argent</p>
-                  </div>
                 </div>
               ) : (
                 <>
