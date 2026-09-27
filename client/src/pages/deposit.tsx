@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
+import { getDepositMethodLabels, sanitizeDepositDisplayText } from "@/lib/deposit-display";
 import type { PaymentNumber } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -256,6 +257,7 @@ export default function DepositPage() {
       enabled: !!country,
     });
   const depositMethods = depositMethodsData?.methods || [];
+  const depositMethodLabels = getDepositMethodLabels(depositMethods);
   const depositMethodIds = new Set(depositMethods.map((method) => method.provider));
   const depositMethodSignature = depositMethods.map((method) => method.provider).join(",");
   useEffect(() => {
@@ -270,10 +272,6 @@ export default function DepositPage() {
     3500, 5000, 10000, 25000, 50000,
     100000, 200000, 300000, 400000, 500000,
   ].filter((preset) => preset >= MIN_DEPOSIT);
-  const westpayChannelName = platformSettings?.westpayChannelName || "WestPay";
-  const inpayChannelName = platformSettings?.inpayChannelName || "InPay";
-  const soleaspayChannelName = platformSettings?.soleaspayChannelName || "SoleaPay";
-  const ashtechChannelName = platformSettings?.ashtechChannelName || "AshtechPay";
   const ashtechAvailable = depositMethodIds.has("ashtech");
 
   const activeDepositCountries = apiCountries.filter(c => c.isActive) as Array<{ code: string; name: string; currency: string }>;
@@ -404,8 +402,8 @@ export default function DepositPage() {
         setSoleaspayStatus("pending");
         setSoleaspayMessage(
           returnStatus === "success"
-            ? "Retour de SoleaPay reçu. Vérification du paiement en cours..."
-            : "Retour de SoleaPay reçu. Vérification de l'état final du paiement...",
+            ? "Retour du paiement reçu. Vérification en cours..."
+            : "Retour du paiement reçu. Vérification de l'état final...",
         );
         setSoleaspayPolling(true);
         setStep("soleaspay-waiting");
@@ -417,7 +415,7 @@ export default function DepositPage() {
 
     if (!resumed) {
       toast({
-        title: "Retour SoleaPay reçu",
+        title: "Retour du paiement reçu",
         description: "Consultez l'historique des dépôts pour vérifier le statut du paiement.",
       });
     }
@@ -524,7 +522,7 @@ export default function DepositPage() {
       setPaymentMessage("");
       setReference("");
     },
-    onError: (e: any) => toast({ title: "Dépôt non enregistré", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Dépôt non enregistré", description: sanitizeDepositDisplayText(e.message, "Impossible d’enregistrer le dépôt."), variant: "destructive" }),
   });
 
   // WestPay: create deposit + get redirect URL
@@ -541,7 +539,7 @@ export default function DepositPage() {
       // clean URL
       window.history.replaceState({}, "", "/deposit");
       if (s === "success") {
-        toast({ title: "Paiement en cours de confirmation", description: "Votre dépôt sera crédité dès confirmation WestPay." });
+        toast({ title: "Paiement en cours de confirmation", description: "Votre dépôt sera crédité dès confirmation." });
         queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
       }
     }
@@ -559,7 +557,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Dépôt WestPay non enregistré");
+        throw new Error(d.message || "Dépôt non enregistré");
       }
       return res.json();
     },
@@ -568,7 +566,7 @@ export default function DepositPage() {
         window.location.href = data.westpayUrl;
       }
     },
-    onError: (e: any) => toast({ title: "Dépôt WestPay non enregistré", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Dépôt non enregistré", description: sanitizeDepositDisplayText(e.message, "Impossible d’enregistrer le dépôt."), variant: "destructive" }),
   });
 
   const inpayInitiateMutation = useMutation({
@@ -583,7 +581,7 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Dépôt InPay non enregistré");
+        throw new Error(d.message || "Dépôt non enregistré");
       }
       return res.json();
     },
@@ -592,7 +590,7 @@ export default function DepositPage() {
         window.location.href = data.inpayUrl;
       }
     },
-    onError: (e: any) => toast({ title: `Dépôt ${inpayChannelName} non enregistré`, description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Dépôt non enregistré", description: sanitizeDepositDisplayText(e.message, "Impossible d’enregistrer le dépôt."), variant: "destructive" }),
   });
 
   const ashtechCollectMutation = useMutation({
@@ -608,13 +606,13 @@ export default function DepositPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "Dépôt AshtechPay non enregistré");
+        throw new Error(d.message || "Dépôt non enregistré");
       }
       return res.json();
     },
     onSuccess: (data: any) => {
       setAshtechDepositId(data.depositId);
-      setAshtechMessage(data.message || "");
+      setAshtechMessage(sanitizeDepositDisplayText(data.message, ""));
       setAshtechUssdCode(data.ussdCode || "");
       if (data.waveUrl) {
         setAshtechWaveUrl(data.waveUrl);
@@ -631,12 +629,12 @@ export default function DepositPage() {
       if (e.data?.requiresOtp) {
         setAshtechDepositId(e.data.depositId || ashtechDepositId);
         setAshtechUssdCode(e.data.ussdCode || "");
-        setAshtechMessage(e.message || "Composez le code indiqué puis saisissez le code OTP.");
+        setAshtechMessage(sanitizeDepositDisplayText(e.message, "Composez le code indiqué puis saisissez le code OTP."));
         setAshtechOtp("");
         setStep("ashtech-otp");
         return;
       }
-      toast({ title: `Dépôt ${ashtechChannelName} non enregistré`, description: e.message, variant: "destructive" });
+      toast({ title: "Dépôt non enregistré", description: sanitizeDepositDisplayText(e.message, "Impossible d’enregistrer le dépôt."), variant: "destructive" });
     },
   });
 
@@ -689,17 +687,17 @@ export default function DepositPage() {
         // Orange Money (BF, CI, GN, ML, SN) — user must dial USSD then enter OTP
         setSvOtpToken(data.otpToken);
         setSvUssdCode(data.ussdCode || "");
-        setSvOtpMessage(data.message || "");
+        setSvOtpMessage(sanitizeDepositDisplayText(data.message, ""));
         setStep("sv-otp");
       } else if (data.success) {
         // Standard push: invite sent directly to phone — wait for webhook
         setSvPolling(true);
         setStep("sv-waiting");
       } else {
-        toast({ title: "Paiement SendavaPay impossible", description: data.error || data.message || "Le paiement n'a pas pu être initié.", variant: "destructive" });
+        toast({ title: "Paiement impossible", description: sanitizeDepositDisplayText(data.error || data.message, "Le paiement n'a pas pu être initié."), variant: "destructive" });
       }
     },
-    onError: (e: any) => toast({ title: "Paiement SendavaPay impossible", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Paiement impossible", description: sanitizeDepositDisplayText(e.message, "Le paiement n'a pas pu être initié."), variant: "destructive" }),
   });
 
   // SendavaPay: retry failed payment
@@ -725,7 +723,7 @@ export default function DepositPage() {
       setStep("sv-operator");
       toast({ title: "Prêt à réessayer", description: "Sélectionnez un opérateur et relancez le paiement." });
     },
-    onError: (e: any) => toast({ title: "Nouvelle tentative impossible", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Nouvelle tentative impossible", description: sanitizeDepositDisplayText(e.message, "Réessayez dans quelques instants."), variant: "destructive" }),
   });
 
   // SendavaPay: submit OTP
@@ -745,7 +743,7 @@ export default function DepositPage() {
       setSvPolling(true);
       setStep("sv-waiting");
     },
-    onError: (e: any) => toast({ title: "Validation du code OTP impossible", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "Validation du code OTP impossible", description: sanitizeDepositDisplayText(e.message, "Vérifiez le code puis réessayez."), variant: "destructive" }),
   });
 
   const handleAmountNext = () => {
@@ -762,7 +760,7 @@ export default function DepositPage() {
       (!Number.isInteger(Number(amount)) || Number(amount) % 5 !== 0)
     ) {
       toast({
-        title: "Montant InPay invalide",
+        title: "Montant invalide",
         description: "Utilisez un montant entier multiple de 5 : 300, 305, 310…",
         variant: "destructive",
       });
@@ -802,7 +800,7 @@ export default function DepositPage() {
     if (selectedDepositMethod === "inpay") {
       if (!Number.isInteger(Number(amount)) || Number(amount) % 5 !== 0) {
         toast({
-          title: "Montant InPay invalide",
+          title: "Montant invalide",
           description: "Utilisez un montant entier multiple de 5 : 300, 305, 310…",
           variant: "destructive",
         });
@@ -1200,8 +1198,8 @@ export default function DepositPage() {
               onChange={(event) => setSelectedDepositMethod(event.target.value as DepositMethodId | "")}
             >
               <option value="">Choisissez un moyen de dépôt</option>
-              {depositMethods.map((method) => (
-                <option key={method.provider} value={method.provider}>{method.name}</option>
+              {depositMethods.map((method, index) => (
+                <option key={method.provider} value={method.provider}>{depositMethodLabels[index]}</option>
               ))}
             </select>
           ) : (
@@ -1273,7 +1271,7 @@ export default function DepositPage() {
               className="deposit-step-field w-full appearance-none px-4 py-4 text-sm text-gray-700 outline-none"
             >
               <option value="">Choisissez un moyen de dépôt</option>
-              {depositMethods.map((method) => <option key={method.provider} value={method.provider}>{method.name}</option>)}
+              {depositMethods.map((method, index) => <option key={method.provider} value={method.provider}>{depositMethodLabels[index]}</option>)}
             </select>
           ) : (
             <p role="alert" className="text-sm text-red-700">
@@ -1415,7 +1413,7 @@ export default function DepositPage() {
       <header className="deposit-step-header">
         <button className="deposit-step-back" onClick={() => setStep("select")}>
           <ChevronLeft className="w-5 h-5" />
-          <span className="font-semibold text-base">{westpayChannelName}</span>
+          <span className="font-semibold text-base">Paiement Mobile Money</span>
         </button>
       </header>
 
@@ -1436,7 +1434,7 @@ export default function DepositPage() {
             <p className="font-semibold text-gray-900 text-sm">Comment ça marche ?</p>
           </div>
           <p className="text-xs text-gray-600 leading-relaxed">
-            1. Cliquez <strong>Payer avec {westpayChannelName}</strong> — vous serez redirigé vers la page de paiement sécurisée.
+            1. Cliquez sur <strong>Continuer le paiement</strong> — vous serez redirigé vers la page de paiement sécurisée.
           </p>
           <p className="text-xs text-gray-600 leading-relaxed">
             2. Entrez votre numéro Mobile Money et validez le paiement USSD depuis votre téléphone.
@@ -1455,12 +1453,12 @@ export default function DepositPage() {
           {wpInitiateMutation.isPending ? (
             <><Loader2 className="w-5 h-5 animate-spin" /> Redirection en cours...</>
           ) : (
-            <><ExternalLink className="w-5 h-5" /> Payer avec {westpayChannelName}</>
+            <><ExternalLink className="w-5 h-5" /> Continuer le paiement</>
           )}
         </button>
 
         <p className="text-xs text-center text-gray-400">
-          Paiement sécurisé via {westpayChannelName} — USSD Mobile Money
+          Paiement sécurisé — USSD Mobile Money
         </p>
       </div>
     </div>
@@ -1473,7 +1471,7 @@ export default function DepositPage() {
       <header className="deposit-step-header">
         <button className="deposit-step-back" onClick={() => setStep("select")}>
           <ChevronLeft className="w-5 h-5" />
-          <span className="font-semibold text-base">{ashtechChannelName}</span>
+          <span className="font-semibold text-base">Paiement Mobile Money</span>
         </button>
         <Link href="/history"><button className="deposit-step-history">Historique</button></Link>
       </header>
@@ -1586,7 +1584,7 @@ export default function DepositPage() {
     <div className="deposit-step-shell flex flex-col">
       <DepositStepStyles />
       <header className="deposit-step-header">
-        <span className="font-semibold text-base text-gray-800">Paiement {soleaspayChannelName}</span>
+        <span className="font-semibold text-base text-gray-800">Paiement en cours</span>
       </header>
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
         <div className="deposit-step-icon">

@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
+import { sanitizeDepositDisplayText } from "@/lib/deposit-display";
 import type { PaymentNumber } from "@shared/schema";
 
 type Provider = "ashtech" | "sendavapay" | "soleaspay" | "clapay";
@@ -84,7 +85,7 @@ export default function RobotPayPage() {
       const providerQuery = forcedProvider ? `?provider=${encodeURIComponent(forcedProvider)}` : "";
       const res = await fetch(`/api/deposit/provider/${country}${providerQuery}`, { credentials: "include" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Aucun canal automatique disponible");
+      if (!res.ok) throw new Error(sanitizeDepositDisplayText(data.message, "Aucun canal automatique disponible"));
       return data;
     },
     enabled: !!country && !isSoleaspayFlow && !isManualFlow,
@@ -96,8 +97,6 @@ export default function RobotPayPage() {
   const availableProviders = isSoleaspayFlow
     ? [{ provider: "soleaspay" as const, name: "SoleaPay" }]
     : providerInfo?.providers || (providerInfo ? [{ provider: providerInfo.provider, name: providerInfo.name }] : []);
-  const activeProviderName =
-    availableProviders.find((entry) => entry.provider === activeProvider)?.name || activeProvider;
   const countryInfo = countries.find(c => c.code === country && c.isActive);
   const currency = countryInfo?.currency || "FCFA";
   const phonePrefix = countryInfo && "phonePrefix" in countryInfo ? countryInfo.phonePrefix : "";
@@ -122,7 +121,7 @@ export default function RobotPayPage() {
     queryFn: async () => {
       const res = await fetch("/api/soleaspay/services", { credentials: "include" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Impossible de charger les opérateurs SoleaPay");
+      if (!res.ok) throw new Error(sanitizeDepositDisplayText(data.message, "Impossible de charger les opérateurs."));
       return data;
     },
     enabled: isSoleaspayFlow && !!country,
@@ -168,7 +167,7 @@ export default function RobotPayPage() {
     queryFn: async () => {
       const res = await fetch(`/api/clapay/operators/${encodeURIComponent(country)}`, { credentials: "include" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Impossible de charger les opérateurs Clapay");
+      if (!res.ok) throw new Error(sanitizeDepositDisplayText(data.message, "Impossible de charger les opérateurs."));
       return data;
     },
     enabled: !!providerInfo && availableProviders.some(item => item.provider === "clapay") && !!country,
@@ -205,11 +204,9 @@ export default function RobotPayPage() {
      : manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading || clapayLoading;
   const operatorMethodLabel = (item: Operator) => {
     if (item.manualNumber) return item.manualNumber.paymentLink ? "Paiement par lien" : "Paiement par numéro";
-    if (item.provider === "soleaspay") return "Paiement automatique via SoleaPay";
-    const providerName = item.provider
-      ? availableProviders.find((entry) => entry.provider === item.provider)?.name || item.provider
-      : "Paiement automatique";
-    return `Paiement automatique via ${providerName}`;
+    if (item.provider === "ashtech") return "Mobile Money avec code de confirmation";
+    if (item.provider === "clapay") return "Paiement Mobile Money";
+    return "Mobile Money avec confirmation sur téléphone";
   };
 
   const sendavaMutation = useMutation({
@@ -230,12 +227,12 @@ export default function RobotPayPage() {
       return initiated.json();
     },
     onSuccess: (data) => {
-      setMessage(data.message || "");
+      setMessage(sanitizeDepositDisplayText(data.message, ""));
       if (data.requiresOtp && data.otpToken) { setOtpToken(data.otpToken); setUssd(data.ussdCode || ""); setStep(2); }
       else if (data.requiresRedirect && data.redirectUrl) { setRedirectUrl(data.redirectUrl); setStep(2); }
       else { setStep(2); setStatus("processing"); }
     },
-     onError: (e: any) => toast({ title: "Paiement impossible", description: e.message, variant: "destructive" }),
+     onError: (e: any) => toast({ title: "Paiement impossible", description: sanitizeDepositDisplayText(e.message, "Le paiement n'a pas pu être initié."), variant: "destructive" }),
   });
   const ashtechMutation = useMutation({
     mutationFn: async (otpCode?: string) => {
@@ -250,7 +247,7 @@ export default function RobotPayPage() {
     },
     onSuccess: (data) => {
        setAshtechOtpRequired(false);
-      setDepositId(data.depositId); setMessage(data.message || ""); setUssd(data.ussdCode || "");
+      setDepositId(data.depositId); setMessage(sanitizeDepositDisplayText(data.message, "")); setUssd(data.ussdCode || "");
       if (data.waveUrl) setRedirectUrl(data.waveUrl);
       setStep(2); setStatus(data.status || "processing");
     },
@@ -259,11 +256,11 @@ export default function RobotPayPage() {
         setDepositId(e.data.depositId || depositId);
         setAshtechOtpRequired(true);
         setUssd(e.data.ussdCode || "");
-        setMessage(e.message || "Composez le code indiqué puis saisissez votre OTP.");
+        setMessage(sanitizeDepositDisplayText(e.message, "Composez le code indiqué puis saisissez votre OTP."));
         setStep(2);
         return;
       }
-       toast({ title: "Paiement impossible", description: e.message, variant: "destructive" });
+       toast({ title: "Paiement impossible", description: sanitizeDepositDisplayText(e.message, "Le paiement n'a pas pu être initié."), variant: "destructive" });
     },
   });
   const clapayMutation = useMutation({
@@ -278,20 +275,20 @@ export default function RobotPayPage() {
         feePaymentId,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Initiation Clapay impossible");
+      if (!res.ok) throw new Error(sanitizeDepositDisplayText(data.message, "Impossible d’initier le paiement."));
       return data as { depositId: number; redirectUrl?: string; message?: string };
     },
     onSuccess: (data) => {
       setDepositId(data.depositId);
       setRedirectUrl(data.redirectUrl || "");
-      setMessage(data.message || "Confirmez le paiement sur votre téléphone.");
+      setMessage(sanitizeDepositDisplayText(data.message, "Confirmez le paiement sur votre téléphone."));
       setStatus("processing");
       setStep(2);
       queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
     },
     onError: (error: any) => toast({
-      title: "Paiement Clapay impossible",
-      description: error.message,
+      title: "Paiement impossible",
+      description: sanitizeDepositDisplayText(error.message, "Le paiement n'a pas pu être initié."),
       variant: "destructive",
     }),
   });
@@ -308,7 +305,7 @@ export default function RobotPayPage() {
         useSoleaspay: true,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Dépôt SoleaPay non enregistré");
+      if (!res.ok) throw new Error(sanitizeDepositDisplayText(data.message, "Dépôt non enregistré"));
       if (!data.deposit?.id) throw new Error("Le serveur n'a pas retourné de référence de dépôt.");
       try {
         sessionStorage.setItem(
@@ -325,14 +322,14 @@ export default function RobotPayPage() {
     },
     onSuccess: (data) => {
       setDepositId(data.deposit.id);
-      setMessage(data.message || "Validez la demande de paiement sur votre téléphone.");
+      setMessage(sanitizeDepositDisplayText(data.message, "Validez la demande de paiement sur votre téléphone."));
       setStatus("pending");
       setStep(2);
       queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
     },
     onError: (e: any) => toast({
-      title: "Dépôt SoleaPay non enregistré",
-      description: e.message,
+      title: "Dépôt non enregistré",
+      description: sanitizeDepositDisplayText(e.message, "Impossible d’enregistrer le dépôt."),
       variant: "destructive",
     }),
   });
@@ -364,7 +361,7 @@ export default function RobotPayPage() {
       setStep(3);
       queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
     },
-     onError: (e: any) => toast({ title: "Dépôt non enregistré", description: e.message, variant: "destructive" }),
+      onError: (e: any) => toast({ title: "Dépôt non enregistré", description: sanitizeDepositDisplayText(e.message, "Impossible d’enregistrer le dépôt."), variant: "destructive" }),
   });
 
   useEffect(() => {
@@ -480,7 +477,7 @@ export default function RobotPayPage() {
                     ? "Sélectionnez votre opérateur Mobile Money :"
                     : "Sélectionnez le mode de paiement :"}
               </p>
-               {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-blue-500" /> : operators.length === 0 ? <p className="text-center text-gray-500">{providerError instanceof Error ? providerError.message : "Aucun opérateur disponible pour ce pays."}</p> : (
+               {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-blue-500" /> : operators.length === 0 ? <p className="text-center text-gray-500">{providerError instanceof Error ? sanitizeDepositDisplayText(providerError.message, "Aucun opérateur disponible pour ce pays.") : "Aucun opérateur disponible pour ce pays."}</p> : (
                  <div className="space-y-3">{operators.map((op, i) => <button key={`${op.id || op.name}-${i}`} onClick={() => chooseOperator(op)} className={`w-full flex items-center justify-between rounded-lg px-4 py-4 border-2 text-left ${operator === op ? "border-[#2885d8] bg-blue-50" : "border-gray-100 bg-white shadow-sm"}`}><span><span className="block font-semibold text-lg text-[#14538a]">{op.name}</span><span className="block text-xs text-gray-500">{operatorMethodLabel(op)}</span></span><ChevronRight className="text-gray-400" /></button>)}</div>
               )}
             </div>
@@ -545,7 +542,7 @@ export default function RobotPayPage() {
               )}
               <div className="flex items-center justify-center gap-5 pt-3">
                 <button onClick={() => { setOperator(null); setStep(0); }} className="w-[43%] rounded-md bg-[#78b9df] py-3 font-semibold text-white shadow-sm">&lt; Retour</button>
-                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !screenshot)} className="w-[43%] rounded-md bg-[#078ee8] py-3 font-semibold text-white shadow-sm disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : activeProvider === "soleaspay" ? "Continuer avec SoleaPay" : "Suivant >"}</button>
+                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !screenshot)} className="w-[43%] rounded-md bg-[#078ee8] py-3 font-semibold text-white shadow-sm disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : "Continuer"}</button>
               </div>
             </div>
           )}
@@ -554,7 +551,7 @@ export default function RobotPayPage() {
               {redirectUrl ? <><p className="text-gray-700">{message || "Ouvrez la page sécurisée pour terminer votre paiement."}</p><a href={redirectUrl} target="_blank" rel="noreferrer" className="block rounded-lg bg-[#1486d8] text-white py-3 font-semibold">Ouvrir la page de paiement</a></> : (otpToken || ashtechOtpRequired) ? <>{ussd && <p className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-3 text-center font-mono text-xl font-bold tracking-widest text-[#00a526]">{ussd}</p>}<p className="text-sm text-gray-600">{ussd ? "Composez ce code sur votre téléphone pour obtenir le code OTP, puis saisissez-le ci-dessous." : "Un code OTP vous a été envoyé. Saisissez-le ci-dessous."}</p><input value={activeProvider === "ashtech" ? ashtechOtp : otp} onChange={e => activeProvider === "ashtech" ? setAshtechOtp(e.target.value.replace(/\D/g, "")) : setOtp(e.target.value)} inputMode="numeric" placeholder="Saisissez le code OTP" className="w-full border rounded-lg p-3 text-center text-xl" /><button onClick={submitOtp} disabled={busy} className="w-full rounded-lg bg-[#1486d8] py-3 font-semibold text-white disabled:opacity-50">Confirmer</button></> : status === "rejected" ? <><ShieldCheck className="mx-auto h-16 w-16 text-red-400" /><p className="font-semibold text-lg text-red-600">Paiement refusé</p><p className="text-sm text-gray-500">Le paiement n’a pas été confirmé. Vous pouvez réessayer.</p><button onClick={() => { setDepositId(null); setStatus("pending"); setStep(1); }} className="w-full rounded-lg bg-[#1486d8] py-3 font-semibold text-white">Réessayer</button></> : <><ShieldCheck className="mx-auto h-16 w-16 animate-pulse text-green-400" /><p className="font-semibold text-lg">Paiement en cours de confirmation</p><p className="text-sm text-gray-500">{message || "Validez la demande sur votre téléphone. La page se met à jour automatiquement."}</p></>}
             </div>
           )}
-          {step === 3 && (manualSubmitted ? <div className="space-y-5 py-5 text-center"><Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-700">Demande envoyée</h2><p className="text-sm text-gray-500">Votre capture et les informations du paiement ont été transmises. Le dépôt sera crédité après vérification.</p><div className="rounded bg-gray-100 p-3 text-left text-sm leading-7 text-gray-700"><b>Opérateur :</b> {operator?.name}<br /><b>Montant :</b> {amount.toLocaleString()} {currency}<br /><b>Statut :</b> En attente de validation</div><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div> : <div className="space-y-5 py-5 text-center"><div className="text-left border-b pb-3 text-xl text-gray-700">{activeProvider === "clapay" ? activeProviderName.toUpperCase() : "ROBOTPAY"} - {countryInfo?.name || country}</div><p className="text-left text-2xl text-gray-900">{amount.toLocaleString()} {currency}</p><Check className="w-24 h-24 mx-auto rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-600">Votre paiement a été approuvé</h2><div className="rounded bg-gray-200 p-3 text-left text-sm leading-7 text-gray-700"><b>Payeur :</b> {phone}<br /><b>ID Transaction :</b> {transactionReference}<br /><b>Date Paiement :</b> {new Date().toLocaleString("fr-FR")}</div><p className="pt-12 text-gray-500">🔒 Sécurisé par <b className="text-[#174d79]">{activeProvider === "clapay" ? activeProviderName : "ROBOTPAY"}</b></p><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div>)}
+          {step === 3 && (manualSubmitted ? <div className="space-y-5 py-5 text-center"><Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-700">Demande envoyée</h2><p className="text-sm text-gray-500">Votre capture et les informations du paiement ont été transmises. Le dépôt sera crédité après vérification.</p><div className="rounded bg-gray-100 p-3 text-left text-sm leading-7 text-gray-700"><b>Opérateur :</b> {operator?.name}<br /><b>Montant :</b> {amount.toLocaleString()} {currency}<br /><b>Statut :</b> En attente de validation</div><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div> : <div className="space-y-5 py-5 text-center"><div className="text-left border-b pb-3 text-xl text-gray-700">Paiement — {countryInfo?.name || country}</div><p className="text-left text-2xl text-gray-900">{amount.toLocaleString()} {currency}</p><Check className="w-24 h-24 mx-auto rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-600">Votre paiement a été approuvé</h2><div className="rounded bg-gray-200 p-3 text-left text-sm leading-7 text-gray-700"><b>Payeur :</b> {phone}<br /><b>ID Transaction :</b> {transactionReference}<br /><b>Date Paiement :</b> {new Date().toLocaleString("fr-FR")}</div><p className="pt-12 text-gray-500">🔒 Paiement vérifié</p><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div>)}
         </section>
       </div>
     </main>
