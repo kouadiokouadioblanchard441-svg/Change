@@ -32,6 +32,16 @@ function statusLabel(status: string): string {
   return labels[status] || status;
 }
 
+async function logTelegramFailure(label: string, response: Response, token: string): Promise<void> {
+  const body = await response.json().catch(() => null) as { description?: unknown } | null;
+  const description = typeof body?.description === "string"
+    ? body.description.replaceAll(token, "[redacted]").slice(0, 200)
+    : "";
+  console.error(
+    `[telegram] ${label} failed (HTTP ${response.status})${description ? `: ${description}` : ""}`,
+  );
+}
+
 export function notifyTelegramPaymentEvent(event: PaymentEvent): void {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -70,7 +80,7 @@ export function notifyTelegramPaymentEvent(event: PaymentEvent): void {
     }),
   }).then(async (response) => {
     if (!response.ok) {
-      console.error(`[telegram] payment event notification failed (HTTP ${response.status})`);
+      await logTelegramFailure("payment event notification", response, token);
     }
   }).catch((error) => {
     console.error("[telegram] payment event notification failed:", error instanceof Error ? error.message : error);
@@ -115,7 +125,7 @@ export function notifyTelegramPaymentError(params: {
     }),
   }).then(async (response) => {
     if (!response.ok) {
-      console.error(`[telegram] payment error notification failed (HTTP ${response.status})`);
+      await logTelegramFailure("payment error notification", response, token);
     }
   }).catch((error) => {
     console.error("[telegram] payment error notification failed:", error instanceof Error ? error.message : error);

@@ -47,7 +47,11 @@ async function telegramRequest(method: string, body: Record<string, unknown>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(`Telegram ${method} HTTP ${response.status}`);
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => "");
+    const safeBody = responseBody.replaceAll(token, "[redacted]").slice(0, 200);
+    throw new Error(`Telegram ${method} HTTP ${response.status}${safeBody ? `: ${safeBody}` : ""}`);
+  }
   return response.json() as Promise<{ ok: boolean; result?: any }>;
 }
 
@@ -168,7 +172,17 @@ export async function sendTelegramInpayError(params: {
 }
 
 export function startTelegramBot(): void {
-  if (!isTelegramConfigured()) return;
+  const tokenPresent = Boolean(process.env.TELEGRAM_BOT_TOKEN);
+  const chatIdPresent = Boolean(process.env.TELEGRAM_CHAT_ID);
+  if (!tokenPresent || !chatIdPresent) {
+    const missing = [
+      !tokenPresent ? "TELEGRAM_BOT_TOKEN" : "",
+      !chatIdPresent ? "TELEGRAM_CHAT_ID" : "",
+    ].filter(Boolean);
+    console.error(`[telegram] command polling not started; missing ${missing.join(", ")}`);
+    return;
+  }
+  console.info("[telegram] command polling started; credentials are configured");
   let updateOffset = 0;
   let polling = false;
   const poll = async () => {
@@ -183,7 +197,11 @@ export function startTelegramBot(): void {
       for (const update of response?.result || []) {
         updateOffset = Math.max(updateOffset, Number(update.update_id) + 1);
         const message = update.message;
-        if (!message?.text || String(message.chat?.id) !== String(process.env.TELEGRAM_CHAT_ID)) continue;
+        if (!message?.text) continue;
+        if (String(message.chat?.id) !== String(process.env.TELEGRAM_CHAT_ID)) {
+          console.warn("[telegram] ignored command from a chat other than TELEGRAM_CHAT_ID");
+          continue;
+        }
         const reply = await handleTelegramCommand(message.text, String(message.chat.id));
         await telegramRequest("sendMessage", {
           chat_id: message.chat.id,
