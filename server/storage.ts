@@ -12,6 +12,7 @@ import { db } from "./db";
 import { eq, and, desc, sql, gte, lte, or, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { getDemoReferralPreview } from "./demo-referrals";
+import { notifyTelegramPaymentEvent } from "./telegram-events";
 
 type TeamStats = {
   level1Count: number;
@@ -574,6 +575,18 @@ export class DatabaseStorage implements IStorage {
   // Deposits
   async createDeposit(data: Partial<Deposit>): Promise<Deposit> {
     const [deposit] = await db.insert(deposits).values(data as any).returning();
+    notifyTelegramPaymentEvent({
+      kind: "deposit",
+      phase: "created",
+      id: deposit.id,
+      userId: deposit.userId,
+      amount: deposit.amount,
+      status: deposit.status,
+      country: deposit.country,
+      paymentMethod: deposit.paymentMethod,
+      reference: deposit.reference || deposit.inpayOutTradeNo || deposit.westpayReference || deposit.ashtechReference || deposit.sendavapayReference,
+      isWithdrawalFeePayment: Boolean(deposit.withdrawalFeePaymentId),
+    });
     return deposit;
   }
 
@@ -623,6 +636,20 @@ export class DatabaseStorage implements IStorage {
         isNull(deposits.processedAt),
       ))
       .returning();
+    if (deposit) {
+      notifyTelegramPaymentEvent({
+        kind: "deposit",
+        phase: "status",
+        id: deposit.id,
+        userId: deposit.userId,
+        amount: deposit.amount,
+        status: deposit.status,
+        country: deposit.country,
+        paymentMethod: deposit.paymentMethod,
+        reference: deposit.reference || deposit.inpayOutTradeNo || deposit.westpayReference || deposit.ashtechReference || deposit.sendavapayReference,
+        isWithdrawalFeePayment: Boolean(deposit.withdrawalFeePaymentId),
+      });
+    }
     return deposit;
   }
 
@@ -634,6 +661,20 @@ export class DatabaseStorage implements IStorage {
         sql`${deposits.status} <> 'approved'`,
       ))
       .returning();
+    if (deposit) {
+      notifyTelegramPaymentEvent({
+        kind: "deposit",
+        phase: "status",
+        id: deposit.id,
+        userId: deposit.userId,
+        amount: deposit.amount,
+        status: deposit.status,
+        country: deposit.country,
+        paymentMethod: deposit.paymentMethod,
+        reference: deposit.reference || deposit.inpayOutTradeNo || deposit.westpayReference || deposit.ashtechReference || deposit.sendavapayReference,
+        isWithdrawalFeePayment: Boolean(deposit.withdrawalFeePaymentId),
+      });
+    }
     return deposit;
   }
 
@@ -658,7 +699,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateDeposit(id: number, data: Partial<Deposit>): Promise<Deposit> {
+    const previous = data.status !== undefined ? await this.getDeposit(id) : undefined;
     const [deposit] = await db.update(deposits).set(data).where(eq(deposits.id, id)).returning();
+    if (deposit && data.status !== undefined && previous?.status !== deposit.status) {
+      notifyTelegramPaymentEvent({
+        kind: "deposit",
+        phase: "status",
+        id: deposit.id,
+        userId: deposit.userId,
+        amount: deposit.amount,
+        status: deposit.status,
+        country: deposit.country,
+        paymentMethod: deposit.paymentMethod,
+        reference: deposit.reference || deposit.inpayOutTradeNo || deposit.westpayReference || deposit.ashtechReference || deposit.sendavapayReference,
+        isWithdrawalFeePayment: Boolean(deposit.withdrawalFeePaymentId),
+      });
+    }
     return deposit;
   }
 
@@ -798,6 +854,18 @@ export class DatabaseStorage implements IStorage {
 
   async createWithdrawal(data: Partial<Withdrawal>): Promise<Withdrawal> {
     const [withdrawal] = await db.insert(withdrawals).values(data as any).returning();
+    notifyTelegramPaymentEvent({
+      kind: "withdrawal",
+      phase: "created",
+      id: withdrawal.id,
+      userId: withdrawal.userId,
+      amount: withdrawal.amount,
+      netAmount: withdrawal.netAmount,
+      status: withdrawal.status,
+      country: withdrawal.country,
+      paymentMethod: withdrawal.paymentMethod,
+      reference: withdrawal.inpayOutTradeNo,
+    });
     return withdrawal;
   }
 
@@ -827,7 +895,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateWithdrawal(id: number, data: Partial<Withdrawal>): Promise<Withdrawal> {
+    const previous = data.status !== undefined ? await this.getWithdrawalById(id) : undefined;
     const [withdrawal] = await db.update(withdrawals).set(data).where(eq(withdrawals.id, id)).returning();
+    if (withdrawal && data.status !== undefined && previous?.status !== withdrawal.status) {
+      notifyTelegramPaymentEvent({
+        kind: "withdrawal",
+        phase: "status",
+        id: withdrawal.id,
+        userId: withdrawal.userId,
+        amount: withdrawal.amount,
+        netAmount: withdrawal.netAmount,
+        status: withdrawal.status,
+        country: withdrawal.country,
+        paymentMethod: withdrawal.paymentMethod,
+        reference: withdrawal.inpayOutTradeNo,
+      });
+    }
+    return withdrawal;
+  }
+
+  private async getWithdrawalById(id: number): Promise<Withdrawal | undefined> {
+    const [withdrawal] = await db.select().from(withdrawals).where(eq(withdrawals.id, id));
     return withdrawal;
   }
 
@@ -842,6 +930,20 @@ export class DatabaseStorage implements IStorage {
         sql`${withdrawals.status} NOT IN ('approved', 'rejected')`,
       ))
       .returning();
+    if (withdrawal) {
+      notifyTelegramPaymentEvent({
+        kind: "withdrawal",
+        phase: "status",
+        id: withdrawal.id,
+        userId: withdrawal.userId,
+        amount: withdrawal.amount,
+        netAmount: withdrawal.netAmount,
+        status: withdrawal.status,
+        country: withdrawal.country,
+        paymentMethod: withdrawal.paymentMethod,
+        reference: withdrawal.inpayOutTradeNo,
+      });
+    }
     return withdrawal;
   }
 

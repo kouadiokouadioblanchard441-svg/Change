@@ -71,6 +71,7 @@ import {
   sendTelegramMessage,
   sendTelegramSecurityAlert,
 } from "./telegram";
+import { notifyTelegramPaymentError } from "./telegram-events";
 import express from "express";
 
 // --- Brute-force protection (in-memory) ---
@@ -173,14 +174,6 @@ async function creditApprovedDeposit(deposit: {
 
   if (deposit.withdrawalFeePaymentId) {
     await storage.markWithdrawalFeePaymentPaid(deposit.withdrawalFeePaymentId, deposit.id);
-    void sendTelegramMessage(
-      [
-        "✅ <b>Paiement préalable de retrait validé</b>",
-        `Utilisateur : ${formatTelegramValue(user.fullName)}`,
-        `Montant : <b>${formatTelegramValue(deposit.amount)} XOF</b>`,
-        `Référence : ${formatTelegramValue(deposit.id)}`,
-      ].join("\n"),
-    ).catch((error) => console.error("[telegram] withdrawal fee notification failed:", error.message));
     return;
   }
 
@@ -195,15 +188,6 @@ async function creditApprovedDeposit(deposit: {
     description: `Dépôt RobotPay #${deposit.id}`,
   });
   await storage.processDepositReferralCommissions(user.id, deposit.amount);
-  void sendTelegramMessage(
-    [
-      "✅ <b>Dépôt validé</b>",
-      `Utilisateur : ${formatTelegramValue(user.fullName)}`,
-      `Montant : <b>${formatTelegramValue(deposit.amount)} XOF</b>`,
-      `Référence : ${formatTelegramValue(deposit.id)}`,
-      `Pays : ${formatTelegramValue(user.country)}`,
-    ].join("\n"),
-  ).catch((error) => console.error("[telegram] deposit notification failed:", error.message));
 }
 
 async function validateWithdrawalFeePayment(
@@ -1316,6 +1300,14 @@ export async function registerRoutes(
               message: paymentResult.message
             });
           } else {
+            notifyTelegramPaymentError({
+              operation: "Dépôt SoleaPay",
+              error: paymentResult.message || "Échec de l'initialisation",
+              userId: user.id,
+              amount: normalizedDeposit.amount,
+              country: soleaspayCountry,
+              paymentMethod: normalizedDeposit.paymentMethod,
+            });
             return res.status(400).json({ 
               message: paymentResult.message || "Erreur Soleaspay",
               soleaspay: true
@@ -1323,6 +1315,14 @@ export async function registerRoutes(
           }
         } catch (soleaspayError: any) {
           console.error("[soleaspay] Payment error:", soleaspayError);
+          notifyTelegramPaymentError({
+            operation: "Dépôt SoleaPay",
+            error: soleaspayError,
+            userId: user.id,
+            amount: normalizedDeposit.amount,
+            country: soleaspayCountry,
+            paymentMethod: normalizedDeposit.paymentMethod,
+          });
           return res.status(400).json({ 
             message: soleaspayError.message || "Erreur de paiement Soleaspay",
             soleaspay: true
@@ -1369,6 +1369,14 @@ export async function registerRoutes(
           return res.json({ deposit, westpayUrl, westpay: true });
         } catch (westpayError: any) {
           console.error("[westpay] deposit error:", westpayError);
+          notifyTelegramPaymentError({
+            operation: "Dépôt WestPay",
+            error: westpayError,
+            userId: user.id,
+            amount: normalizedDeposit.amount,
+            country: normalizedDeposit.country,
+            paymentMethod: "WestPay",
+          });
           return res.status(400).json({ message: westpayError.message || "Erreur WestPay", westpay: true });
         }
       }
@@ -1546,6 +1554,15 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
           });
         } catch (verifyError: any) {
           console.error("[soleaspay] Verify error:", verifyError);
+          notifyTelegramPaymentError({
+            operation: "Vérification du dépôt SoleaPay",
+            error: verifyError,
+            recordId: deposit.id,
+            userId: deposit.userId,
+            amount: deposit.amount,
+            country: deposit.country,
+            paymentMethod: deposit.paymentMethod,
+          });
           return res.json({ 
             status: deposit.status,
             soleaspay: true,
@@ -1896,6 +1913,14 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       });
 
       if (!result.success || !result.data) {
+        notifyTelegramPaymentError({
+          operation: "Création du dépôt SendavaPay",
+          error: result.error || "Échec de la création du paiement",
+          userId: user.id,
+          amount: numericAmount,
+          country,
+          paymentMethod: operatorName || "SendavaPay",
+        });
         return res.status(400).json({
           message: result.error || "Erreur SendavaPay",
         });
@@ -1922,6 +1947,14 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       });
     } catch (error: any) {
       console.error("[sendavapay] create error:", error);
+      notifyTelegramPaymentError({
+        operation: "Création du dépôt SendavaPay",
+        error,
+        userId: req.session.userId,
+        amount: req.body?.amount,
+        country: req.body?.country,
+        paymentMethod: req.body?.operatorName || "SendavaPay",
+      });
       res.status(500).json({ message: error.message || "Erreur serveur" });
     }
   });
@@ -1955,6 +1988,14 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       res.json(result);
     } catch (error: any) {
       console.error("[sendavapay] initiate error:", error);
+      notifyTelegramPaymentError({
+        operation: "Initialisation du dépôt SendavaPay",
+        error,
+        recordId: req.body?.depositId,
+        userId: req.session.userId,
+        country: req.body?.payerCountry,
+        paymentMethod: "SendavaPay",
+      });
       res.status(500).json({ message: error.message || "Erreur serveur" });
     }
   });
@@ -1970,6 +2011,12 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       res.json(result);
     } catch (error: any) {
       console.error("[sendavapay] submit-otp error:", error);
+      notifyTelegramPaymentError({
+        operation: "Validation OTP SendavaPay",
+        error,
+        userId: req.session.userId,
+        paymentMethod: "SendavaPay",
+      });
       res.status(500).json({ message: error.message || "Erreur serveur" });
     }
   });
@@ -1989,6 +2036,13 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       res.json(result);
     } catch (error: any) {
       console.error("[sendavapay] retry error:", error);
+      notifyTelegramPaymentError({
+        operation: "Nouvel essai du dépôt SendavaPay",
+        error,
+        recordId: req.body?.depositId,
+        userId: req.session.userId,
+        paymentMethod: "SendavaPay",
+      });
       res.status(500).json({ message: error.message || "Erreur serveur" });
     }
   });
@@ -2033,6 +2087,13 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       res.json({ status: newStatus || deposit.status, rawStatus: statusData.data.status });
     } catch (error: any) {
       console.error("[sendavapay] status check error:", error);
+      notifyTelegramPaymentError({
+        operation: "Vérification du dépôt SendavaPay",
+        error,
+        recordId: req.params.id,
+        userId: req.session.userId,
+        paymentMethod: "SendavaPay",
+      });
       res.status(500).json({ message: error.message });
     }
   });
@@ -2454,18 +2515,6 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         paymentMethod: wallet.paymentMethod,
         status: "pending",
       });
-
-      void sendTelegramMessage(
-        [
-          "💸 <b>Retrait lancé</b>",
-          `Utilisateur : ${formatTelegramValue(user.fullName)}`,
-          `Montant : <b>${formatTelegramValue(amount)} XOF</b>`,
-          `Net après frais : ${formatTelegramValue(netAmount)} XOF`,
-          `Méthode : ${formatTelegramValue(wallet.paymentMethod)}`,
-          `Pays : ${formatTelegramValue(wallet.country)}`,
-          `ID retrait : ${formatTelegramValue(withdrawal.id)}`,
-        ].join("\n"),
-      ).catch((error) => console.error("[telegram] withdrawal notification failed:", error.message));
 
       res.json(withdrawal);
     } catch (error: any) {
@@ -3688,6 +3737,15 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         await storage.updateDeposit(depositId, { status: "rejected", processedAt: new Date() }).catch(() => undefined);
       }
       console.error("[clapay] initiation error:", error);
+      notifyTelegramPaymentError({
+        operation: "Initiation du dépôt Clapay",
+        error,
+        recordId: depositId,
+        userId: req.session.userId,
+        amount: req.body?.amount,
+        country: req.body?.country,
+        paymentMethod: req.body?.operatorName || "Clapay",
+      });
       return res.status(502).json({ message: error.message || "Impossible d'initier le paiement Clapay" });
     }
   });
@@ -3723,6 +3781,13 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       });
     } catch (error: any) {
       console.error("[clapay] status verification error:", error);
+      notifyTelegramPaymentError({
+        operation: "Vérification du dépôt Clapay",
+        error,
+        recordId: req.params.id,
+        userId: req.session.userId,
+        paymentMethod: "Clapay",
+      });
       return res.status(502).json({ message: error.message || "Erreur de vérification Clapay" });
     }
   });
