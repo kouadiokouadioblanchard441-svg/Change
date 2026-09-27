@@ -504,46 +504,45 @@ export default function RobotPayPage() {
           {step === 1 && (
             <div className="space-y-5">
               {operator?.manualNumber && (
-                <div className="rounded-xl border border-[#cbd5e1] bg-white p-3 text-left shadow-sm">
-                  <div className="mb-1.5 flex items-center justify-between gap-2">
-                    <p className="max-w-[55%] truncate text-xs font-semibold text-[#14538a]">{operator.name || operator.code}</p>
-                    <p className="shrink-0 text-[10px] font-medium text-slate-500">Numéro de paiement</p>
+                <section
+                  aria-label="Informations de paiement manuel"
+                  className="mx-auto w-full max-w-md rounded-2xl border-2 border-[#14538a] bg-[#f7fbff] p-3 text-center shadow-[0_4px_14px_rgba(20,83,138,0.16)]"
+                >
+                  <div className="mb-3 flex flex-col items-center border-b border-[#d7e3ef] pb-2.5 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                      {operator.manualNumber.paymentLink ? "Lien de paiement" : "Numéro de paiement"}
+                    </p>
+                    <p className="mt-0.5 text-sm font-bold text-[#14538a]">{operator.name || operator.code}</p>
                   </div>
                   {operator.manualNumber.paymentLink ? (
-                    <div className="flex min-h-11 items-center gap-2 rounded-lg border-2 border-[#7894af] bg-[#f8fbff] px-2 py-1.5">
+                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#14538a] bg-white px-3 py-2 shadow-inner">
                       <a
                         href={operator.manualNumber.paymentLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-w-0 flex-1 items-center gap-1 truncate text-xs font-semibold text-[#14538a]"
+                        className="inline-flex min-w-0 items-center justify-center gap-1.5 text-center text-sm font-semibold text-[#14538a] underline decoration-[#b7cee5] underline-offset-2"
                       >
-                        <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0" /> Ouvrir le lien
+                        <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" /> Ouvrir le lien
                       </a>
-                      <button
-                        type="button"
-                        onClick={copyPaymentNumber}
-                        aria-label="Copier le lien de paiement"
-                        className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-[#14538a] bg-[#14538a] px-2 text-[11px] font-semibold text-white transition hover:bg-[#104674] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8]"
-                      >
-                        <Copy aria-hidden="true" className="h-3.5 w-3.5" /> Copier
-                      </button>
                     </div>
                   ) : (
-                    <div className="flex min-h-11 items-center gap-2 rounded-lg border-2 border-[#7894af] bg-[#f8fbff] px-2.5 py-1.5">
-                      <p className="min-w-0 flex-1 break-all font-mono text-base font-bold tabular-nums tracking-wide text-[#17324d]">
+                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#14538a] bg-white px-3 py-2 shadow-inner">
+                      <p className="break-all text-center font-mono text-xl font-bold tabular-nums tracking-[0.08em] text-[#17324d]">
                         {operator.manualNumber.phone}
                       </p>
-                      <button
-                        type="button"
-                        onClick={copyPaymentNumber}
-                        aria-label={`Copier le numéro ${operator.manualNumber.phone}`}
-                        className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-[#14538a] bg-[#14538a] px-2 text-[11px] font-semibold text-white transition hover:bg-[#104674] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8]"
-                      >
-                        <Copy aria-hidden="true" className="h-3.5 w-3.5" /> Copier
-                      </button>
                     </div>
                   )}
-                </div>
+                  <button
+                    type="button"
+                    onClick={copyPaymentNumber}
+                    aria-label={operator.manualNumber.paymentLink
+                      ? "Copier le lien de paiement"
+                      : `Copier le numéro ${operator.manualNumber.phone}`}
+                    className="mx-auto mt-2.5 flex h-9 min-w-28 items-center justify-center gap-1.5 rounded-lg border-2 border-[#14538a] bg-[#14538a] px-4 text-xs font-bold text-white shadow-sm transition hover:bg-[#104674] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8] focus-visible:ring-offset-2"
+                  >
+                    <Copy aria-hidden="true" className="h-4 w-4" /> Copier
+                  </button>
+                </section>
               )}
               <label htmlFor="robotpay-payer-phone" className="block text-sm font-semibold">Votre numéro pour le paiement</label>
               <div className="flex items-center rounded-lg border border-gray-300 px-3">
