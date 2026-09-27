@@ -435,12 +435,12 @@ export default function RobotPayPage() {
   return (
       <main className="min-h-screen bg-[#FF7A14] p-3 text-[#111827] sm:p-6">
       <div className="max-w-xl mx-auto">
-         <div className="px-4 pb-5 pt-3 text-[#111827] sm:px-5 sm:pt-4 sm:pb-6">
-           <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#5b2500]">Montant du dépôt</p>
-           <p className="mt-1 text-4xl font-extrabold tracking-tight">{amount.toLocaleString()} <span className="text-2xl font-bold">{currency}</span></p>
+         <div className={`${isManualFlow ? "px-3 pb-3 pt-2 sm:px-4 sm:pt-3 sm:pb-4" : "px-4 pb-5 pt-3 sm:px-5 sm:pt-4 sm:pb-6"} text-[#111827]`}>
+           <p className={`${isManualFlow ? "text-xs" : "text-sm"} font-bold uppercase tracking-[0.12em] text-[#5b2500]`}>{isManualFlow ? "Montant" : "Montant du dépôt"}</p>
+           <p className={`mt-1 ${isManualFlow ? "text-3xl" : "text-4xl"} font-extrabold tracking-tight`}>{amount.toLocaleString()} <span className="text-2xl font-bold">{currency}</span></p>
         </div>
-         <section className="rounded-2xl border-2 border-[#111827] bg-white p-4 shadow-[0_5px_0_#111827,0_10px_18px_rgba(17,24,39,0.18)] sm:p-6">
-          {step > 0 && <Stepper step={Math.max(0, Math.min(2, step - 1))} />}
+          <section className={`rounded-2xl border-2 border-[#111827] bg-white shadow-[0_5px_0_#111827,0_10px_18px_rgba(17,24,39,0.18)] ${isManualFlow ? "p-3 sm:p-4" : "p-4 sm:p-6"}`}>
+           {step > 0 && !isManualFlow && <Stepper step={Math.max(0, Math.min(2, step - 1))} />}
           {step === 0 && (
             <div className="space-y-5">
                <p className="px-1 text-lg font-bold text-[#111827]">
@@ -482,20 +482,19 @@ export default function RobotPayPage() {
             </div>
           )}
           {step === 1 && (
-            <div className="space-y-5">
+            <div className={operator?.manualNumber ? "space-y-3" : "space-y-5"}>
               {operator?.manualNumber && (
                 <section
                   aria-label="Informations de paiement manuel"
-                  className="mx-auto w-full max-w-md rounded-2xl border-2 border-[#111827] bg-white p-3 text-center shadow-[0_3px_0_#111827,0_7px_14px_rgba(17,24,39,0.14)]"
+                  className="mx-auto w-full max-w-md rounded-2xl border-2 border-[#111827] bg-white p-2.5 text-center shadow-[0_3px_0_#111827,0_7px_14px_rgba(17,24,39,0.14)]"
                 >
-                  <div className="mb-3 flex flex-col items-center border-b border-gray-200 pb-2.5 text-center">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                      {operator.manualNumber.paymentLink ? "Lien de paiement" : "Numéro de paiement"}
+                  <div className="mb-2 border-b border-gray-200 pb-2 text-center">
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-600">
+                      {operator.name || operator.code || "Paiement"} · {operator.manualNumber.paymentLink ? "Lien" : "Numéro"}
                     </p>
-                    <p className="mt-0.5 text-sm font-bold text-[#111827]">{operator.name || operator.code}</p>
                   </div>
                   {operator.manualNumber.paymentLink ? (
-                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#111827] bg-white px-3 py-2 shadow-[0_2px_5px_rgba(17,24,39,0.12)]">
+                    <div className="flex min-h-10 items-center justify-center rounded-xl border-2 border-[#111827] bg-white px-3 py-1.5 shadow-[0_2px_5px_rgba(17,24,39,0.12)]">
                       <a
                         href={operator.manualNumber.paymentLink}
                         target="_blank"
@@ -506,8 +505,8 @@ export default function RobotPayPage() {
                       </a>
                     </div>
                   ) : (
-                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#111827] bg-white px-3 py-2 shadow-[0_2px_5px_rgba(17,24,39,0.12)]">
-                      <p className="break-all text-center font-mono text-xl font-bold tabular-nums tracking-[0.08em] text-[#17324d]">
+                    <div className="flex min-h-10 items-center justify-center rounded-xl border-2 border-[#111827] bg-white px-3 py-1.5 shadow-[0_2px_5px_rgba(17,24,39,0.12)]">
+                      <p className="break-all text-center font-mono text-lg font-bold tabular-nums tracking-[0.06em] text-[#17324d]">
                         {operator.manualNumber.phone}
                       </p>
                     </div>
@@ -518,21 +517,21 @@ export default function RobotPayPage() {
                     aria-label={operator.manualNumber.paymentLink
                       ? "Copier le lien de paiement"
                       : `Copier le numéro ${operator.manualNumber.phone}`}
-                    className="mx-auto mt-2.5 flex h-10 min-w-28 items-center justify-center gap-1.5 rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] px-4 text-xs font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2"
+                    className="mx-auto mt-2 flex h-9 min-w-24 items-center justify-center gap-1.5 rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] px-3 text-xs font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2"
                   >
                     <Copy aria-hidden="true" className="h-4 w-4" /> Copier
                   </button>
                 </section>
               )}
-              <label htmlFor="robotpay-payer-phone" className="block text-sm font-semibold text-[#111827]">Votre numéro pour le paiement</label>
+              <label htmlFor="robotpay-payer-phone" className="block text-sm font-semibold text-[#111827]">Téléphone payeur</label>
               <div className="flex items-center rounded-[11px] border-2 border-[#111827] px-3 shadow-[0_2px_5px_rgba(17,24,39,0.1)] transition focus-within:border-[#FF7A14] focus-within:ring-2 focus-within:ring-[#FF7A14]/20">
                 <Phone className="h-4 w-4 text-[#111827]" />
                 <span className="shrink-0 border-r border-gray-300 pr-2 text-[#111827]">+{phonePrefix}</span>
-                <input id="robotpay-payer-phone" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 12))} type="tel" inputMode="numeric" placeholder="Numéro de téléphone" className="w-full px-3 py-3 text-[#111827] placeholder:text-gray-500 outline-none" />
+                <input id="robotpay-payer-phone" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 12))} type="tel" inputMode="numeric" className="w-full px-3 py-2.5 text-[#111827] outline-none" />
               </div>
               {operator?.manualNumber && (
-                <div className="border-t border-gray-200 pt-4 text-left">
-                  <label htmlFor="robotpay-transaction-reference" className="mb-2 block text-sm font-semibold text-[#111827]">
+                <div className="border-t border-gray-200 pt-3 text-left">
+                  <label htmlFor="robotpay-transaction-reference" className="mb-1.5 block text-sm font-semibold text-[#111827]">
                     ID de transaction <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center rounded-[11px] border-2 border-[#111827] px-3 shadow-[0_2px_5px_rgba(17,24,39,0.1)] transition focus-within:border-[#FF7A14] focus-within:ring-2 focus-within:ring-[#FF7A14]/20">
@@ -546,19 +545,16 @@ export default function RobotPayPage() {
                       autoComplete="off"
                       autoCapitalize="none"
                       spellCheck={false}
-                      placeholder="Saisissez l’ID du SMS ou du reçu"
+                      placeholder="ID du SMS ou du reçu"
                       aria-required="true"
-                      className="w-full min-w-0 px-3 py-3 text-center font-mono tracking-wide text-[#111827] placeholder:font-sans placeholder:text-sm placeholder:tracking-normal placeholder:text-gray-500 outline-none"
+                      className="w-full min-w-0 px-3 py-2.5 text-center font-mono tracking-wide text-[#111827] placeholder:font-sans placeholder:text-sm placeholder:tracking-normal placeholder:text-gray-500 outline-none"
                     />
                   </div>
-                  <p className="mt-2 text-center text-xs text-gray-600">
-                    Recopiez la référence indiquée dans le SMS ou le reçu de paiement.
-                  </p>
                 </div>
               )}
-              <div className="flex items-center justify-center gap-5 pt-3">
-                <button onClick={() => { setOperator(null); setStep(0); }} className="w-[43%] rounded-[11px] border-2 border-[#111827] bg-white py-3 font-semibold text-[#111827] shadow-[0_3px_0_#111827] transition active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2">&lt; Retour</button>
-                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !manualTransactionReference.trim())} className="w-[43%] rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-3 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : "Continuer"}</button>
+              <div className="flex items-center justify-center gap-3 pt-1">
+                <button onClick={() => { setOperator(null); setStep(0); }} className="flex-1 rounded-[11px] border-2 border-[#111827] bg-white py-2.5 font-semibold text-[#111827] shadow-[0_3px_0_#111827] transition active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2">Retour</button>
+                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !manualTransactionReference.trim())} className="flex-1 rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-2.5 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer" : "Continuer"}</button>
               </div>
             </div>
           )}
@@ -618,17 +614,16 @@ export default function RobotPayPage() {
           )}
           {step === 3 && (
             manualSubmitted ? (
-              <div className="space-y-5 py-5 text-center">
-                <Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" />
+              <div className="space-y-3 py-3 text-center">
+                <Check className="mx-auto h-16 w-16 rounded-full bg-green-500 p-3 text-white" />
                 <h2 className="text-xl font-bold text-gray-900">Demande envoyée</h2>
-                <p className="text-sm text-gray-600">Votre ID de transaction a été transmis. Le dépôt sera crédité après vérification.</p>
-                <div className="rounded-xl border-2 border-[#111827] bg-[#fffaf6] p-3 text-left text-sm leading-7 text-gray-800">
+                <div className="rounded-xl border-2 border-[#111827] bg-[#fffaf6] p-3 text-left text-sm leading-6 text-gray-800">
                   <b>Opérateur :</b> {operator?.name}<br />
                   <b>Montant :</b> {amount.toLocaleString()} {currency}<br />
-                  <b>ID de transaction :</b> <span className="break-all font-mono">{manualTransactionReference.trim()}</span><br />
-                  <b>Statut :</b> En attente de validation
+                  <b>ID :</b> <span className="break-all font-mono">{manualTransactionReference.trim()}</span>
                 </div>
-                <button onClick={() => navigate("/")} className="text-lg font-semibold text-[#111827] underline decoration-[#FF7A14] underline-offset-4 hover:text-[#b84d00]">Retourner sur le site</button>
+                <p className="text-sm font-semibold text-amber-700">En attente de validation</p>
+                <button onClick={() => navigate("/")} className="text-base font-semibold text-[#111827] underline decoration-[#FF7A14] underline-offset-4 hover:text-[#b84d00]">Retour au site</button>
               </div>
             ) : (
               <div className="space-y-5 py-5 text-center">
