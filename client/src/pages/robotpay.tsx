@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
 import type { PaymentNumber } from "@shared/schema";
 
-type Provider = "ashtech" | "sendavapay" | "soleaspay";
+type Provider = "ashtech" | "sendavapay" | "soleaspay" | "clapay";
 type Operator = { id?: string; name?: string; operator?: string; slug?: string; code?: string; requiresOtp?: boolean; status?: string; provider?: Provider; manualNumber?: PaymentNumber };
 type ProviderInfo = { provider: Provider; name: string; providers?: Array<{ provider: Provider; name: string }> };
 type SoleaspayServiceResponse = {
@@ -50,7 +50,7 @@ export default function RobotPayPage() {
   const requestedProvider = (params.get("provider") || "").toLowerCase();
   const isSoleaspayFlow = requestedProvider === "soleaspay";
   const isManualFlow = requestedProvider === "manual";
-  const forcedProvider = requestedProvider === "ashtech" || requestedProvider === "sendavapay"
+  const forcedProvider = requestedProvider === "ashtech" || requestedProvider === "sendavapay" || requestedProvider === "clapay"
     ? requestedProvider
     : "";
   const feePaymentId = Number(params.get("feePaymentId") || 0) || undefined;
@@ -96,6 +96,8 @@ export default function RobotPayPage() {
   const availableProviders = isSoleaspayFlow
     ? [{ provider: "soleaspay" as const, name: "SoleaPay" }]
     : providerInfo?.providers || (providerInfo ? [{ provider: providerInfo.provider, name: providerInfo.name }] : []);
+  const activeProviderName =
+    availableProviders.find((entry) => entry.provider === activeProvider)?.name || activeProvider;
   const countryInfo = countries.find(c => c.code === country && c.isActive);
   const currency = countryInfo?.currency || "FCFA";
   const phonePrefix = countryInfo && "phonePrefix" in countryInfo ? countryInfo.phonePrefix : "";
@@ -161,9 +163,24 @@ export default function RobotPayPage() {
   const sendavaOperators: Operator[] = availableProviders.some(item => item.provider === "sendavapay")
     ? (sendavaData?.data || []).filter((x: Operator) => x.status === "online").map(x => ({ ...x, provider: "sendavapay" as const }))
     : [];
+  const { data: clapayData, isLoading: clapayLoading } = useQuery<{ operators: Array<{ id: string; name: string }> }>({
+    queryKey: ["/api/clapay/operators", country],
+    queryFn: async () => {
+      const res = await fetch(`/api/clapay/operators/${encodeURIComponent(country)}`, { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Impossible de charger les opérateurs Clapay");
+      return data;
+    },
+    enabled: !!providerInfo && availableProviders.some(item => item.provider === "clapay") && !!country,
+  });
+  const clapayOperators: Operator[] = (clapayData?.operators || []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    provider: "clapay",
+  }));
   const automaticOperators: Operator[] = isSoleaspayFlow
     ? soleaspayOperators
-    : [...ashtechOperators, ...sendavaOperators];
+    : [...ashtechOperators, ...sendavaOperators, ...clapayOperators];
   const operators: Operator[] = isManualFlow
     ? manualNumbers.map(number => ({
         id: `manual-${number.id}`,
@@ -185,7 +202,7 @@ export default function RobotPayPage() {
           ];
   const loadingOperators = isSoleaspayFlow
     ? soleaspayServicesLoading
-    : manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading;
+     : manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading || clapayLoading;
   const operatorMethodLabel = (item: Operator) => {
     if (item.manualNumber) return item.manualNumber.paymentLink ? "Paiement par lien" : "Paiement par numéro";
     if (item.provider === "soleaspay") return "Paiement automatique via SoleaPay";
@@ -248,6 +265,35 @@ export default function RobotPayPage() {
       }
        toast({ title: "Paiement impossible", description: e.message, variant: "destructive" });
     },
+  });
+  const clapayMutation = useMutation({
+    mutationFn: async () => {
+      if (!operator?.id || !operator.name) throw new Error("Sélectionnez un opérateur");
+      const res = await apiRequest("POST", "/api/clapay/initiate", {
+        amount,
+        country,
+        operatorId: operator.id,
+        operatorName: operator.name,
+        phone: paymentPhone,
+        feePaymentId,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Initiation Clapay impossible");
+      return data as { depositId: number; redirectUrl?: string; message?: string };
+    },
+    onSuccess: (data) => {
+      setDepositId(data.depositId);
+      setRedirectUrl(data.redirectUrl || "");
+      setMessage(data.message || "Confirmez le paiement sur votre téléphone.");
+      setStatus("processing");
+      setStep(2);
+      queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
+    },
+    onError: (error: any) => toast({
+      title: "Paiement Clapay impossible",
+      description: error.message,
+      variant: "destructive",
+    }),
   });
   const soleaspayMutation = useMutation({
     mutationFn: async () => {
@@ -329,7 +375,9 @@ export default function RobotPayPage() {
           ? `/api/deposits/${depositId}/ashtechpay-status`
           : activeProvider === "soleaspay"
             ? `/api/deposits/${depositId}/verify`
-            : `/api/deposits/${depositId}/sendavapay-status`;
+            : activeProvider === "clapay"
+              ? `/api/deposits/${depositId}/clapay-status`
+              : `/api/deposits/${depositId}/sendavapay-status`;
         const res = await fetch(url, { credentials: "include" });
         const data = await res.json();
         if (!res.ok) return;
@@ -338,7 +386,7 @@ export default function RobotPayPage() {
           setStep(3);
           clearInterval(timer);
           queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
-          if (activeProvider === "soleaspay") refreshUser();
+          if (activeProvider === "soleaspay" || activeProvider === "clapay") refreshUser();
         }
         if (data.status === "rejected") {
           clearInterval(timer);
@@ -364,6 +412,7 @@ export default function RobotPayPage() {
     if (operator.manualNumber) manualMutation.mutate();
     else if (activeProvider === "ashtech") ashtechMutation.mutate(undefined);
     else if (activeProvider === "soleaspay") soleaspayMutation.mutate();
+    else if (activeProvider === "clapay") clapayMutation.mutate();
     else sendavaMutation.mutate();
   };
   const submitOtp = async () => {
@@ -376,7 +425,7 @@ export default function RobotPayPage() {
     if (!res.ok) { toast({ title: "OTP invalide", variant: "destructive" }); return; }
     setStep(2); setStatus("processing");
   };
-  const busy = sendavaMutation.isPending || ashtechMutation.isPending || soleaspayMutation.isPending || manualMutation.isPending;
+  const busy = sendavaMutation.isPending || ashtechMutation.isPending || soleaspayMutation.isPending || clapayMutation.isPending || manualMutation.isPending;
 
   const copyPaymentNumber = async () => {
     const number = operator?.manualNumber;
@@ -505,7 +554,7 @@ export default function RobotPayPage() {
               {redirectUrl ? <><p className="text-gray-700">{message || "Ouvrez la page sécurisée pour terminer votre paiement."}</p><a href={redirectUrl} target="_blank" rel="noreferrer" className="block rounded-lg bg-[#1486d8] text-white py-3 font-semibold">Ouvrir la page de paiement</a></> : (otpToken || ashtechOtpRequired) ? <>{ussd && <p className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-3 text-center font-mono text-xl font-bold tracking-widest text-[#00a526]">{ussd}</p>}<p className="text-sm text-gray-600">{ussd ? "Composez ce code sur votre téléphone pour obtenir le code OTP, puis saisissez-le ci-dessous." : "Un code OTP vous a été envoyé. Saisissez-le ci-dessous."}</p><input value={activeProvider === "ashtech" ? ashtechOtp : otp} onChange={e => activeProvider === "ashtech" ? setAshtechOtp(e.target.value.replace(/\D/g, "")) : setOtp(e.target.value)} inputMode="numeric" placeholder="Saisissez le code OTP" className="w-full border rounded-lg p-3 text-center text-xl" /><button onClick={submitOtp} disabled={busy} className="w-full rounded-lg bg-[#1486d8] py-3 font-semibold text-white disabled:opacity-50">Confirmer</button></> : status === "rejected" ? <><ShieldCheck className="mx-auto h-16 w-16 text-red-400" /><p className="font-semibold text-lg text-red-600">Paiement refusé</p><p className="text-sm text-gray-500">Le paiement n’a pas été confirmé. Vous pouvez réessayer.</p><button onClick={() => { setDepositId(null); setStatus("pending"); setStep(1); }} className="w-full rounded-lg bg-[#1486d8] py-3 font-semibold text-white">Réessayer</button></> : <><ShieldCheck className="mx-auto h-16 w-16 animate-pulse text-green-400" /><p className="font-semibold text-lg">Paiement en cours de confirmation</p><p className="text-sm text-gray-500">{message || "Validez la demande sur votre téléphone. La page se met à jour automatiquement."}</p></>}
             </div>
           )}
-          {step === 3 && (manualSubmitted ? <div className="space-y-5 py-5 text-center"><Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-700">Demande envoyée</h2><p className="text-sm text-gray-500">Votre capture et les informations du paiement ont été transmises. Le dépôt sera crédité après vérification.</p><div className="rounded bg-gray-100 p-3 text-left text-sm leading-7 text-gray-700"><b>Opérateur :</b> {operator?.name}<br /><b>Montant :</b> {amount.toLocaleString()} {currency}<br /><b>Statut :</b> En attente de validation</div><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div> : <div className="space-y-5 py-5 text-center"><div className="text-left border-b pb-3 text-xl text-gray-700">ROBOTPAY - {countryInfo?.name || country}</div><p className="text-left text-2xl text-gray-900">{amount.toLocaleString()} {currency}</p><Check className="w-24 h-24 mx-auto rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-600">Votre paiement a été approuvé</h2><div className="rounded bg-gray-200 p-3 text-left text-sm leading-7 text-gray-700"><b>Payeur :</b> {phone}<br /><b>ID Transaction :</b> {transactionReference}<br /><b>Date Paiement :</b> {new Date().toLocaleString("fr-FR")}</div><p className="pt-12 text-gray-500">🔒 Sécurisé par <b className="text-[#174d79]">ROBOTPAY</b></p><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div>)}
+          {step === 3 && (manualSubmitted ? <div className="space-y-5 py-5 text-center"><Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-700">Demande envoyée</h2><p className="text-sm text-gray-500">Votre capture et les informations du paiement ont été transmises. Le dépôt sera crédité après vérification.</p><div className="rounded bg-gray-100 p-3 text-left text-sm leading-7 text-gray-700"><b>Opérateur :</b> {operator?.name}<br /><b>Montant :</b> {amount.toLocaleString()} {currency}<br /><b>Statut :</b> En attente de validation</div><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div> : <div className="space-y-5 py-5 text-center"><div className="text-left border-b pb-3 text-xl text-gray-700">{activeProvider === "clapay" ? activeProviderName.toUpperCase() : "ROBOTPAY"} - {countryInfo?.name || country}</div><p className="text-left text-2xl text-gray-900">{amount.toLocaleString()} {currency}</p><Check className="w-24 h-24 mx-auto rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-600">Votre paiement a été approuvé</h2><div className="rounded bg-gray-200 p-3 text-left text-sm leading-7 text-gray-700"><b>Payeur :</b> {phone}<br /><b>ID Transaction :</b> {transactionReference}<br /><b>Date Paiement :</b> {new Date().toLocaleString("fr-FR")}</div><p className="pt-12 text-gray-500">🔒 Sécurisé par <b className="text-[#174d79]">{activeProvider === "clapay" ? activeProviderName : "ROBOTPAY"}</b></p><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div>)}
         </section>
       </div>
     </main>

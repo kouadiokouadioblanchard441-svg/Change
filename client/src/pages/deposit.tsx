@@ -13,7 +13,7 @@ import type { PaymentNumber } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 
-type DepositMethodId = "manual" | "soleaspay" | "ashtech" | "sendavapay" | "westpay" | "inpay";
+type DepositMethodId = "manual" | "soleaspay" | "ashtech" | "sendavapay" | "westpay" | "inpay" | "clapay";
 type DepositMethodChoice = { provider: DepositMethodId; name: string };
 
 const TON_GREEN = "#FF7A14";
@@ -787,7 +787,12 @@ export default function DepositPage() {
       });
       return;
     }
-    if (selectedDepositMethod === "soleaspay" || selectedDepositMethod === "sendavapay" || selectedDepositMethod === "manual") {
+    if (
+      selectedDepositMethod === "soleaspay" ||
+      selectedDepositMethod === "sendavapay" ||
+      selectedDepositMethod === "manual" ||
+      selectedDepositMethod === "clapay"
+    ) {
       window.location.href =
         `/robotpay?amount=${encodeURIComponent(Number(amount))}` +
         `&country=${encodeURIComponent(depositCountry)}` +

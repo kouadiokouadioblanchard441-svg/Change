@@ -15,7 +15,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Loader2, Save, Link, Clock, Users, Zap } from "lucide-react";
 
 type AdminCountry = { code: string; name: string; isActive: boolean };
-type DepositMethodId = "manual" | "soleaspay" | "ashtech" | "sendavapay" | "westpay" | "inpay";
+type DepositMethodId = "manual" | "soleaspay" | "ashtech" | "sendavapay" | "westpay" | "inpay" | "clapay";
 
 const DEPOSIT_METHOD_OPTIONS: Array<{ value: DepositMethodId; label: string }> = [
   { value: "manual", label: "Paiement manuel" },
@@ -24,6 +24,7 @@ const DEPOSIT_METHOD_OPTIONS: Array<{ value: DepositMethodId; label: string }> =
   { value: "sendavapay", label: "SendavaPay" },
   { value: "westpay", label: "WestPay" },
   { value: "inpay", label: "InPay" },
+  { value: "clapay", label: "Clapay" },
 ];
 
 function getInitialDepositRouting(
@@ -124,6 +125,8 @@ const settingsSchema = z.object({
   ashtechChannelName: z.string().min(1, "Nom requis"),
   inpayEnabled: z.boolean(),
   inpayChannelName: z.string().min(1, "Nom requis"),
+  clapayEnabled: z.boolean(),
+  clapayChannelName: z.string().min(1, "Nom requis"),
 });
 
 type SettingsForm = z.infer<typeof settingsSchema>;
@@ -189,6 +192,8 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       ashtechChannelName: "AshtechPay",
       inpayEnabled: false,
       inpayChannelName: "InPay",
+      clapayEnabled: false,
+      clapayChannelName: "Clapay",
     },
   });
 
@@ -233,6 +238,8 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         ashtechChannelName: settings.ashtechChannelName || "AshtechPay",
         inpayEnabled: settings.inpayEnabled === "true",
         inpayChannelName: settings.inpayChannelName || "InPay",
+        clapayEnabled: settings.clapayEnabled === "true",
+        clapayChannelName: settings.clapayChannelName || "Clapay",
       });
       if (!countriesLoading && !paymentNumbersLoading) {
         setDepositMethodsByCountry(getInitialDepositRouting(settings, countries, paymentNumbers));
@@ -255,6 +262,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         westpayEnabled: String(data.westpayEnabled),
         ashtechEnabled: String(data.ashtechEnabled),
         inpayEnabled: String(data.inpayEnabled),
+        clapayEnabled: String(data.clapayEnabled),
       };
       const response = await apiRequest("POST", "/api/admin/settings", serialized);
       if (!response.ok) {
@@ -915,6 +923,46 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
               <p>Ajoutez <code className="bg-green-100 px-1 rounded">ASHTECHPAY_API_BASE_URL</code>, <code className="bg-green-100 px-1 rounded">ASHTECHPAY_API_KEY</code> et <code className="bg-green-100 px-1 rounded">ASHTECHPAY_WEBHOOK_SECRET</code> sur le serveur.</p>
               <p>La clé API n'est jamais enregistrée dans les paramètres ni affichée dans ce formulaire.</p>
               <p>URL de notification à configurer chez AshtechPay : <code className="bg-green-100 px-1 rounded">/api/webhooks/ashtechpay</code>. Le statut est confirmé par interrogation sécurisée de l'API.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Clapay ── */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="w-5 h-5 text-indigo-600" />
+              Clapay — Dépôts Mobile Money
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Activer Clapay</p>
+                <p className="text-xs text-gray-500">Affiche Clapay uniquement dans les pays cochés dans le routage ci-dessus.</p>
+              </div>
+              <FormField control={form.control} name="clapayEnabled" render={({ field }) => (
+                <FormItem className="flex items-center gap-2 space-y-0">
+                  <FormLabel className="text-xs text-gray-500">{field.value ? "Actif" : "Désactivé"}</FormLabel>
+                  <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                </FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="clapayChannelName" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nom du canal affiché</FormLabel>
+                <FormControl><Input {...field} placeholder="Clapay" /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-xs text-indigo-900 space-y-1">
+              <p className="font-semibold">Configuration requise dans les variables d’environnement Plesk</p>
+              <p><code>CLAPAY_API_BASE_URL</code>, <code>CLAPAY_API_KEY</code>, <code>CLAPAY_API_KEY_HEADER</code> et, si nécessaire, <code>CLAPAY_API_KEY_PREFIX</code>.</p>
+              <p><code>CLAPAY_INITIATE_PATH</code>, <code>CLAPAY_INITIATE_REQUEST_TEMPLATE</code> (JSON conforme à la documentation), <code>CLAPAY_INITIATE_SIGNATURE_PATH</code> et, si la réponse les fournit, <code>CLAPAY_INITIATE_REDIRECT_PATH</code> / <code>CLAPAY_INITIATE_MESSAGE_PATH</code>.</p>
+              <p>Vérification côté serveur : <code>CLAPAY_STATUS_PATH</code> (par défaut <code>/nowallet/api/check/status/payment</code>), <code>CLAPAY_STATUS_REQUEST_TEMPLATE</code>, <code>CLAPAY_STATUS_VALUE_PATH</code>, <code>CLAPAY_STATUS_SUCCESS_VALUES</code> et <code>CLAPAY_STATUS_FAILURE_VALUES</code>.</p>
+              <p>Opérateurs : <code>CLAPAY_OPERATORS_PATH</code> (par défaut <code>/nowallet/api/operators/data</code>), <code>CLAPAY_OPERATORS_COUNTRY_PARAM</code>, <code>CLAPAY_OPERATORS_RESPONSE_PATH</code>, <code>CLAPAY_OPERATOR_ID_PATH</code> et <code>CLAPAY_OPERATOR_NAME_PATH</code>.</p>
+              <p>Les modèles JSON acceptent les marqueurs <code>{"{{amount}}"}</code>, <code>{"{{country}}"}</code>, <code>{"{{operator}}"}</code>, <code>{"{{operatorId}}"}</code>, <code>{"{{operatorName}}"}</code>, <code>{"{{phone}}"}</code>, <code>{"{{accountNumber}}"}</code>, <code>{"{{accountName}}"}</code>, <code>{"{{accountEmail}}"}</code>, <code>{"{{reference}}"}</code>, <code>{"{{depositId}}"}</code> et <code>{"{{signature}}"}</code>. Utilisez les noms de champs et le format d’authentification indiqués par Clapay ; ne mettez pas les identifiants dans ces modèles.</p>
+              <p>Le crédit du dépôt dépend uniquement du statut confirmé par l’API Clapay et n’est pas déclenché par un retour navigateur.</p>
             </div>
           </CardContent>
         </Card>

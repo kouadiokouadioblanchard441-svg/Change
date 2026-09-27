@@ -60,6 +60,12 @@ import {
   verifyAshtechWebhookSignature,
 } from "./ashtechpay";
 import {
+  checkClapayPayment,
+  getClapayOperators,
+  initiateClapayPayment,
+  isClapayConfigured,
+} from "./clapay";
+import {
   formatTelegramValue,
   sendTelegramInpayError,
   sendTelegramMessage,
@@ -265,6 +271,7 @@ const DEPOSIT_METHOD_IDS = [
   "sendavapay",
   "westpay",
   "inpay",
+  "clapay",
 ] as const;
 type DepositMethodId = typeof DEPOSIT_METHOD_IDS[number];
 const DEPOSIT_METHOD_ID_SET = new Set<string>(DEPOSIT_METHOD_IDS);
@@ -283,6 +290,7 @@ const PUBLIC_SETTING_KEYS = new Set([
   "westpayEnabled", "westpayChannelName", "westpayCountries",
   "ashtechEnabled", "ashtechChannelName", "ashtechCountries",
   "inpayEnabled", "inpayChannelName", "inpayCountries",
+  "clapayEnabled", "clapayChannelName",
   "depositMethodsByCountry",
 ]);
 const ADMIN_SETTING_KEYS = new Set([
@@ -360,6 +368,10 @@ function isLegacyDepositMethodAssigned(
     case "inpay":
       return settings.inpayEnabled === "true" &&
         isCountryInSettingsList(settings.inpayCountries, country);
+    case "clapay":
+      // Clapay is deliberately excluded from derived legacy routing. It only
+      // becomes available after an administrator saves an explicit country map.
+      return false;
   }
 }
 
@@ -386,6 +398,7 @@ function isDepositProviderGloballyEnabled(
     sendavapay: "sendavapayEnabled",
     westpay: "westpayEnabled",
     inpay: "inpayEnabled",
+    clapay: "clapayEnabled",
   };
   return settings[settingKey[method]] === "true";
 }
@@ -415,6 +428,7 @@ function getDepositMethodName(
     sendavapay: "sendavapayChannelName",
     westpay: "westpayChannelName",
     inpay: "inpayChannelName",
+    clapay: "clapayChannelName",
   };
   const defaultName: Record<Exclude<DepositMethodId, "manual">, string> = {
     soleaspay: "SoleaPay",
@@ -422,6 +436,7 @@ function getDepositMethodName(
     sendavapay: "SendavaPay",
     westpay: "WestPay",
     inpay: "InPay",
+    clapay: "Clapay",
   };
   return settings[settingKey[method]] || defaultName[method];
 }
@@ -3557,6 +3572,152 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     }
   });
 
+  app.get("/api/clapay/operators/:country", requireAuth, async (req, res) => {
+    try {
+      const country = String(req.params.country || "").trim().toUpperCase();
+      const activeCountries = await storage.getActiveCountries();
+      if (!activeCountries.some((entry) => entry.code.toUpperCase() === country)) {
+        return res.status(404).json({ message: "Pays indisponible" });
+      }
+      const settings = await storage.getSettings();
+      if (!isDepositMethodConfigured(country, "clapay", settings)) {
+        return res.status(403).json({ message: "Clapay n'est pas configuré pour ce pays" });
+      }
+      if (!isClapayConfigured()) {
+        return res.status(503).json({ message: "La configuration API de Clapay est incomplète dans Plesk" });
+      }
+      const operators = await getClapayOperators(country);
+      res.json({ operators });
+    } catch (error: any) {
+      res.status(502).json({ message: error.message || "Impossible de charger les opérateurs Clapay" });
+    }
+  });
+
+  app.post("/api/clapay/initiate", requireAuth, async (req, res) => {
+    let depositId: number | undefined;
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) return res.status(401).json({ message: "Non authentifié" });
+
+      const country = String(req.body.country || "").trim().toUpperCase();
+      const operatorId = String(req.body.operatorId || "").trim();
+      const operatorName = String(req.body.operatorName || "").trim();
+      const rawPhone = String(req.body.phone || "").trim();
+      const amount = Number(req.body.amount);
+      const activeCountries = await storage.getActiveCountries();
+      if (!activeCountries.some((entry) => entry.code.toUpperCase() === country)) {
+        return res.status(400).json({ message: "Pays indisponible" });
+      }
+      const settings = await storage.getSettings();
+      if (!isDepositMethodConfigured(country, "clapay", settings)) {
+        return res.status(403).json({ message: "Clapay n'est pas configuré pour ce pays" });
+      }
+      if (!isClapayConfigured()) {
+        return res.status(503).json({ message: "La configuration API de Clapay est incomplète dans Plesk" });
+      }
+      if (!Number.isInteger(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Montant invalide" });
+      }
+      const feePaymentId = req.body.feePaymentId === undefined || req.body.feePaymentId === null
+        ? undefined
+        : Number(req.body.feePaymentId);
+      const withdrawalFeePayment = feePaymentId === undefined
+        ? undefined
+        : await validateWithdrawalFeePayment(user.id, feePaymentId, amount);
+      const minDeposit = parseInt(settings.minDeposit || "3500", 10);
+      if (!withdrawalFeePayment && amount < minDeposit) {
+        return res.status(400).json({ message: `Montant minimum : ${minDeposit.toLocaleString()} FCFA` });
+      }
+      if (!operatorId || !operatorName) {
+        return res.status(400).json({ message: "Sélectionnez un opérateur Clapay" });
+      }
+      const parsedPhone = phoneNumberSchema.safeParse(rawPhone);
+      if (!parsedPhone.success) {
+        return res.status(400).json({ message: "Le numéro de téléphone est invalide" });
+      }
+
+      const operators = await getClapayOperators(country);
+      const selectedOperator = operators.find((entry) => entry.id === operatorId);
+      if (!selectedOperator || selectedOperator.name !== operatorName) {
+        return res.status(400).json({ message: "Cet opérateur Clapay n'est plus disponible" });
+      }
+
+      const deposit = await storage.createDeposit({
+        userId: user.id,
+        amount,
+        accountName: user.fullName,
+        accountNumber: parsedPhone.data,
+        country,
+        paymentMethod: `Clapay — ${operatorName}`,
+        status: "processing",
+        withdrawalFeePaymentId: withdrawalFeePayment?.id,
+      });
+      depositId = deposit.id;
+      const orderReference = `CLAPAY-${deposit.id}-${Date.now()}`;
+      const payment = await initiateClapayPayment({
+        amount,
+        country,
+        operator: operatorName,
+        operatorId,
+        operatorName,
+        phone: parsedPhone.data,
+        accountNumber: parsedPhone.data,
+        accountName: user.fullName,
+        accountEmail: `user${user.id}@chargepoint.app`,
+        reference: orderReference,
+        depositId: deposit.id,
+        callbackUrl: "",
+      });
+      await storage.updateDeposit(deposit.id, { reference: payment.signature, status: "processing" });
+      return res.json({
+        depositId: deposit.id,
+        redirectUrl: payment.redirectUrl,
+        message: payment.message || "Confirmez le paiement sur votre téléphone.",
+      });
+    } catch (error: any) {
+      if (depositId) {
+        await storage.updateDeposit(depositId, { status: "rejected", processedAt: new Date() }).catch(() => undefined);
+      }
+      console.error("[clapay] initiation error:", error);
+      return res.status(502).json({ message: error.message || "Impossible d'initier le paiement Clapay" });
+    }
+  });
+
+  app.get("/api/deposits/:id/clapay-status", requireAuth, async (req, res) => {
+    try {
+      const depositId = Number(req.params.id);
+      if (!Number.isInteger(depositId) || depositId <= 0) {
+        return res.status(400).json({ message: "Identifiant de dépôt invalide" });
+      }
+      const deposit = await storage.getDeposit(depositId);
+      if (!deposit) return res.status(404).json({ message: "Dépôt non trouvé" });
+      if (deposit.userId !== req.session.userId) return res.status(403).json({ message: "Accès refusé" });
+      if (!deposit.paymentMethod.startsWith("Clapay — ")) {
+        return res.status(400).json({ message: "Ce dépôt ne provient pas de Clapay" });
+      }
+      if (deposit.status === "approved" || deposit.status === "rejected") {
+        return res.json({ status: deposit.status });
+      }
+      if (!deposit.reference) return res.json({ status: deposit.status });
+
+      const verification = await checkClapayPayment(deposit.reference);
+      if (verification.status === "approved") {
+        const claimedDeposit = await storage.claimDepositApproval(deposit.id);
+        if (claimedDeposit) await creditApprovedDeposit(claimedDeposit);
+      } else if (verification.status === "rejected") {
+        await storage.updateDeposit(deposit.id, { status: "rejected", processedAt: new Date() });
+      }
+      const finalDeposit = await storage.getDeposit(deposit.id);
+      return res.json({
+        status: finalDeposit?.status || deposit.status,
+        providerStatus: verification.rawStatus,
+      });
+    } catch (error: any) {
+      console.error("[clapay] status verification error:", error);
+      return res.status(502).json({ message: error.message || "Erreur de vérification Clapay" });
+    }
+  });
+
   app.get("/api/deposit/provider/:country", requireAuth, async (req, res) => {
     try {
       const country = String(req.params.country || "").trim().toUpperCase();
@@ -3565,9 +3726,12 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         return res.status(404).json({ message: "Pays indisponible" });
       }
       const settings = await storage.getSettings();
-      const providers: Array<{ provider: "ashtech" | "sendavapay"; name: string }> = [];
-      for (const provider of ["ashtech", "sendavapay"] as const) {
-        if (isDepositMethodConfigured(country, provider, settings)) {
+      const providers: Array<{ provider: "ashtech" | "sendavapay" | "clapay"; name: string }> = [];
+      for (const provider of ["ashtech", "sendavapay", "clapay"] as const) {
+        if (
+          isDepositMethodConfigured(country, provider, settings) &&
+          (provider !== "clapay" || isClapayConfigured())
+        ) {
           providers.push({ provider, name: getDepositMethodName(provider, settings) });
         }
       }
@@ -3575,7 +3739,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         ? req.query.provider.trim().toLowerCase()
         : "";
       if (requestedProvider) {
-        if (requestedProvider !== "ashtech" && requestedProvider !== "sendavapay") {
+        if (requestedProvider !== "ashtech" && requestedProvider !== "sendavapay" && requestedProvider !== "clapay") {
           return res.status(400).json({ message: "Fournisseur de dépôt invalide" });
         }
         if (!providers.some(({ provider }) => provider === requestedProvider)) {
@@ -3605,6 +3769,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const methods = getAssignedDepositMethods(country, settings)
         .filter((method) => isDepositProviderGloballyEnabled(method, settings))
         .filter((method) => method !== "manual" || manualNumbers.length > 0)
+        .filter((method) => method !== "clapay" || isClapayConfigured())
         .map((provider) => ({ provider, name: getDepositMethodName(provider, settings) }));
       res.json({
         country,
