@@ -9,13 +9,13 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
-import { getDepositMethodLabels, sanitizeDepositDisplayText } from "@/lib/deposit-display";
+import { sanitizeDepositDisplayText } from "@/lib/deposit-display";
 import type { PaymentNumber } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 
 type DepositMethodId = "manual" | "soleaspay" | "ashtech" | "sendavapay" | "westpay" | "inpay" | "clapay";
-type DepositMethodChoice = { provider: DepositMethodId; name: string };
+type DepositMethodChoice = { provider: DepositMethodId };
 
 const TON_GREEN = "#FF7A14";
 const TON_GREEN_DARK = "#E85D00";
@@ -257,7 +257,6 @@ export default function DepositPage() {
       enabled: !!country,
     });
   const depositMethods = depositMethodsData?.methods || [];
-  const depositMethodLabels = getDepositMethodLabels(depositMethods);
   const depositMethodIds = new Set(depositMethods.map((method) => method.provider));
   const depositMethodSignature = depositMethods.map((method) => method.provider).join(",");
   useEffect(() => {
@@ -1185,30 +1184,16 @@ export default function DepositPage() {
             ))}
           </select>
           {countriesError && <p className="mt-2 text-xs text-amber-700">Liste locale temporaire affichée.</p>}
-        </section>
-
-        <section className="country-panel" aria-label="Moyen de dépôt">
-          <label htmlFor="deposit-method">Moyen de dépôt</label>
-          {depositMethodsLoading ? (
-            <p className="mt-2 text-sm text-gray-500">Chargement des moyens disponibles…</p>
-          ) : depositMethods.length > 0 ? (
-            <select
-              id="deposit-method"
-              value={selectedDepositMethod}
-              onChange={(event) => setSelectedDepositMethod(event.target.value as DepositMethodId | "")}
-            >
-              <option value="">Choisissez un moyen de dépôt</option>
-              {depositMethods.map((method, index) => (
-                <option key={method.provider} value={method.provider}>{depositMethodLabels[index]}</option>
-              ))}
-            </select>
-          ) : (
-            <p role="alert" className="mt-2 text-sm text-red-700">
-              {depositMethodsError
-                ? "Impossible de charger les moyens de dépôt."
-                : "Aucun moyen de dépôt n’est configuré pour ce pays."}
-            </p>
-          )}
+          {depositCountry && !depositMethodsLoading &&
+            (depositMethodsError || depositMethods.length === 0 || depositMethods.length > 1) && (
+              <p role="alert" className="mt-2 text-sm text-red-700">
+                {depositMethodsError
+                  ? "Impossible de vérifier les options de paiement pour ce pays."
+                  : depositMethods.length > 1
+                    ? "Plusieurs options de paiement sont configurées pour ce pays. Contactez le service client."
+                    : "Aucune option de paiement n’est disponible pour ce pays."}
+              </p>
+            )}
         </section>
 
         <button
@@ -1259,26 +1244,16 @@ export default function DepositPage() {
           </select>
           <p className="mt-2 text-xs text-gray-500">Seuls les pays activés par l’administration sont affichés.</p>
         </div>
-        <div className="deposit-step-card mt-4 p-4">
-          <label htmlFor="legacy-deposit-method" className="mb-2 block text-sm font-bold text-gray-900">Moyen de dépôt</label>
-          {depositMethodsLoading ? (
-            <p className="text-sm text-gray-500">Chargement des moyens disponibles…</p>
-          ) : depositMethods.length > 0 ? (
-            <select
-              id="legacy-deposit-method"
-              value={selectedDepositMethod}
-              onChange={(event) => setSelectedDepositMethod(event.target.value as DepositMethodId | "")}
-              className="deposit-step-field w-full appearance-none px-4 py-4 text-sm text-gray-700 outline-none"
-            >
-              <option value="">Choisissez un moyen de dépôt</option>
-              {depositMethods.map((method, index) => <option key={method.provider} value={method.provider}>{depositMethodLabels[index]}</option>)}
-            </select>
-          ) : (
-            <p role="alert" className="text-sm text-red-700">
-              {depositMethodsError ? "Impossible de charger les moyens." : "Aucun moyen configuré pour ce pays."}
+        {depositCountry && !depositMethodsLoading &&
+          (depositMethodsError || depositMethods.length === 0 || depositMethods.length > 1) && (
+            <p role="alert" className="mt-4 text-sm text-red-700">
+              {depositMethodsError
+                ? "Impossible de vérifier les options de paiement pour ce pays."
+                : depositMethods.length > 1
+                  ? "Plusieurs options de paiement sont configurées pour ce pays. Contactez le service client."
+                  : "Aucune option de paiement n’est disponible pour ce pays."}
             </p>
           )}
-        </div>
         <button
           onClick={openRobotPay}
           disabled={!depositCountry || depositMethodsLoading || !selectedDepositMethod}
