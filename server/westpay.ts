@@ -1,7 +1,20 @@
 import crypto from "crypto";
 
-const WESTPAY_API_BASE = "https://westpay.cfd";
-const WESTPAY_BANK2_CHECKOUT = "https://payment.bank2.westpay.cfd/";
+function getWestpayApiBaseUrl(): string {
+  const configured = (process.env.WESTPAY_API_BASE_URL || "").trim();
+  if (!configured) throw new Error("WESTPAY_API_BASE_URL n'est pas configurée dans Plesk");
+  const parsed = new URL(configured);
+  if (parsed.protocol !== "https:") throw new Error("WESTPAY_API_BASE_URL doit utiliser HTTPS");
+  return parsed.toString().replace(/\/+$/, "");
+}
+
+function getWestpayCheckoutBaseUrl(): string {
+  const configured = (process.env.WESTPAY_CHECKOUT_BASE_URL || "").trim();
+  if (!configured) throw new Error("WESTPAY_CHECKOUT_BASE_URL n'est pas configurée dans Plesk");
+  const parsed = new URL(configured);
+  if (parsed.protocol !== "https:") throw new Error("WESTPAY_CHECKOUT_BASE_URL doit utiliser HTTPS");
+  return parsed.toString();
+}
 
 /** Map app country code → WestPay display country name */
 export const WESTPAY_COUNTRY_NAMES: Record<string, string> = {
@@ -65,6 +78,13 @@ export function getMerchantSlug(): string {
   return process.env.WESTPAY_MERCHANT_SLUG || "";
 }
 
+export function validateWestpayConfig(): void {
+  getWestpayApiBaseUrl();
+  getWestpayCheckoutBaseUrl();
+  if (!getMerchantSlug()) throw new Error("WESTPAY_MERCHANT_SLUG doit être configurée dans Plesk");
+  if (!process.env.WESTPAY_WEBHOOK_SECRET) throw new Error("WESTPAY_WEBHOOK_SECRET doit être configurée dans Plesk");
+}
+
 export function getApiKeyForCountry(code: string): string {
   const envVar = API_KEY_ENV[code];
   return envVar ? (process.env[envVar] || "") : "";
@@ -92,7 +112,7 @@ export function buildPaymentUrl(params: {
 }): string {
   const slug = getMerchantSlug();
   if (!slug) throw new Error("WESTPAY_MERCHANT_SLUG non configuré");
-  const url = new URL(WESTPAY_BANK2_CHECKOUT);
+  const url = new URL(getWestpayCheckoutBaseUrl());
   url.searchParams.set("merchant", slug);
   url.searchParams.set("amount", String(params.amount));
   url.searchParams.set("country", getCountryName(params.countryCode));
@@ -122,11 +142,11 @@ export async function transfer(params: {
   if (!apiKey) {
     return {
       success: false,
-      error: `Clé API WestPay manquante pour ${params.countryCode} — configurez WESTPAY_API_KEY_${params.countryCode} dans les Secrets`,
+      error: `Clé API WestPay manquante pour ${params.countryCode} — configurez WESTPAY_API_KEY_${params.countryCode} dans Plesk`,
     };
   }
   try {
-    const res = await fetch(`${WESTPAY_API_BASE}/api/merchant/transfer`, {
+    const res = await fetch(`${getWestpayApiBaseUrl()}/api/merchant/transfer`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

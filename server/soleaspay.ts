@@ -1,5 +1,25 @@
-const SOLEASPAY_API_URL = "https://soleaspay.com";
-const API_KEY = process.env.SOLEASPAY_API_KEY;
+function getSoleaspayApiBaseUrl(): string {
+  const configuredUrl = process.env.SOLEASPAY_API_BASE_URL?.trim();
+  if (!configuredUrl) {
+    throw new Error("SOLEASPAY_API_BASE_URL doit être configurée dans les variables d'environnement Plesk.");
+  }
+  const parsedUrl = new URL(configuredUrl);
+  if (parsedUrl.protocol !== "https:") {
+    throw new Error("SOLEASPAY_API_BASE_URL doit utiliser HTTPS.");
+  }
+  return parsedUrl.toString().replace(/\/+$/, "");
+}
+
+function getApiKey(): string {
+  const key = process.env.SOLEASPAY_API_KEY;
+  if (!key) throw new Error("SOLEASPAY_API_KEY doit être configurée dans les variables d'environnement Plesk.");
+  return key;
+}
+
+export function validateSoleaspayConfig(): void {
+  getSoleaspayApiBaseUrl();
+  getApiKey();
+}
 
 export const SOLEASPAY_SERVICE_MAP: Record<string, Record<string, number>> = {
   CM: {
@@ -178,10 +198,10 @@ export async function initiatePayment(
     failureUrl: buildReturnUrl(baseUrl, "failure", orderId),
   };
 
-  const response = await fetch(`${SOLEASPAY_API_URL}/api/agent/bills/v3`, {
+  const response = await fetch(`${getSoleaspayApiBaseUrl()}/api/agent/bills/v3`, {
     method: "POST",
     headers: {
-      "x-api-key": API_KEY || "",
+      "x-api-key": getApiKey(),
       "operation": "2",
       "service": serviceId.toString(),
       "Content-Type": "application/json",
@@ -195,11 +215,11 @@ export async function initiatePayment(
 
 export async function verifyPayment(orderId: string, payId: string): Promise<SoleaspayVerifyResponse> {
   const response = await fetch(
-    `${SOLEASPAY_API_URL}/api/agent/verif-pay?orderId=${orderId}&payId=${payId}`,
+    `${getSoleaspayApiBaseUrl()}/api/agent/verif-pay?orderId=${encodeURIComponent(orderId)}&payId=${encodeURIComponent(payId)}`,
     {
       method: "GET",
       headers: {
-        "x-api-key": API_KEY || "",
+        "x-api-key": getApiKey(),
         "Content-Type": "application/json",
       },
     }

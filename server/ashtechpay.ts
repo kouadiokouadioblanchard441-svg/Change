@@ -1,9 +1,21 @@
 import crypto from "node:crypto";
 
-const ASHTECHPAY_API_BASE =
-  process.env.ASHTECHPAY_API_BASE ||
-  process.env.ASHTECH_API_BASE ||
-  "https://www.ashtechpay.com";
+function getApiBase() {
+  const configured = (
+    process.env.ASHTECHPAY_API_BASE_URL ||
+    process.env.ASHTECHPAY_API_BASE ||
+    process.env.ASHTECH_API_BASE ||
+    ""
+  ).trim();
+  if (!configured) {
+    throw new Error("AshtechPay non configuré : ASHTECHPAY_API_BASE_URL est manquante dans Plesk");
+  }
+  const parsed = new URL(configured);
+  if (parsed.protocol !== "https:") {
+    throw new Error("ASHTECHPAY_API_BASE_URL doit utiliser HTTPS");
+  }
+  return parsed.toString().replace(/\/+$/, "");
+}
 
 export interface AshtechCountry {
   code: string;
@@ -61,7 +73,7 @@ function getApiKey() {
 }
 
 async function ashtechRequest(path: string, init: RequestInit = {}) {
-  const response = await fetch(`${ASHTECHPAY_API_BASE}${path}`, {
+  const response = await fetch(`${getApiBase()}${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${getApiKey()}`,
@@ -109,7 +121,10 @@ export function mapAshtechStatus(status: string | undefined): "pending" | "appro
 }
 
 export function isAshtechConfigured() {
-  return Boolean(process.env.ASHTECH_API_KEY || process.env.ASHTECHPAY_API_KEY);
+  return Boolean(
+    (process.env.ASHTECH_API_KEY || process.env.ASHTECHPAY_API_KEY) &&
+    (process.env.ASHTECHPAY_API_BASE_URL || process.env.ASHTECHPAY_API_BASE || process.env.ASHTECH_API_BASE)
+  );
 }
 
 export function verifyAshtechWebhookSignature(

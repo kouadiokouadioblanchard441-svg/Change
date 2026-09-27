@@ -47,7 +47,12 @@ export default function RobotPayPage() {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const amount = Number(params.get("amount") || 0);
   const country = (params.get("country") || "").toUpperCase();
-  const isSoleaspayFlow = params.get("provider") === "soleaspay";
+  const requestedProvider = (params.get("provider") || "").toLowerCase();
+  const isSoleaspayFlow = requestedProvider === "soleaspay";
+  const isManualFlow = requestedProvider === "manual";
+  const forcedProvider = requestedProvider === "ashtech" || requestedProvider === "sendavapay"
+    ? requestedProvider
+    : "";
   const feePaymentId = Number(params.get("feePaymentId") || 0) || undefined;
   const withdrawalAmount = Number(params.get("withdrawalAmount") || 0) || undefined;
   const isWithdrawalFeePayment = Boolean(feePaymentId);
@@ -73,17 +78,20 @@ export default function RobotPayPage() {
 
   const { data: loadedCountries, isError: countriesError } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
   const countries = getCountriesForDisplay(loadedCountries, countriesError);
-  const { data: providerInfo, isLoading: providerLoading } = useQuery<ProviderInfo>({
-    queryKey: ["/api/deposit/provider", country],
+  const { data: providerInfo, isLoading: providerLoading, error: providerError } = useQuery<ProviderInfo>({
+    queryKey: ["/api/deposit/provider", country, forcedProvider],
     queryFn: async () => {
-      const res = await fetch(`/api/deposit/provider/${country}`, { credentials: "include" });
+      const providerQuery = forcedProvider ? `?provider=${encodeURIComponent(forcedProvider)}` : "";
+      const res = await fetch(`/api/deposit/provider/${country}${providerQuery}`, { credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Aucun canal automatique disponible");
       return data;
     },
-    enabled: !!country && !isSoleaspayFlow,
+    enabled: !!country && !isSoleaspayFlow && !isManualFlow,
   });
-  const provider: Provider = isSoleaspayFlow ? "soleaspay" : providerInfo?.provider || "sendavapay";
+  const provider: Provider = isSoleaspayFlow
+    ? "soleaspay"
+    : forcedProvider || providerInfo?.provider || "sendavapay";
   const activeProvider = operator?.provider || provider;
   const availableProviders = isSoleaspayFlow
     ? [{ provider: "soleaspay" as const, name: "SoleaPay" }]
@@ -104,7 +112,7 @@ export default function RobotPayPage() {
       if (!res.ok) throw new Error("Impossible de charger les numéros de paiement");
       return res.json();
     },
-    enabled: !!country && !isSoleaspayFlow,
+    enabled: !!country && !isSoleaspayFlow && (!forcedProvider || isManualFlow),
   });
 
   const { data: soleaspayServiceData, isLoading: soleaspayServicesLoading } = useQuery<SoleaspayServiceResponse>({
@@ -156,53 +164,36 @@ export default function RobotPayPage() {
   const automaticOperators: Operator[] = isSoleaspayFlow
     ? soleaspayOperators
     : [...ashtechOperators, ...sendavaOperators];
-  const normalizeOperatorName = (value: unknown) =>
-    String(value || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-  const operatorNamesMatch = (first: unknown, second: unknown) => {
-    const firstName = normalizeOperatorName(first);
-    const secondName = normalizeOperatorName(second);
-    return Boolean(firstName && secondName && (
-      firstName === secondName || firstName.includes(secondName) || secondName.includes(firstName)
-    ));
-  };
-  const getOperatorIdentifiers = (automatic: Operator) =>
-    [automatic.name, automatic.operator, automatic.code, automatic.slug, automatic.id]
-      .filter(Boolean);
-  const matchesManualOperator = (automatic: Operator, manual: PaymentNumber) => {
-    return getOperatorIdentifiers(automatic)
-      .some(name => operatorNamesMatch(name, manual.operatorName));
-  };
-  const uniqueAutomaticOperators = automaticOperators.filter((automatic, index, list) =>
-    list.findIndex(candidate =>
-      getOperatorIdentifiers(candidate).some(candidateName =>
-        getOperatorIdentifiers(automatic).some(automaticName =>
-          operatorNamesMatch(candidateName, automaticName)
-        )
-      )
-    ) === index
-  );
-  const operators: Operator[] = isSoleaspayFlow
-    ? soleaspayOperators
-    : [
-        ...uniqueAutomaticOperators.map(automatic => {
-          const manualNumber = manualNumbers.find(number => matchesManualOperator(automatic, number));
-          return manualNumber ? { ...automatic, manualNumber } : automatic;
-        }),
+  const operators: Operator[] = isManualFlow
+    ? manualNumbers.map(number => ({
+        id: `manual-${number.id}`,
+        name: number.operatorName,
+        manualNumber: number,
+      }))
+    : isSoleaspayFlow
+      ? soleaspayOperators
+      : forcedProvider
+        ? automaticOperators
+        : [
+        ...automaticOperators,
         ...manualNumbers
-          .filter(number => !uniqueAutomaticOperators.some(automatic => matchesManualOperator(automatic, number)))
           .map(number => ({
             id: `manual-${number.id}`,
             name: number.operatorName,
             manualNumber: number,
           })),
-      ];
+          ];
   const loadingOperators = isSoleaspayFlow
     ? soleaspayServicesLoading
     : manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading;
+  const operatorMethodLabel = (item: Operator) => {
+    if (item.manualNumber) return item.manualNumber.paymentLink ? "Paiement par lien" : "Paiement par numéro";
+    if (item.provider === "soleaspay") return "Paiement automatique via SoleaPay";
+    const providerName = item.provider
+      ? availableProviders.find((entry) => entry.provider === item.provider)?.name || item.provider
+      : "Paiement automatique";
+    return `Paiement automatique via ${providerName}`;
+  };
 
   const sendavaMutation = useMutation({
     mutationFn: async () => {
@@ -434,10 +425,14 @@ export default function RobotPayPage() {
           {step === 0 && (
             <div className="space-y-5">
               <p className="px-1 text-xl text-white">
-                {isSoleaspayFlow ? "Sélectionnez votre opérateur Mobile Money :" : "Sélectionnez le mode de paiement :"}
+                {isManualFlow
+                  ? "Sélectionnez le numéro de paiement :"
+                  : isSoleaspayFlow
+                    ? "Sélectionnez votre opérateur Mobile Money :"
+                    : "Sélectionnez le mode de paiement :"}
               </p>
-               {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-blue-500" /> : operators.length === 0 ? <p className="text-center text-gray-500">Aucun opérateur disponible pour ce pays.</p> : (
-                 <div className="space-y-3">{operators.map((op, i) => <button key={`${op.id || op.name}-${i}`} onClick={() => chooseOperator(op)} className={`w-full flex items-center justify-between rounded-lg px-4 py-4 border-2 text-left ${operator === op ? "border-[#2885d8] bg-blue-50" : "border-gray-100 bg-white shadow-sm"}`}><span><span className="block font-semibold text-lg text-[#14538a]">{op.name}</span><span className="block text-xs text-gray-500">{op.manualNumber ? (op.manualNumber.paymentLink ? "Paiement par lien" : "Paiement par numéro") : op.provider === "soleaspay" ? "Paiement automatique via SoleaPay" : "Paiement automatique"}</span></span><ChevronRight className="text-gray-400" /></button>)}</div>
+               {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-blue-500" /> : operators.length === 0 ? <p className="text-center text-gray-500">{providerError instanceof Error ? providerError.message : "Aucun opérateur disponible pour ce pays."}</p> : (
+                 <div className="space-y-3">{operators.map((op, i) => <button key={`${op.id || op.name}-${i}`} onClick={() => chooseOperator(op)} className={`w-full flex items-center justify-between rounded-lg px-4 py-4 border-2 text-left ${operator === op ? "border-[#2885d8] bg-blue-50" : "border-gray-100 bg-white shadow-sm"}`}><span><span className="block font-semibold text-lg text-[#14538a]">{op.name}</span><span className="block text-xs text-gray-500">{operatorMethodLabel(op)}</span></span><ChevronRight className="text-gray-400" /></button>)}</div>
               )}
             </div>
           )}

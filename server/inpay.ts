@@ -78,22 +78,25 @@ export class InpayRequestError extends Error {
 }
 
 export function getInpayApiBase(): string {
-  return (process.env.INPAY_API_BASE_URL || "").replace(/\/+$/, "");
+  const configured = (process.env.INPAY_API_BASE_URL || "").trim();
+  if (!configured) return "";
+  const parsed = new URL(configured);
+  if (parsed.protocol !== "https:") {
+    throw new Error("INPAY_API_BASE_URL doit utiliser HTTPS et être configurée dans Plesk");
+  }
+  return parsed.toString().replace(/\/+$/, "");
 }
 
-function settingMerchantId(settings: Record<string, string>, country: string): string {
-  return process.env[`${MERCHANT_ENV_PREFIX}${country}`] || settings[`inpayMerchantId_${country}`] || "";
+function settingMerchantId(country: string): string {
+  return process.env[`${MERCHANT_ENV_PREFIX}${country}`] || "";
 }
 
-export function getInpayAccount(
-  country: string,
-  settings: Record<string, string>,
-): InpayAccount {
+export function getInpayAccount(country: string): InpayAccount {
   const normalizedCountry = country.trim().toUpperCase();
   return {
     country: normalizedCountry,
     countryPrefix: INPAY_COUNTRY_PREFIXES[normalizedCountry] || "",
-    merchantId: settingMerchantId(settings, normalizedCountry),
+    merchantId: settingMerchantId(normalizedCountry),
     apiKey: process.env[`${API_KEY_ENV_PREFIX}${normalizedCountry}`] || "",
   };
 }
@@ -116,9 +119,8 @@ export function isInpayCountryEnabled(
 
 export function isInpayConfigured(
   country: string,
-  settings: Record<string, string>,
 ): boolean {
-  const account = getInpayAccount(country, settings);
+  const account = getInpayAccount(country);
   return Boolean(
     getInpayApiBase() &&
     account.countryPrefix &&
@@ -365,7 +367,7 @@ export function findVerifiedAccount(
 ): InpayAccount | undefined {
   const merchantId = String(payload.merchantid || payload.merchant || "");
   return Object.keys(INPAY_COUNTRY_PREFIXES)
-    .map((country) => getInpayAccount(country, settings))
+    .map((country) => getInpayAccount(country))
     .find((account) =>
       account.merchantId === merchantId &&
       account.apiKey &&

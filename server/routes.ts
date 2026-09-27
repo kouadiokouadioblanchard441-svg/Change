@@ -12,7 +12,8 @@ import {
   verifyPayment, 
   isSoleaspaySupported, 
   mapSoleaspayStatus,
-  SOLEASPAY_SERVICE_MAP 
+  SOLEASPAY_SERVICE_MAP,
+  validateSoleaspayConfig,
 } from "./soleaspay";
 import {
   createPayment as sendavapayCreate,
@@ -24,6 +25,7 @@ import {
   mapSendavapayStatus,
   formatPhone as sendavapayFormatPhone,
   getCurrency as sendavapayGetCurrency,
+  getSendavapayApiBaseUrl,
   toSendavapayCountry,
 } from "./sendavapay";
 import {
@@ -31,6 +33,7 @@ import {
   verifyWebhookSignature as westpayVerifySignature,
   transfer as westpayTransfer,
   formatMsisdn as westpayFormatMsisdn,
+  validateWestpayConfig,
 } from "./westpay";
 import {
   createPayin as inpayCreatePayin,
@@ -255,10 +258,16 @@ const SENSITIVE_SETTING_KEYS = new Set([
   "westpayWebhookSecret",
   "ashtechWebhookSecret",
 ]);
-const INPAY_COUNTRY_CODES = ["SN", "ML", "CI", "BF", "TG", "BJ", "GH", "CM", "CG", "KE", "TZ", "UG", "ZA"];
-const INPAY_MERCHANT_SETTING_KEYS = new Set(
-  INPAY_COUNTRY_CODES.map((country) => `inpayMerchantId_${country}`),
-);
+const DEPOSIT_METHOD_IDS = [
+  "manual",
+  "soleaspay",
+  "ashtech",
+  "sendavapay",
+  "westpay",
+  "inpay",
+] as const;
+type DepositMethodId = typeof DEPOSIT_METHOD_IDS[number];
+const DEPOSIT_METHOD_ID_SET = new Set<string>(DEPOSIT_METHOD_IDS);
 const PUBLIC_SETTING_KEYS = new Set([
   "supportLink", "supportType", "supportLabel",
   "support2Link", "support2Type", "support2Label",
@@ -274,15 +283,148 @@ const PUBLIC_SETTING_KEYS = new Set([
   "westpayEnabled", "westpayChannelName", "westpayCountries",
   "ashtechEnabled", "ashtechChannelName", "ashtechCountries",
   "inpayEnabled", "inpayChannelName", "inpayCountries",
+  "depositMethodsByCountry",
 ]);
 const ADMIN_SETTING_KEYS = new Set([
   ...Array.from(PUBLIC_SETTING_KEYS),
-  "sendavapayWebhookSecret", "omnipayCallbackKey",
-  "westpayWebhookSecret",
-  "ashtechWebhookSecret",
-  ...Array.from(INPAY_MERCHANT_SETTING_KEYS),
 ]);
 const MASKED_SETTING_VALUE = "********";
+
+function isAdminSettingKey(key: string): boolean {
+  return ADMIN_SETTING_KEYS.has(key);
+}
+
+function parseDepositMethodsByCountry(
+  raw: string | undefined,
+): Record<string, DepositMethodId[]> | undefined {
+  if (!raw?.trim()) return undefined;
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    throw new Error("La configuration des méthodes de dépôt par pays est invalide");
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("La configuration des méthodes de dépôt par pays doit être un objet JSON");
+  }
+
+  const result: Record<string, DepositMethodId[]> = {};
+  for (const [rawCountry, rawMethods] of Object.entries(value)) {
+    const country = rawCountry.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(country) || !Array.isArray(rawMethods)) {
+      throw new Error(`Configuration de dépôt invalide pour le pays ${rawCountry}`);
+    }
+    const methods = rawMethods.map((method) => String(method).trim().toLowerCase());
+    const invalidMethod = methods.find((method) => !DEPOSIT_METHOD_ID_SET.has(method));
+    if (invalidMethod) {
+      throw new Error(`Méthode de dépôt inconnue : ${invalidMethod}`);
+    }
+    result[country] = (methods as DepositMethodId[]).filter(
+      (method, index, list) => list.indexOf(method) === index,
+    );
+  }
+  return result;
+}
+
+function isCountryInSettingsList(
+  value: string | undefined,
+  country: string,
+  emptyMeansAll = false,
+): boolean {
+  const countries = (value || "")
+    .split(",")
+    .map((code) => code.trim().toUpperCase())
+    .filter(Boolean);
+  return countries.length === 0 ? emptyMeansAll : countries.includes(country.toUpperCase());
+}
+
+function isLegacyDepositMethodAssigned(
+  method: DepositMethodId,
+  country: string,
+  settings: Record<string, string>,
+): boolean {
+  switch (method) {
+    case "manual":
+      return true;
+    case "soleaspay":
+      return settings.soleaspayEnabled === "true" &&
+        isCountryInSettingsList(settings.soleaspayCountries, country);
+    case "ashtech":
+      return settings.ashtechEnabled === "true" &&
+        isCountryInSettingsList(settings.ashtechCountries, country, true);
+    case "sendavapay":
+      return settings.sendavapayEnabled === "true";
+    case "westpay":
+      return settings.westpayEnabled === "true" &&
+        isCountryInSettingsList(settings.westpayCountries, country, true);
+    case "inpay":
+      return settings.inpayEnabled === "true" &&
+        isCountryInSettingsList(settings.inpayCountries, country);
+  }
+}
+
+function getAssignedDepositMethods(
+  country: string,
+  settings: Record<string, string>,
+): DepositMethodId[] {
+  const normalizedCountry = country.trim().toUpperCase();
+  const explicitRouting = parseDepositMethodsByCountry(settings.depositMethodsByCountry);
+  if (explicitRouting) return explicitRouting[normalizedCountry] || [];
+  return DEPOSIT_METHOD_IDS.filter((method) =>
+    isLegacyDepositMethodAssigned(method, normalizedCountry, settings)
+  );
+}
+
+function isDepositProviderGloballyEnabled(
+  method: DepositMethodId,
+  settings: Record<string, string>,
+): boolean {
+  if (method === "manual") return true;
+  const settingKey: Record<Exclude<DepositMethodId, "manual">, string> = {
+    soleaspay: "soleaspayEnabled",
+    ashtech: "ashtechEnabled",
+    sendavapay: "sendavapayEnabled",
+    westpay: "westpayEnabled",
+    inpay: "inpayEnabled",
+  };
+  return settings[settingKey[method]] === "true";
+}
+
+function isDepositMethodConfigured(
+  country: string,
+  method: DepositMethodId,
+  settings: Record<string, string>,
+): boolean {
+  const explicitRouting = parseDepositMethodsByCountry(settings.depositMethodsByCountry);
+  if (explicitRouting) {
+    return (explicitRouting[country.trim().toUpperCase()] || []).includes(method) &&
+      isDepositProviderGloballyEnabled(method, settings);
+  }
+  return getAssignedDepositMethods(country, settings).includes(method) &&
+    isDepositProviderGloballyEnabled(method, settings);
+}
+
+function getDepositMethodName(
+  method: DepositMethodId,
+  settings: Record<string, string>,
+): string {
+  if (method === "manual") return "Paiement manuel";
+  const settingKey: Record<Exclude<DepositMethodId, "manual">, string> = {
+    soleaspay: "soleaspayChannelName",
+    ashtech: "ashtechChannelName",
+    sendavapay: "sendavapayChannelName",
+    westpay: "westpayChannelName",
+    inpay: "inpayChannelName",
+  };
+  const defaultName: Record<Exclude<DepositMethodId, "manual">, string> = {
+    soleaspay: "SoleaPay",
+    ashtech: "AshtechPay",
+    sendavapay: "SendavaPay",
+    westpay: "WestPay",
+    inpay: "InPay",
+  };
+  return settings[settingKey[method]] || defaultName[method];
+}
 
 function publicSettings(settings: Record<string, string>) {
   return Object.fromEntries(
@@ -293,7 +435,7 @@ function publicSettings(settings: Record<string, string>) {
 function adminSettings(settings: Record<string, string>) {
   return Object.fromEntries(
     Object.entries(settings)
-      .filter(([key]) => ADMIN_SETTING_KEYS.has(key))
+      .filter(([key]) => isAdminSettingKey(key))
       .map(([key, value]) => [
       key,
       SENSITIVE_SETTING_KEYS.has(key) && value ? MASKED_SETTING_VALUE : value,
@@ -809,13 +951,12 @@ export async function registerRoutes(
   app.get("/api/soleaspay/services", requireAuth, async (req, res) => {
     try {
       const settings = await storage.getSettings();
-      const soleaspayEnabled = settings.soleaspayEnabled === "true";
-      const soleaspayCountries = (settings.soleaspayCountries || "")
-        .split(",")
-        .map((country) => country.trim().toUpperCase())
-        .filter(Boolean);
+      const activeCountries = await storage.getActiveCountries();
+      const soleaspayCountries = activeCountries
+        .filter(({ code }) => isDepositMethodConfigured(code, "soleaspay", settings))
+        .map(({ code }) => code.toUpperCase());
       res.json({ 
-        enabled: soleaspayEnabled,
+        enabled: soleaspayCountries.length > 0,
         services: SOLEASPAY_SERVICE_MAP,
         enabledCountries: soleaspayCountries,
       });
@@ -926,6 +1067,8 @@ export async function registerRoutes(
     try {
       const country = typeof req.query.country === "string" ? req.query.country.trim().toUpperCase() : "";
       if (country) {
+        const settings = await storage.getSettings();
+        if (!isDepositMethodConfigured(country, "manual", settings)) return res.json([]);
         const nums = await storage.getPaymentNumbersByCountry(country);
         return res.json(nums);
       }
@@ -1082,28 +1225,32 @@ export async function registerRoutes(
          ) {
            return res.status(400).json({ message: "Ce numéro de paiement n'est plus disponible pour ce pays" });
          }
+          if (!isDepositMethodConfigured(normalizedDeposit.country, "manual", settings)) {
+            return res.status(400).json({ message: "Le paiement manuel n'est pas configuré pour ce pays" });
+          }
          if (!screenshot) {
            return res.status(400).json({ message: "La capture d'écran du paiement est requise" });
          }
        }
 
-      const soleaspayEnabled = settings.soleaspayEnabled === "true";
-      const soleaspayCountries = (settings.soleaspayCountries || "")
-        .split(",")
-        .map((country) => country.trim().toUpperCase())
-        .filter(Boolean);
+        const explicitRouting = parseDepositMethodsByCountry(settings.depositMethodsByCountry);
+        const hasAutomaticProviderRequest =
+          useSoleaspay === true || useWestpay === true || useInpay === true;
+        if (explicitRouting && !hasManualPaymentNumber && !hasAutomaticProviderRequest) {
+          return res.status(400).json({ message: "Sélectionnez un moyen de dépôt autorisé pour ce pays" });
+        }
+
       const soleaspayCountry = normalizedDeposit.country.trim().toUpperCase();
       const orderId = `JOLLIBEE-${Date.now()}-${user.id}`;
       
       if (useSoleaspay === true) {
-        if (!soleaspayEnabled) {
-          return res.status(400).json({ message: "SoleaPay est désactivé", soleaspay: true });
-        }
-        if (!soleaspayCountries.includes(soleaspayCountry)) {
+        if (!isDepositMethodConfigured(soleaspayCountry, "soleaspay", settings)) {
           return res.status(400).json({ message: "SoleaPay n'est pas activé pour ce pays", soleaspay: true });
         }
-        if (!process.env.SOLEASPAY_API_KEY) {
-          return res.status(503).json({ message: "SoleaPay n'est pas configuré : ajoutez SOLEASPAY_API_KEY dans les Secrets du serveur", soleaspay: true });
+        try {
+          validateSoleaspayConfig();
+        } catch (error: any) {
+          return res.status(503).json({ message: error.message, soleaspay: true });
         }
          if (!isSoleaspaySupported(soleaspayCountry, normalizedDeposit.paymentMethod)) {
           return res.status(400).json({
@@ -1161,22 +1308,20 @@ export async function registerRoutes(
 
       // ── WestPay: redirect-based hosted-payment flow ─────────────────────────
       if (useWestpay === true) {
-        if (settings.westpayEnabled !== "true") {
-          return res.status(400).json({ message: "WestPay est désactivé", westpay: true });
-        }
-        const westpayCountries = (settings.westpayCountries || "")
-          .split(",")
-          .map((enabledCountry) => enabledCountry.trim().toUpperCase())
-          .filter(Boolean);
-        if (westpayCountries.length && !westpayCountries.includes(normalizedDeposit.country.trim().toUpperCase())) {
+        if (!isDepositMethodConfigured(normalizedDeposit.country, "westpay", settings)) {
           return res.status(400).json({ message: "WestPay n'est pas activé pour ce pays", westpay: true });
         }
         try {
+          validateWestpayConfig();
+        } catch (error: any) {
+          return res.status(503).json({ message: error.message || "WestPay n'est pas configuré dans Plesk", westpay: true });
+        }
+        try {
           if (!process.env.WESTPAY_MERCHANT_SLUG) {
-            return res.status(400).json({ message: "WestPay non configuré : la variable WESTPAY_MERCHANT_SLUG doit être définie sur le serveur", westpay: true });
+            return res.status(400).json({ message: "WestPay non configuré : ajoutez WESTPAY_MERCHANT_SLUG aux variables d'environnement Plesk", westpay: true });
           }
-          if (!process.env.WESTPAY_WEBHOOK_SECRET && !settings.westpayWebhookSecret) {
-            return res.status(503).json({ message: "WestPay ne peut pas confirmer les paiements : configurez WESTPAY_WEBHOOK_SECRET dans les Secrets du serveur", westpay: true });
+          if (!process.env.WESTPAY_WEBHOOK_SECRET) {
+            return res.status(503).json({ message: "WestPay ne peut pas confirmer les paiements : configurez WESTPAY_WEBHOOK_SECRET dans les variables d'environnement Plesk", westpay: true });
           }
           const baseUrl = `${req.protocol}://${req.get("host")}`;
           // Create deposit to get an ID, then build the redirect URL
@@ -1205,13 +1350,12 @@ export async function registerRoutes(
       }
 
       // ── InPay: redirect-based hosted-payment flow ───────────────────────────
-      const inpayEnabledDeposit = settings.inpayEnabled === "true";
-      if (useInpay && inpayEnabledDeposit) {
+      if (useInpay === true) {
         const normalizedCountry = normalizedDeposit.country.trim().toUpperCase();
-        if (!isInpayCountryEnabled(normalizedCountry, settings)) {
+        if (!isDepositMethodConfigured(normalizedCountry, "inpay", settings)) {
           return res.status(400).json({ message: "InPay n'est pas activé pour ce pays", inpay: true });
         }
-        if (!isInpayConfigured(normalizedCountry, settings)) {
+        if (!isInpayConfigured(normalizedCountry)) {
           return res.status(400).json({
             message: `InPay n'est pas configuré pour ${normalizedCountry} : URL API, merchant ID ou clé API manquant`,
             inpay: true,
@@ -1241,7 +1385,7 @@ export async function registerRoutes(
            withdrawalFeePaymentId: withdrawalFeePayment?.id,
         });
         const outTradeNo = inpayCreateOutTradeNo("PAYIN", inpayDeposit.id, user.id);
-        const account = getInpayAccount(normalizedCountry, settings);
+        const account = getInpayAccount(normalizedCountry);
         try {
           const result = await inpayCreatePayin({
             amount: normalizedDeposit.amount,
@@ -1421,9 +1565,6 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (!user) return res.status(401).json({ message: "Non authentifié" });
 
       const settings = await storage.getSettings();
-      if (settings.ashtechEnabled !== "true") {
-        return res.status(400).json({ message: "AshtechPay non activé" });
-      }
       const numericAmount = Number(amount);
       const minDeposit = parseInt(settings.minDeposit || "3500");
       if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -1432,6 +1573,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const existingDeposit = depositId ? await storage.getDeposit(Number(depositId)) : undefined;
       if (existingDeposit && existingDeposit.userId !== user.id) {
         return res.status(403).json({ message: "Accès refusé" });
+      }
+      const selectedCountryCode = String(existingDeposit?.country || country || "").trim().toUpperCase();
+      if (!existingDeposit && !isDepositMethodConfigured(selectedCountryCode, "ashtech", settings)) {
+        return res.status(400).json({ message: "AshtechPay n'est pas configuré pour ce pays" });
       }
       if (existingDeposit?.status === "approved") {
         return res.status(409).json({ message: "Ce dépôt est déjà confirmé" });
@@ -1659,10 +1804,12 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
   // Proxy: operators for a given country (public SendavaPay endpoint)
   app.get("/api/sendavapay/operators/:country", requireAuth, async (req, res) => {
     try {
+      const settings = await storage.getSettings();
+      if (!isDepositMethodConfigured(req.params.country, "sendavapay", settings)) {
+        return res.status(403).json({ success: false, message: "SendavaPay n'est pas configuré pour ce pays" });
+      }
       const svCountry = toSendavapayCountry(req.params.country);
-      const r = await fetch(
-        `https://sendavapay.com/api/sdk/v1/operators/${svCountry}`
-      );
+      const r = await fetch(`${getSendavapayApiBaseUrl()}/operators/${svCountry}`);
       const data = await r.json();
       res.json(data);
     } catch (error: any) {
@@ -1678,8 +1825,8 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (!user) return res.status(401).json({ message: "Non authentifié" });
 
       const settings = await storage.getSettings();
-      if (settings.sendavapayEnabled !== "true") {
-        return res.status(400).json({ message: "SendavaPay non activé" });
+      if (!isDepositMethodConfigured(country, "sendavapay", settings)) {
+        return res.status(400).json({ message: "SendavaPay n'est pas configuré pour ce pays" });
       }
       const minDeposit = parseInt(settings.minDeposit || "3500");
       const numericAmount = Number(amount);
@@ -1702,7 +1849,14 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       // Only use the number explicitly entered for this deposit; never reuse the profile phone.
       const customerPhone = sendavapayFormatPhone(payerPhone.trim(), country);
       const devDomain = process.env.REPLIT_DEV_DOMAIN;
-      const baseUrl = devDomain ? `https://${devDomain}` : "https://sybotx.replit.app";
+      const configuredBaseUrl = process.env.PUBLIC_APP_URL?.trim();
+      const baseUrl = (configuredBaseUrl || (devDomain ? `https://${devDomain}` : ""))
+        .replace(/\/+$/, "");
+      if (!/^https:\/\//i.test(baseUrl)) {
+        return res.status(503).json({
+          message: "SendavaPay exige l'URL publique HTTPS du serveur dans la variable Plesk PUBLIC_APP_URL",
+        });
+      }
       const webhookUrl = `${baseUrl}/api/webhooks/sendavapay`;
 
       const result = await sendavapayCreate({
@@ -1833,7 +1987,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
       // Use lightweight GET payment-status endpoint for polling
       const statusRes = await fetch(
-        `${process.env.SENDAVAPAY_API_BASE || "https://sendavapay.com/api/sdk/v1"}/payment-status/${deposit.sendavapayReference}`,
+        `${getSendavapayApiBaseUrl()}/payment-status/${encodeURIComponent(deposit.sendavapayReference)}`,
         { headers: { Authorization: `Bearer ${process.env.SENDAVAPAY_API_KEY || ""}` } }
       );
       const statusData = await statusRes.json() as { success: boolean; data?: { status: string } };
@@ -1870,7 +2024,6 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const webhookSecret =
         process.env.ASHTECHPAY_WEBHOOK_SECRET ||
         process.env.ASHTECH_WEBHOOK_SECRET ||
-        settings.ashtechWebhookSecret ||
         "";
       if (!webhookSecret) {
         console.error("[ashtechpay webhook] Webhook secret non configuré");
@@ -1938,10 +2091,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     "/api/webhooks/sendavapay",
     async (req, res) => {
       try {
-        const settings = await storage.getSettings();
-        // Prefer the deployment secret; keep the admin setting as a
-        // backwards-compatible fallback for existing installations.
-        const secret = process.env.SENDAVAPAY_WEBHOOK_SECRET || settings.sendavapayWebhookSecret || "";
+        const secret = process.env.SENDAVAPAY_WEBHOOK_SECRET || "";
         if (!secret) {
           console.error("[sendavapay webhook] Webhook secret not configured");
           return res.status(503).json({ message: "Webhook secret non configuré" });
@@ -2011,8 +2161,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     "/api/webhooks/westpay",
     async (req, res) => {
       try {
-        const settings = await storage.getSettings();
-        const secret = process.env.WESTPAY_WEBHOOK_SECRET || settings.westpayWebhookSecret || "";
+        const secret = process.env.WESTPAY_WEBHOOK_SECRET || "";
         if (!secret) {
           console.error("[westpay webhook] Webhook secret not configured");
           return res.status(503).json({ message: "Webhook secret non configuré" });
@@ -2766,10 +2915,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
       const settings = await storage.getSettings();
       const country = withdrawal.country.trim().toUpperCase();
-      if (!isInpayCountryEnabled(country, settings) || !isInpayConfigured(country, settings)) {
+      if (!isInpayCountryEnabled(country, settings) || !isInpayConfigured(country)) {
         return res.status(400).json({ message: `InPay n'est pas configuré pour ${country}` });
       }
-      const account = getInpayAccount(country, settings);
+      const account = getInpayAccount(country);
       const bankCode = inpayResolveBankCode(country, withdrawal.paymentMethod);
       const outTradeNo = inpayCreateOutTradeNo("PAYOUT", withdrawal.id, withdrawal.userId);
       const result = await inpayCreatePayout({
@@ -3135,7 +3284,32 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
   app.get("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const settings = await storage.getSettings();
-      res.json(adminSettings(settings));
+      const countries = await storage.getCountries();
+      const explicitRouting = parseDepositMethodsByCountry(settings.depositMethodsByCountry);
+      const routing = explicitRouting || {};
+      if (!explicitRouting) {
+        const paymentNumbers = await storage.getPaymentNumbers();
+        for (const country of countries) {
+          const code = country.code.trim().toUpperCase();
+          routing[code] = DEPOSIT_METHOD_IDS.filter((method) => {
+            if (method === "manual") {
+              return paymentNumbers.some((number) =>
+                number.isActive && number.country.toUpperCase() === code
+              );
+            }
+            return isLegacyDepositMethodAssigned(method, code, settings);
+          });
+        }
+      } else {
+        for (const country of countries) {
+          const code = country.code.trim().toUpperCase();
+          routing[code] ||= [];
+        }
+      }
+      res.json({
+        ...adminSettings(settings),
+        depositMethodsByCountry: JSON.stringify(routing),
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -3145,10 +3319,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     const country = String(req.params.country).trim().toUpperCase();
     try {
       const settings = await storage.getSettings();
-      if (!isInpayConfigured(country, settings)) {
+      if (!isInpayConfigured(country)) {
         return res.status(400).json({ message: `InPay n'est pas configuré pour ${country}` });
       }
-      const account = getInpayAccount(country, settings);
+      const account = getInpayAccount(country);
       const balance = await inpayGetBalance({
         merchantId: account.merchantId,
         apiKey: account.apiKey,
@@ -3212,15 +3386,38 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const entries = Object.entries(req.body ?? {});
       const unknownKeys = entries
         .map(([key]) => key)
-        .filter((key) => !ADMIN_SETTING_KEYS.has(key));
+        .filter((key) => !isAdminSettingKey(key));
       if (unknownKeys.length > 0) {
         return res.status(400).json({
           message: `Paramètre(s) non reconnu(s) : ${unknownKeys.join(", ")}`,
         });
       }
+      const routingEntry = entries.find(([key]) => key === "depositMethodsByCountry");
+      let normalizedRouting: Record<string, DepositMethodId[]> | undefined;
+      if (routingEntry) {
+        if (typeof routingEntry[1] !== "string") {
+          return res.status(400).json({ message: "La configuration des méthodes de dépôt doit être du JSON texte" });
+        }
+        normalizedRouting = parseDepositMethodsByCountry(routingEntry[1] as string);
+        if (!normalizedRouting) {
+          return res.status(400).json({ message: "La configuration des méthodes de dépôt est vide" });
+        }
+        const countryCodes = new Set(
+          (await storage.getCountries()).map((country) => country.code.trim().toUpperCase()),
+        );
+        const unknownCountries = Object.keys(normalizedRouting).filter((code) => !countryCodes.has(code));
+        if (unknownCountries.length > 0) {
+          return res.status(400).json({
+            message: `Pays de routage inconnus : ${unknownCountries.join(", ")}`,
+          });
+        }
+      }
       for (const [key, value] of entries) {
         if (SENSITIVE_SETTING_KEYS.has(key) && (value === "" || value === MASKED_SETTING_VALUE)) continue;
-        await storage.setSetting(key, value as string, req.session.userId);
+        const serializedValue = key === "depositMethodsByCountry" && normalizedRouting
+          ? JSON.stringify(normalizedRouting)
+          : value as string;
+        await storage.setSetting(key, serializedValue, req.session.userId);
       }
       await storage.logAdminAction(req.session.userId!, "update_settings", null, `Paramètres modifiés`);
       res.json({ success: true });
@@ -3362,28 +3559,60 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.get("/api/deposit/provider/:country", requireAuth, async (req, res) => {
     try {
-      const country = req.params.country.toUpperCase();
+      const country = String(req.params.country || "").trim().toUpperCase();
       const active = await storage.getActiveCountries();
       if (!active.some(c => c.code.toUpperCase() === country)) {
         return res.status(404).json({ message: "Pays indisponible" });
       }
       const settings = await storage.getSettings();
-      const enabledCodes = (value: string | undefined) =>
-        (value || "").split(",").map(code => code.trim().toUpperCase()).filter(Boolean);
-      const ashtechCountries = enabledCodes(settings.ashtechCountries);
       const providers: Array<{ provider: "ashtech" | "sendavapay"; name: string }> = [];
-      if (settings.ashtechEnabled === "true" && ashtechCountries.includes(country)) {
-        providers.push({ provider: "ashtech", name: settings.ashtechChannelName || "AshtechPay" });
+      for (const provider of ["ashtech", "sendavapay"] as const) {
+        if (isDepositMethodConfigured(country, provider, settings)) {
+          providers.push({ provider, name: getDepositMethodName(provider, settings) });
+        }
       }
-      if (settings.sendavapayEnabled === "true") {
-        providers.push({ provider: "sendavapay", name: settings.sendavapayChannelName || "SendavaPay" });
+      const requestedProvider = typeof req.query.provider === "string"
+        ? req.query.provider.trim().toLowerCase()
+        : "";
+      if (requestedProvider) {
+        if (requestedProvider !== "ashtech" && requestedProvider !== "sendavapay") {
+          return res.status(400).json({ message: "Fournisseur de dépôt invalide" });
+        }
+        if (!providers.some(({ provider }) => provider === requestedProvider)) {
+          return res.status(403).json({ message: "Ce fournisseur n'est pas configuré pour ce pays" });
+        }
+        const selected = providers.find(({ provider }) => provider === requestedProvider)!;
+        return res.json({ ...selected, providers: [selected] });
       }
       if (providers.length > 0) {
         return res.json({ ...providers[0], providers });
       }
-      return res.status(503).json({ message: "Aucun canal de paiement disponible", provider: "sendavapay", name: "SendavaPay" });
+      return res.status(503).json({ message: "Aucun fournisseur automatique disponible pour ce pays" });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/deposit/methods/:country", requireAuth, async (req, res) => {
+    try {
+      const country = String(req.params.country || "").trim().toUpperCase();
+      const activeCountries = await storage.getActiveCountries();
+      if (!activeCountries.some((entry) => entry.code.toUpperCase() === country)) {
+        return res.status(404).json({ message: "Pays indisponible" });
+      }
+      const settings = await storage.getSettings();
+      const manualNumbers = await storage.getPaymentNumbersByCountry(country);
+      const methods = getAssignedDepositMethods(country, settings)
+        .filter((method) => isDepositProviderGloballyEnabled(method, settings))
+        .filter((method) => method !== "manual" || manualNumbers.length > 0)
+        .map((provider) => ({ provider, name: getDepositMethodName(provider, settings) }));
+      res.json({
+        country,
+        methods,
+        source: settings.depositMethodsByCountry?.trim() ? "admin" : "legacy",
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Impossible de charger les méthodes de dépôt" });
     }
   });
 

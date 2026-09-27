@@ -205,26 +205,22 @@ export async function seed() {
     { key: "level2Commission", value: "4" },
     { key: "level3Commission", value: "1" },
     { key: "signupBonus", value: "1000" },
-    { key: "soleaspayEnabled", value: "true" },
-    { key: "soleaspayCountries", value: "TG,BF" },
+    { key: "soleaspayEnabled", value: "false" },
+    { key: "soleaspayCountries", value: "" },
     { key: "soleaspayChannelName", value: "SoleaPay" },
     { key: "omnipayEnabled", value: "false" },
     { key: "omnipayChannelName", value: "OmniPay" },
-    { key: "omnipayCallbackKey", value: "" },
     { key: "sendavapayEnabled", value: "false" },
     { key: "sendavapayChannelName", value: "SendavaPay" },
-    { key: "sendavapayWebhookSecret", value: "" },
-    { key: "westpayEnabled", value: "true" },
+    { key: "westpayEnabled", value: "false" },
     { key: "westpayChannelName", value: "WestPay" },
-    { key: "westpayCountries", value: "NE" },
-    { key: "westpayWebhookSecret", value: "" },
-    { key: "ashtechEnabled", value: "true" },
+    { key: "westpayCountries", value: "" },
+    { key: "ashtechEnabled", value: "false" },
     { key: "ashtechChannelName", value: "AshtechPay" },
-    { key: "ashtechCountries", value: "BF,TG,CM,BJ" },
-    { key: "ashtechWebhookSecret", value: "" },
-    { key: "inpayEnabled", value: "true" },
+    { key: "ashtechCountries", value: "" },
+    { key: "inpayEnabled", value: "false" },
     { key: "inpayChannelName", value: "InPay" },
-    { key: "inpayCountries", value: "CI" },
+    { key: "inpayCountries", value: "" },
   ];
 
   for (const settingData of requiredSettings) {
@@ -279,42 +275,8 @@ export async function seed() {
     console.log("Minimum withdrawal setting migrated to 800 FCFA");
   }
 
-  const currentGatewaySettings = new Map<string, string>(
-    (await db.select().from(platformSettings)).map(({ key, value }) => [key, value] as [string, string]),
-  );
-  const previousGatewayDefaults = {
-    soleaspayEnabled: "false",
-    soleaspayCountries: "",
-    soleaspayChannelName: "Westpay",
-    westpayEnabled: "false",
-    westpayCountries: "",
-    ashtechEnabled: "true",
-    ashtechCountries: "BF,TG,CM,BJ",
-    inpayEnabled: "false",
-    inpayCountries: "",
-  };
-  const stillUsingPreviousGatewayDefaults = Object.entries(previousGatewayDefaults)
-    .every(([key, value]) => currentGatewaySettings.get(key) === value);
-
-  if (stillUsingPreviousGatewayDefaults) {
-    const requestedGatewayDefaults = {
-      soleaspayEnabled: "true",
-      soleaspayCountries: "TG,BF",
-      soleaspayChannelName: "SoleaPay",
-      westpayEnabled: "true",
-      westpayCountries: "NE",
-      inpayEnabled: "true",
-      inpayCountries: "CI",
-    };
-    for (const [key, value] of Object.entries(requestedGatewayDefaults)) {
-      await db.update(platformSettings)
-        .set({ value })
-        .where(eq(platformSettings.key, key));
-    }
-    console.log("Default deposit providers configured for CI, NE, TG and BF");
-  } else {
-    console.log("Customized payment-provider settings preserved");
-  }
+  // Preserve existing payment settings. Deposit routes are configured explicitly
+  // by an administrator; startup seeding must not assign countries automatically.
   console.log("Settings check complete");
 
   console.log("Database seeding complete!");

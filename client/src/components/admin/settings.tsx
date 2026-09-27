@@ -14,6 +14,69 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Loader2, Save, Link, Clock, Users, Zap } from "lucide-react";
 
+type AdminCountry = { code: string; name: string; isActive: boolean };
+type DepositMethodId = "manual" | "soleaspay" | "ashtech" | "sendavapay" | "westpay" | "inpay";
+
+const DEPOSIT_METHOD_OPTIONS: Array<{ value: DepositMethodId; label: string }> = [
+  { value: "manual", label: "Paiement manuel" },
+  { value: "soleaspay", label: "SoleaPay" },
+  { value: "ashtech", label: "AshtechPay" },
+  { value: "sendavapay", label: "SendavaPay" },
+  { value: "westpay", label: "WestPay" },
+  { value: "inpay", label: "InPay" },
+];
+
+function getInitialDepositRouting(
+  settings: Record<string, string>,
+  countries: AdminCountry[],
+  paymentNumbers: Array<{ country: string; isActive: boolean }>,
+): Record<string, DepositMethodId[]> {
+  const parsed = settings.depositMethodsByCountry;
+  if (parsed) {
+    try {
+      const stored = JSON.parse(parsed) as Record<string, unknown>;
+      return Object.fromEntries(countries.map(({ code }) => {
+        const methods = Array.isArray(stored[code.toUpperCase()])
+          ? (stored[code.toUpperCase()] as unknown[]).filter(
+              (method): method is DepositMethodId =>
+                typeof method === "string" &&
+                DEPOSIT_METHOD_OPTIONS.some((option) => option.value === method),
+            )
+          : [];
+        return [code.toUpperCase(), methods];
+      }));
+    } catch {
+      return Object.fromEntries(countries.map(({ code }) => [code.toUpperCase(), []]));
+    }
+  }
+
+  const countryAllowed = (value: string | undefined, code: string, emptyMeansAll = false) => {
+    const configured = (value || "").split(",").map((item) => item.trim().toUpperCase()).filter(Boolean);
+    return configured.length === 0 ? emptyMeansAll : configured.includes(code);
+  };
+  return Object.fromEntries(countries.map(({ code }) => {
+    const normalizedCode = code.toUpperCase();
+    const methods: DepositMethodId[] = [];
+    if (settings.soleaspayEnabled === "true" && countryAllowed(settings.soleaspayCountries, normalizedCode)) {
+      methods.push("soleaspay");
+    }
+    if (settings.ashtechEnabled === "true" && countryAllowed(settings.ashtechCountries, normalizedCode, true)) {
+      methods.push("ashtech");
+    }
+    if (settings.sendavapayEnabled === "true") methods.push("sendavapay");
+    if (settings.westpayEnabled === "true" && countryAllowed(settings.westpayCountries, normalizedCode, true)) {
+      methods.push("westpay");
+    }
+    if (settings.inpayEnabled === "true" && countryAllowed(settings.inpayCountries, normalizedCode)) {
+      methods.push("inpay");
+    }
+    if (paymentNumbers.some((number) => number.isActive && number.country.toUpperCase() === normalizedCode)) {
+      methods.push("manual");
+    }
+    return [normalizedCode, methods];
+  }));
+}
+
 const NETWORKS = [
   { value: "telegram", label: "Telegram" },
   { value: "whatsapp", label: "WhatsApp" },
@@ -22,22 +85,6 @@ const NETWORKS = [
   { value: "tiktok", label: "TikTok" },
   { value: "youtube", label: "YouTube" },
 ];
-const INPAY_COUNTRIES = [
-  { code: "SN", name: "Sénégal" },
-  { code: "ML", name: "Mali" },
-  { code: "CI", name: "Côte d'Ivoire" },
-  { code: "BF", name: "Burkina Faso" },
-  { code: "TG", name: "Togo" },
-  { code: "BJ", name: "Bénin" },
-  { code: "GH", name: "Ghana" },
-  { code: "CM", name: "Cameroun" },
-  { code: "CG", name: "Congo" },
-  { code: "KE", name: "Kenya" },
-  { code: "TZ", name: "Tanzanie" },
-  { code: "UG", name: "Ouganda" },
-  { code: "ZA", name: "Afrique du Sud" },
-] as const;
-
 const settingsSchema = z.object({
   supportLink: z.string().min(5, "Lien requis"),
   supportType: z.string().min(1, "Réseau requis"),
@@ -71,29 +118,12 @@ const settingsSchema = z.object({
   sendavapayChannelName: z.string().min(1, "Nom requis"),
   soleaspayEnabled: z.boolean(),
   soleaspayChannelName: z.string().min(1, "Nom requis"),
-  soleaspayCountries: z.string(),
   westpayEnabled: z.boolean(),
   westpayChannelName: z.string().min(1, "Nom requis"),
-  westpayCountries: z.string(),
   ashtechEnabled: z.boolean(),
   ashtechChannelName: z.string().min(1, "Nom requis"),
-  ashtechCountries: z.string(),
   inpayEnabled: z.boolean(),
   inpayChannelName: z.string().min(1, "Nom requis"),
-  inpayCountries: z.string(),
-  inpayMerchantId_SN: z.string(),
-  inpayMerchantId_ML: z.string(),
-  inpayMerchantId_CI: z.string(),
-  inpayMerchantId_BF: z.string(),
-  inpayMerchantId_TG: z.string(),
-  inpayMerchantId_BJ: z.string(),
-  inpayMerchantId_GH: z.string(),
-  inpayMerchantId_CM: z.string(),
-  inpayMerchantId_CG: z.string(),
-  inpayMerchantId_KE: z.string(),
-  inpayMerchantId_TZ: z.string(),
-  inpayMerchantId_UG: z.string(),
-  inpayMerchantId_ZA: z.string(),
 });
 
 type SettingsForm = z.infer<typeof settingsSchema>;
@@ -108,6 +138,15 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
   const { data: settings, isLoading } = useQuery<Record<string, string>>({
     queryKey: ["/api/admin/settings"],
   });
+  const { data: countries = [], isLoading: countriesLoading } = useQuery<AdminCountry[]>({
+    queryKey: ["/api/admin/countries"],
+  });
+  const { data: paymentNumbers = [], isLoading: paymentNumbersLoading } = useQuery<
+    Array<{ country: string; isActive: boolean }>
+  >({
+    queryKey: ["/api/admin/payment-numbers"],
+  });
+  const [depositMethodsByCountry, setDepositMethodsByCountry] = useState<Record<string, DepositMethodId[]>>({});
 
   const form = useForm<SettingsForm>({
     resolver: zodResolver(settingsSchema),
@@ -142,19 +181,14 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       level3Commission: "1",
       sendavapayEnabled: false,
       sendavapayChannelName: "SendavaPay",
-      soleaspayEnabled: true,
+      soleaspayEnabled: false,
       soleaspayChannelName: "SoleaPay",
-      soleaspayCountries: "TG,BF",
-      westpayEnabled: true,
+      westpayEnabled: false,
       westpayChannelName: "WestPay",
-      westpayCountries: "NE",
-      ashtechEnabled: true,
+      ashtechEnabled: false,
       ashtechChannelName: "AshtechPay",
-      ashtechCountries: "BF,TG,CM,BJ",
-      inpayEnabled: true,
+      inpayEnabled: false,
       inpayChannelName: "InPay",
-      inpayCountries: "CI",
-      ...Object.fromEntries(INPAY_COUNTRIES.map(({ code }) => [`inpayMerchantId_${code}`, ""])),
     },
   });
 
@@ -191,30 +225,26 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         level3Commission: settings.level3Commission || "1",
         soleaspayEnabled: settings.soleaspayEnabled === "true",
         soleaspayChannelName: settings.soleaspayChannelName || "SoleaPay",
-        soleaspayCountries: settings.soleaspayCountries ?? "TG,BF",
         westpayEnabled: settings.westpayEnabled === "true",
         westpayChannelName: settings.westpayChannelName || "WestPay",
-        westpayCountries: settings.westpayCountries ?? "NE",
         sendavapayEnabled: settings.sendavapayEnabled === "true",
         sendavapayChannelName: settings.sendavapayChannelName || "SendavaPay",
         ashtechEnabled: settings.ashtechEnabled === "true",
         ashtechChannelName: settings.ashtechChannelName || "AshtechPay",
-        ashtechCountries: settings.ashtechCountries ?? "BF,TG,CM,BJ",
         inpayEnabled: settings.inpayEnabled === "true",
         inpayChannelName: settings.inpayChannelName || "InPay",
-        inpayCountries: settings.inpayCountries ?? "CI",
-        ...Object.fromEntries(INPAY_COUNTRIES.map(({ code }) => [
-          `inpayMerchantId_${code}`,
-          settings[`inpayMerchantId_${code}`] || "",
-        ])),
       });
+      if (!countriesLoading && !paymentNumbersLoading) {
+        setDepositMethodsByCountry(getInitialDepositRouting(settings, countries, paymentNumbers));
+      }
     }
-  }, [settings, form]);
+  }, [settings, form, countries, paymentNumbers, countriesLoading, paymentNumbersLoading]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: SettingsForm) => {
       const serialized = {
         ...data,
+        depositMethodsByCountry: JSON.stringify(depositMethodsByCountry),
         supportEnabled: String(data.supportEnabled),
         support2Enabled: String(data.support2Enabled),
         channelEnabled: String(data.channelEnabled),
@@ -261,13 +291,66 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
     },
   });
 
-  if (isLoading) {
+  if (isLoading || countriesLoading || paymentNumbersLoading) {
     return <Skeleton className="h-96" />;
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))} className="space-y-4">
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Méthodes de dépôt par pays</CardTitle>
+            <p className="text-sm text-gray-500">
+              Cochez les moyens autorisés pour chaque pays. Si plusieurs sont cochés, le client choisira son moyen au moment du dépôt.
+              Les interrupteurs de fournisseur plus bas sont des commandes globales d’activation ; ils ne remplacent pas cette configuration par pays.
+              Les URL, identifiants, clés et secrets des fournisseurs restent dans les variables d’environnement Plesk.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[...countries]
+              .sort((a, b) => Number(b.isActive) - Number(a.isActive) || a.name.localeCompare(b.name))
+              .map((country) => {
+                const code = country.code.toUpperCase();
+                const selectedMethods = new Set(depositMethodsByCountry[code] || []);
+                return (
+                  <div key={code} className="rounded-xl border p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="font-semibold text-gray-800">{country.name} ({code})</span>
+                      {!country.isActive && (
+                        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Inactif</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {DEPOSIT_METHOD_OPTIONS.map((method) => (
+                        <label key={method.value} className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={selectedMethods.has(method.value)}
+                            onChange={(event) => {
+                              setDepositMethodsByCountry((current) => {
+                                const nextMethods = new Set(current[code] || []);
+                                if (event.target.checked) nextMethods.add(method.value);
+                                else nextMethods.delete(method.value);
+                                return {
+                                  ...current,
+                                  [code]: DEPOSIT_METHOD_OPTIONS
+                                    .map((option) => option.value)
+                                    .filter((value) => nextMethods.has(value)),
+                                };
+                              });
+                            }}
+                          />
+                          {method.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+          </CardContent>
+        </Card>
 
         {/* ── Liens & Réseaux sociaux ── */}
         <Card>
@@ -639,9 +722,11 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
               </FormItem>
             )} />
             <div className="rounded-xl bg-orange-50 border border-orange-100 p-3 text-xs text-orange-700 space-y-1">
-              <p className="font-semibold">Configuration requise :</p>
-              <p>1. Ajoutez la variable d'environnement <code className="bg-orange-100 px-1 rounded">SENDAVAPAY_API_KEY</code> avec votre clé SDK (commence par <code className="bg-orange-100 px-1 rounded">sdk_</code>)</p>
-               <p>2. Ajoutez le secret Webhook dans SENDAVAPAY_WEBHOOK_SECRET, puis configurez l'URL webhook dans votre compte SendavaPay : <code className="bg-orange-100 px-1 rounded">/api/webhooks/sendavapay</code></p>
+              <p className="font-semibold">Variables requises dans Plesk :</p>
+              <p><code className="bg-orange-100 px-1 rounded">SENDAVAPAY_API_BASE_URL</code> — URL API fournie par SendavaPay</p>
+              <p><code className="bg-orange-100 px-1 rounded">SENDAVAPAY_API_KEY</code> — clé SDK (commence par <code className="bg-orange-100 px-1 rounded">sdk_</code>)</p>
+              <p><code className="bg-orange-100 px-1 rounded">SENDAVAPAY_WEBHOOK_SECRET</code> — secret de signature du webhook</p>
+              <p>Définissez <code className="bg-orange-100 px-1 rounded">PUBLIC_APP_URL</code> en HTTPS et configurez l'URL webhook : <code className="bg-orange-100 px-1 rounded">/api/webhooks/sendavapay</code></p>
             </div>
           </CardContent>
         </Card>
@@ -674,17 +759,11 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="soleaspayCountries" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pays SoleaPay activés</FormLabel>
-                <FormControl><Input {...field} placeholder="TG,BF — codes séparés par virgule" /></FormControl>
-                <FormDescription className="text-xs">Seuls les pays listés peuvent utiliser SoleaPay. Un champ vide désactive la disponibilité par pays.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
             <div className="rounded-xl bg-purple-50 border border-purple-100 p-3 text-xs text-purple-800 space-y-1">
-              <p className="font-semibold">Configuration serveur :</p>
-              <p>Ajoutez <code className="bg-purple-100 px-1 rounded">SOLEASPAY_API_KEY</code> dans les Secrets du serveur.</p>
+              <p className="font-semibold">Variables d’environnement Plesk :</p>
+              <p><code className="bg-purple-100 px-1 rounded">SOLEASPAY_API_BASE_URL</code> — URL API SoleaPay fournie par le prestataire.</p>
+              <p><code className="bg-purple-100 px-1 rounded">SOLEASPAY_API_KEY</code> — clé API SoleaPay.</p>
+              <p>Définissez aussi <code className="bg-purple-100 px-1 rounded">PUBLIC_APP_URL</code> sur l’URL HTTPS publique de l’application.</p>
               <p>Les retraits SoleaPay ne sont pas raccordés. URL de vérification : <code className="bg-purple-100 px-1 rounded">/api/deposits/:id/verify</code>.</p>
             </div>
           </CardContent>
@@ -720,20 +799,15 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="westpayCountries" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pays activés (codes séparés par virgule)</FormLabel>
-                <FormControl><Input {...field} placeholder="NE — vide = tous les pays" /></FormControl>
-                <FormDescription className="text-xs">WestPay est raccordé aux dépôts uniquement. Laissez vide pour autoriser tous les pays.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
             <div className="rounded-xl bg-orange-50 border border-orange-100 p-3 text-xs text-orange-700 space-y-1">
-              <p className="font-semibold">Secrets requis sur le serveur :</p>
+              <p className="font-semibold">Variables requises dans Plesk :</p>
+              <p>• <code className="bg-orange-100 px-1 rounded">WESTPAY_API_BASE_URL</code> — URL de l’API marchande</p>
+              <p>• <code className="bg-orange-100 px-1 rounded">WESTPAY_CHECKOUT_BASE_URL</code> — URL de la page de paiement hébergée</p>
               <p>• <code className="bg-orange-100 px-1 rounded">WESTPAY_MERCHANT_SLUG</code> — votre identifiant marchand WestPay</p>
               <p>• <code className="bg-orange-100 px-1 rounded">WESTPAY_WEBHOOK_SECRET</code> — vérification des confirmations de paiement</p>
+              <p>• Pour les retraits : <code className="bg-orange-100 px-1 rounded">WESTPAY_API_KEY_&lt;PAYS&gt;</code></p>
               <p>• URL webhook à configurer dans votre compte WestPay : <code className="bg-orange-100 px-1 rounded">/api/webhooks/westpay</code></p>
-              <p className="font-semibold text-red-600 mt-1">⚠ Ne jamais saisir ces clés dans un formulaire ou les stocker en base de données.</p>
+              <p className="font-semibold text-red-600 mt-1">Ne saisissez jamais ces valeurs dans ce formulaire ou en base de données.</p>
             </div>
           </CardContent>
         </Card>
@@ -766,54 +840,44 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="inpayCountries" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pays InPay activés</FormLabel>
-                <FormControl><Input {...field} placeholder="TG,CI,BJ — codes séparés par virgule" /></FormControl>
-                <FormDescription className="text-xs">Seuls ces pays afficheront InPay. Les identifiants marchands ci-dessous sont séparés par pays.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
             <div className="space-y-2">
-              <p className="text-sm font-semibold text-gray-800">Comptes marchands et soldes</p>
-              {INPAY_COUNTRIES.map(({ code, name }) => (
-                <FormField
-                  key={code}
-                  control={form.control}
-                  name={`inpayMerchantId_${code}` as keyof SettingsForm}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">{name} ({code})</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl><Input {...field} value={String(field.value ?? "")} placeholder={`Merchant ID ${code}`} /></FormControl>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => inpayBalanceMutation.mutate(code)}
-                          disabled={!field.value || inpayBalanceMutation.isPending}
-                        >
-                          {inpayBalanceMutation.isPending && inpayBalanceMutation.variables === code
-                            ? <Loader2 className="w-4 h-4 animate-spin" />
-                            : "Solde"}
-                        </Button>
-                      </div>
-                      {inpayBalances[code] !== undefined && (
-                        <FormDescription className="text-xs text-blue-700">
-                          Solde InPay : {inpayBalances[code]}
-                        </FormDescription>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
+              <p className="text-sm font-semibold text-gray-800">Soldes par pays</p>
+              {countries.map(({ code, name }) => {
+                const country = code.toUpperCase();
+                return (
+                  <div key={country} className="space-y-1">
+                    <p className="text-xs font-medium">
+                      {name} ({country})
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Identifiants chargés depuis Plesk : <code>INPAY_MERCHANT_ID_{country}</code> et <code>INPAY_API_KEY_{country}</code>
+                    </p>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => inpayBalanceMutation.mutate(country)}
+                        disabled={inpayBalanceMutation.isPending}
+                      >
+                        {inpayBalanceMutation.isPending && inpayBalanceMutation.variables === country
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : "Solde"}
+                      </Button>
+                    </div>
+                    {inpayBalances[country] !== undefined && (
+                      <p className="text-xs text-blue-700">Solde InPay : {inpayBalances[country]}</p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-800 space-y-1">
-              <p className="font-semibold">Configuration serveur InPay :</p>
+              <p className="font-semibold">Variables d’environnement Plesk InPay :</p>
               <p>• <code className="bg-blue-100 px-1 rounded">INPAY_API_BASE_URL</code> — URL de base fournie par InPay</p>
-              <p>• <code className="bg-blue-100 px-1 rounded">INPAY_API_KEY_TG</code>, <code className="bg-blue-100 px-1 rounded">INPAY_API_KEY_CI</code>… — une clé API par pays activé</p>
+              <p>• <code className="bg-blue-100 px-1 rounded">INPAY_MERCHANT_ID_&lt;PAYS&gt;</code> — identifiant marchand pour chaque pays activé</p>
+              <p>• <code className="bg-blue-100 px-1 rounded">INPAY_API_KEY_&lt;PAYS&gt;</code> — clé API pour chaque pays activé</p>
               <p>• URL webhook InPay : <code className="bg-blue-100 px-1 rounded">/api/webhooks/inpay</code></p>
-              <p className="font-semibold text-red-600">Ne saisissez jamais les clés API dans ce formulaire : elles restent dans les secrets serveur.</p>
+              <p>Les identifiants marchands et toutes les clés API sont lus uniquement depuis les variables Plesk, jamais depuis les paramètres administrateur.</p>
             </div>
           </CardContent>
         </Card>
@@ -846,17 +910,9 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="ashtechCountries" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pays activés (codes séparés par virgule)</FormLabel>
-                <FormControl><Input {...field} placeholder="TG,CI,BJ,SN — vide = tous les pays" /></FormControl>
-                <FormDescription className="text-xs">AshtechPay traite les dépôts. En cas de chevauchement avec SoleaPay, SoleaPay est choisi en priorité.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} />
             <div className="rounded-xl bg-green-50 border border-green-100 p-3 text-xs text-green-800 space-y-1">
-              <p className="font-semibold">Configuration requise :</p>
-              <p>Ajoutez <code className="bg-green-100 px-1 rounded">ASHTECHPAY_API_KEY</code> dans les Secrets du serveur.</p>
+              <p className="font-semibold">Variables d’environnement Plesk :</p>
+              <p>Ajoutez <code className="bg-green-100 px-1 rounded">ASHTECHPAY_API_BASE_URL</code>, <code className="bg-green-100 px-1 rounded">ASHTECHPAY_API_KEY</code> et <code className="bg-green-100 px-1 rounded">ASHTECHPAY_WEBHOOK_SECRET</code> sur le serveur.</p>
               <p>La clé API n'est jamais enregistrée dans les paramètres ni affichée dans ce formulaire.</p>
               <p>URL de notification à configurer chez AshtechPay : <code className="bg-green-100 px-1 rounded">/api/webhooks/ashtechpay</code>. Le statut est confirmé par interrogation sécurisée de l'API.</p>
             </div>

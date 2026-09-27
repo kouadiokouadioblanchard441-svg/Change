@@ -13,6 +13,9 @@ import type { PaymentNumber } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
 
+type DepositMethodId = "manual" | "soleaspay" | "ashtech" | "sendavapay" | "westpay" | "inpay";
+type DepositMethodChoice = { provider: DepositMethodId; name: string };
+
 const TON_GREEN = "#FF7A14";
 const TON_GREEN_DARK = "#E85D00";
 const TON_GRADIENT = `linear-gradient(112deg, ${TON_GREEN} 0%, ${TON_GREEN_DARK} 100%)`;
@@ -183,6 +186,7 @@ export default function DepositPage() {
 
   const [step, setStep] = useState<Step>("amount");
   const [selectedNumber, setSelectedNumber] = useState<PaymentNumber | null>(null);
+  const [selectedDepositMethod, setSelectedDepositMethod] = useState<DepositMethodId | "">("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const [amount, setAmount] = useState<number | "">("");
@@ -238,44 +242,42 @@ export default function DepositPage() {
   const { data: platformSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
   });
+  const { data: depositMethodsData, isLoading: depositMethodsLoading, isError: depositMethodsError } =
+    useQuery<{ country: string; methods: DepositMethodChoice[] }>({
+      queryKey: ["/api/deposit/methods", country],
+      queryFn: async () => {
+        const response = await fetch(`/api/deposit/methods/${encodeURIComponent(country)}`, {
+          credentials: "include",
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "Impossible de charger les moyens de dépôt");
+        return result;
+      },
+      enabled: !!country,
+    });
+  const depositMethods = depositMethodsData?.methods || [];
+  const depositMethodIds = new Set(depositMethods.map((method) => method.provider));
+  const depositMethodSignature = depositMethods.map((method) => method.provider).join(",");
+  useEffect(() => {
+    if (depositMethods.length === 1) {
+      setSelectedDepositMethod(depositMethods[0].provider);
+    } else {
+      setSelectedDepositMethod("");
+    }
+  }, [country, depositMethodSignature]);
   const MIN_DEPOSIT = Math.max(3500, parseInt(platformSettings?.minDeposit || "3500"));
   const depositPresets = [
     3500, 5000, 10000, 25000, 50000,
     100000, 200000, 300000, 400000, 500000,
   ].filter((preset) => preset >= MIN_DEPOSIT);
-  const sendavapayEnabled = platformSettings?.sendavapayEnabled === "true";
-  const sendavapayChannelName = platformSettings?.sendavapayChannelName || "SendavaPay";
-  const westpayEnabled = platformSettings?.westpayEnabled === "true";
   const westpayChannelName = platformSettings?.westpayChannelName || "WestPay";
-  const westpayCountries = platformSettings?.westpayCountries || "";
-  const westpayAvailable = westpayEnabled && (
-    !westpayCountries || westpayCountries.split(",").map(c => c.trim().toUpperCase()).includes(country.toUpperCase())
-  );
-  const inpayEnabled = platformSettings?.inpayEnabled === "true";
   const inpayChannelName = platformSettings?.inpayChannelName || "InPay";
-  const inpayCountries = platformSettings?.inpayCountries || "";
-  const inpayAvailable = inpayEnabled && inpayCountries
-    .split(",")
-    .map(c => c.trim().toUpperCase())
-    .includes(country.toUpperCase());
-  const soleaspayEnabled = platformSettings?.soleaspayEnabled === "true";
   const soleaspayChannelName = platformSettings?.soleaspayChannelName || "SoleaPay";
-  const soleaspayCountries = platformSettings?.soleaspayCountries || "";
-  const soleaspayAvailable = soleaspayEnabled && soleaspayCountries
-    .split(",")
-    .map(c => c.trim().toUpperCase())
-    .includes(country.toUpperCase());
-  const ashtechEnabled = platformSettings?.ashtechEnabled === "true";
   const ashtechChannelName = platformSettings?.ashtechChannelName || "AshtechPay";
-  const ashtechCountriesSetting = platformSettings?.ashtechCountries || "";
-  const ashtechCountryAllowed = !ashtechCountriesSetting ||
-    ashtechCountriesSetting.split(",").map(c => c.trim().toUpperCase()).includes(country.toUpperCase());
-  const ashtechAvailable = ashtechEnabled && ashtechCountryAllowed;
+  const ashtechAvailable = depositMethodIds.has("ashtech");
 
   const activeDepositCountries = apiCountries.filter(c => c.isActive) as Array<{ code: string; name: string; currency: string }>;
-  const ashtechConfiguredCountryCodes = ashtechCountriesSetting
-    ? ashtechCountriesSetting.split(",").map(c => c.trim().toUpperCase()).filter(Boolean)
-    : null;
+  const ashtechConfiguredCountryCodes = ashtechAvailable ? [country.toUpperCase()] : [];
 
   const { data: paymentNumbersList = [], isLoading: numbersLoading } = useQuery<PaymentNumber[]>({
     queryKey: ["/api/payment-numbers", country],
@@ -310,7 +312,7 @@ export default function DepositPage() {
   });
   const availableAshtechCountries = ashtechCountries.filter(c =>
     activeDepositCountries.some(active => active.code.toUpperCase() === c.code.toUpperCase()) &&
-    (!ashtechConfiguredCountryCodes || ashtechConfiguredCountryCodes.includes(c.code.toUpperCase()))
+    ashtechConfiguredCountryCodes.includes(c.code.toUpperCase())
   );
   const selectedAshtechCountry = availableAshtechCountries.find(c => c.code === ashtechCountry);
   const ashtechOperators = selectedAshtechCountry?.operators || [];
@@ -756,7 +758,7 @@ export default function DepositPage() {
       return;
     }
     if (
-      inpayAvailable &&
+      selectedDepositMethod === "inpay" &&
       (!Number.isInteger(Number(amount)) || Number(amount) % 5 !== 0)
     ) {
       toast({
@@ -775,25 +777,44 @@ export default function DepositPage() {
       toast({ title: "Pays requis", description: "Sélectionnez le pays du paiement.", variant: "destructive" });
       return;
     }
-    if (soleaspayAvailable) {
-      window.location.href = `/robotpay?amount=${encodeURIComponent(Number(amount))}&country=${encodeURIComponent(depositCountry)}&provider=soleaspay`;
+    if (!selectedDepositMethod || !depositMethodIds.has(selectedDepositMethod)) {
+      toast({
+        title: "Moyen de dépôt requis",
+        description: depositMethodsLoading
+          ? "Chargement des moyens disponibles..."
+          : "Aucun moyen de dépôt n’est configuré pour ce pays.",
+        variant: "destructive",
+      });
       return;
     }
-    if (inpayAvailable) {
+    if (selectedDepositMethod === "soleaspay" || selectedDepositMethod === "sendavapay" || selectedDepositMethod === "manual") {
+      window.location.href =
+        `/robotpay?amount=${encodeURIComponent(Number(amount))}` +
+        `&country=${encodeURIComponent(depositCountry)}` +
+        `&provider=${encodeURIComponent(selectedDepositMethod)}`;
+      return;
+    }
+    if (selectedDepositMethod === "inpay") {
+      if (!Number.isInteger(Number(amount)) || Number(amount) % 5 !== 0) {
+        toast({
+          title: "Montant InPay invalide",
+          description: "Utilisez un montant entier multiple de 5 : 300, 305, 310…",
+          variant: "destructive",
+        });
+        return;
+      }
       inpayInitiateMutation.mutate();
       return;
     }
-    if (westpayAvailable) {
+    if (selectedDepositMethod === "westpay") {
       wpInitiateMutation.mutate();
       return;
     }
-    if (ashtechAvailable) {
+    if (selectedDepositMethod === "ashtech") {
       setAshtechCountry(country);
       setAshtechPhone(user?.phone || "");
       setStep("ashtech-operator");
-      return;
     }
-    window.location.href = `/robotpay?amount=${encodeURIComponent(Number(amount))}&country=${encodeURIComponent(depositCountry)}`;
   };
 
   const getOperatorIcon = (name: string): string | null => {
@@ -1163,10 +1184,40 @@ export default function DepositPage() {
           {countriesError && <p className="mt-2 text-xs text-amber-700">Liste locale temporaire affichée.</p>}
         </section>
 
+        <section className="country-panel" aria-label="Moyen de dépôt">
+          <label htmlFor="deposit-method">Moyen de dépôt</label>
+          {depositMethodsLoading ? (
+            <p className="mt-2 text-sm text-gray-500">Chargement des moyens disponibles…</p>
+          ) : depositMethods.length > 0 ? (
+            <select
+              id="deposit-method"
+              value={selectedDepositMethod}
+              onChange={(event) => setSelectedDepositMethod(event.target.value as DepositMethodId | "")}
+            >
+              <option value="">Choisissez un moyen de dépôt</option>
+              {depositMethods.map((method) => (
+                <option key={method.provider} value={method.provider}>{method.name}</option>
+              ))}
+            </select>
+          ) : (
+            <p role="alert" className="mt-2 text-sm text-red-700">
+              {depositMethodsError
+                ? "Impossible de charger les moyens de dépôt."
+                : "Aucun moyen de dépôt n’est configuré pour ce pays."}
+            </p>
+          )}
+        </section>
+
         <button
           className="continue"
           onClick={handleAmountNext}
-          disabled={!depositCountry || inpayInitiateMutation.isPending || wpInitiateMutation.isPending}
+          disabled={
+            !depositCountry ||
+            depositMethodsLoading ||
+            !selectedDepositMethod ||
+            inpayInitiateMutation.isPending ||
+            wpInitiateMutation.isPending
+          }
         >
           Recharger maintenant
         </button>
@@ -1205,7 +1256,33 @@ export default function DepositPage() {
           </select>
           <p className="mt-2 text-xs text-gray-500">Seuls les pays activés par l’administration sont affichés.</p>
         </div>
-        <button onClick={openRobotPay} disabled={!depositCountry} className="deposit-step-primary mt-5 w-full py-3 disabled:opacity-50">Continuer vers le paiement</button>
+        <div className="deposit-step-card mt-4 p-4">
+          <label htmlFor="legacy-deposit-method" className="mb-2 block text-sm font-bold text-gray-900">Moyen de dépôt</label>
+          {depositMethodsLoading ? (
+            <p className="text-sm text-gray-500">Chargement des moyens disponibles…</p>
+          ) : depositMethods.length > 0 ? (
+            <select
+              id="legacy-deposit-method"
+              value={selectedDepositMethod}
+              onChange={(event) => setSelectedDepositMethod(event.target.value as DepositMethodId | "")}
+              className="deposit-step-field w-full appearance-none px-4 py-4 text-sm text-gray-700 outline-none"
+            >
+              <option value="">Choisissez un moyen de dépôt</option>
+              {depositMethods.map((method) => <option key={method.provider} value={method.provider}>{method.name}</option>)}
+            </select>
+          ) : (
+            <p role="alert" className="text-sm text-red-700">
+              {depositMethodsError ? "Impossible de charger les moyens." : "Aucun moyen configuré pour ce pays."}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={openRobotPay}
+          disabled={!depositCountry || depositMethodsLoading || !selectedDepositMethod}
+          className="deposit-step-primary mt-5 w-full py-3 disabled:opacity-50"
+        >
+          Continuer vers le paiement
+        </button>
       </div>
     </div>
   );

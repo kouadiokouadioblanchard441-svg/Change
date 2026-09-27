@@ -1,4 +1,18 @@
-const SENDAVAPAY_API_BASE = "https://sendavapay.com/api/sdk/v1";
+export function getSendavapayApiBaseUrl(): string {
+  const configured = (
+    process.env.SENDAVAPAY_API_BASE_URL ||
+    process.env.SENDAVAPAY_API_BASE ||
+    ""
+  ).trim();
+  if (!configured) {
+    throw new Error("SENDAVAPAY_API_BASE_URL doit être configurée dans les variables d'environnement Plesk.");
+  }
+  const parsed = new URL(configured);
+  if (parsed.protocol !== "https:") {
+    throw new Error("SENDAVAPAY_API_BASE_URL doit utiliser HTTPS.");
+  }
+  return parsed.toString().replace(/\/+$/, "");
+}
 
 function getApiKey(): string {
   return process.env.SENDAVAPAY_API_KEY || "";
@@ -98,7 +112,7 @@ export async function createPayment(params: {
   if (params.customerEmail) body.customerEmail = params.customerEmail;
   if (params.webhookUrl) body.webhookUrl = params.webhookUrl;
 
-  const response = await fetch(`${SENDAVAPAY_API_BASE}/create-payment`, {
+  const response = await fetch(`${getSendavapayApiBaseUrl()}/create-payment`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getApiKey()}`,
@@ -129,7 +143,7 @@ interface VerifyPaymentResponse {
 }
 
 export async function verifyPayment(reference: string): Promise<VerifyPaymentResponse> {
-  const response = await fetch(`${SENDAVAPAY_API_BASE}/verify-payment`, {
+  const response = await fetch(`${getSendavapayApiBaseUrl()}/verify-payment`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getApiKey()}`,
@@ -194,7 +208,7 @@ export async function initiatePayment(params: {
   if (params.payerEmail) body.payerEmail = params.payerEmail;
 
   // No SDK key — this endpoint is CORS-enabled and authenticated via paymentToken
-  const response = await fetch(`${SENDAVAPAY_API_BASE}/initiate-payment`, {
+  const response = await fetch(`${getSendavapayApiBaseUrl()}/initiate-payment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -215,7 +229,7 @@ export async function submitOtp(params: {
   otp: string;
 }): Promise<SubmitOtpResponse> {
   // CLIENT (CORS) endpoint — no SDK key, authenticated via otpToken
-  const response = await fetch(`${SENDAVAPAY_API_BASE}/submit-otp`, {
+  const response = await fetch(`${getSendavapayApiBaseUrl()}/submit-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ otpToken: params.otpToken, otp: params.otp }),
@@ -235,7 +249,7 @@ interface RetryPaymentResponse {
 }
 
 export async function retryPayment(paymentToken: string): Promise<RetryPaymentResponse> {
-  const response = await fetch(`${SENDAVAPAY_API_BASE}/retry-payment`, {
+  const response = await fetch(`${getSendavapayApiBaseUrl()}/retry-payment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ paymentToken }),
