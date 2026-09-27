@@ -110,7 +110,7 @@ export default function TeamDetailsPage() {
           <section className="team-details-members" aria-label={`Filleuls de l'équipe ${selected.name}`}>
             <h2>Filleuls · Équipe {selected.name}</h2>
             <p className="team-details-explanation">
-              Pour les vrais filleuls, le revenu total correspond aux bonus de parrainage reçus. Pour les filleuls « Démo », il s'agit d'un exemple.
+              Le revenu total correspond aux bonus de parrainage reçus pour chaque filleul.
             </p>
             <div className="team-details-columns" aria-hidden="true">
               <span>Utilisateur</span><span>Revenu total</span><span>VIP</span><span>Contact</span>
