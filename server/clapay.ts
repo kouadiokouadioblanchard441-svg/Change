@@ -111,6 +111,26 @@ function getAtPath(value: unknown, path: string): unknown {
   }, value);
 }
 
+function isAllowedClapayOperator(country: string, name: string): boolean {
+  const normalizedCountry = country.trim().toUpperCase();
+  const normalizedName = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  switch (normalizedCountry) {
+    case "BF":
+      return normalizedName.includes("orange") || normalizedName.includes("moov");
+    case "TG":
+      return normalizedName.includes("tmoney");
+    case "CI":
+      return normalizedName.includes("wave");
+    default:
+      return true;
+  }
+}
+
 function fillTemplate(template: unknown, values: RequestValues): unknown {
   if (Array.isArray(template)) return template.map((value) => fillTemplate(value, values));
   if (template && typeof template === "object") {
@@ -196,7 +216,7 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
     throw new Error("La réponse Clapay ne contient pas la liste d'opérateurs configurée");
   }
 
-  return rawOperators.map((operator) => {
+  const operators = rawOperators.map((operator) => {
     const id = getAtPath(operator, config.operatorIdPath);
     const name = getAtPath(operator, config.operatorNamePath);
     if ((typeof id !== "string" && typeof id !== "number") || typeof name !== "string") {
@@ -204,6 +224,8 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
     }
     return { id: String(id), name };
   });
+
+  return operators.filter((operator) => isAllowedClapayOperator(country, operator.name));
 }
 
 export async function initiateClapayPayment(values: RequestValues): Promise<{
