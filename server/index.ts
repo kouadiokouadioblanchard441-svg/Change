@@ -10,7 +10,7 @@ import {
   isAshtechConfigured,
   mapAshtechStatus,
 } from "./ashtechpay";
-import { runTelegramDiagnostic, sendDailyTelegramSummary, startTelegramBot } from "./telegram";
+import { sendDailyTelegramSummary, startTelegramBot } from "./telegram";
 
 const app = express();
 const httpServer = createServer(app);
@@ -104,11 +104,6 @@ app.use((req, res, next) => {
   await seed().catch(console.error);
   
   await registerRoutes(httpServer, app);
-  if (process.env.NODE_ENV !== "production" && process.env.TELEGRAM_SELF_TEST_ONCE === "true") {
-    void runTelegramDiagnostic().catch((error) => {
-      console.error("[telegram] diagnostic failed:", error instanceof Error ? error.message : error);
-    });
-  }
   if (process.env.NODE_ENV === "production") {
     startTelegramBot();
     const scheduleTelegramSummary = () => {
