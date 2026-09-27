@@ -272,7 +272,13 @@ export default function DepositPage() {
   ].filter((preset) => preset >= MIN_DEPOSIT);
   const ashtechAvailable = depositMethodIds.has("ashtech");
 
-  const activeDepositCountries = apiCountries.filter(c => c.isActive) as Array<{ code: string; name: string; currency: string }>;
+  const depositCountryPriority: Record<string, number> = { CI: 0, NE: 1 };
+  const activeDepositCountries = apiCountries
+    .filter(c => c.isActive)
+    .sort((first, second) =>
+      (depositCountryPriority[first.code.toUpperCase()] ?? 2) -
+      (depositCountryPriority[second.code.toUpperCase()] ?? 2),
+    ) as Array<{ code: string; name: string; currency: string }>;
   const ashtechConfiguredCountryCodes = ashtechAvailable ? [country.toUpperCase()] : [];
 
   const { data: paymentNumbersList = [], isLoading: numbersLoading } = useQuery<PaymentNumber[]>({
