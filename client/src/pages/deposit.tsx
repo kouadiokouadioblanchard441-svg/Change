@@ -152,7 +152,6 @@ function DepositStepStyles() {
 
 type Step =
   | "amount"
-  | "select"
   | "form"
   | "sv-operator"
   | "sv-waiting"
@@ -786,6 +785,7 @@ export default function DepositPage() {
     }
     if (
       selectedDepositMethod === "soleaspay" ||
+      selectedDepositMethod === "ashtech" ||
       selectedDepositMethod === "sendavapay" ||
       selectedDepositMethod === "manual" ||
       selectedDepositMethod === "clapay"
@@ -811,11 +811,6 @@ export default function DepositPage() {
     if (selectedDepositMethod === "westpay") {
       wpInitiateMutation.mutate();
       return;
-    }
-    if (selectedDepositMethod === "ashtech") {
-      setAshtechCountry(country);
-      setAshtechPhone(user?.phone || "");
-      setStep("ashtech-operator");
     }
   };
 
@@ -1221,56 +1216,12 @@ export default function DepositPage() {
     </main>
   );
 
-  // ── Compatibility redirect for old in-app navigation ──────────────────────
-  if (step === "select") return (
-    <div className="deposit-step-shell">
-      <DepositStepStyles />
-      <header className="deposit-step-header">
-        <button className="deposit-step-back" onClick={() => setStep("amount")}>
-          <ChevronLeft className="h-5 w-5" /><span className="font-semibold text-base">Choisir le pays</span>
-        </button>
-        <Link href="/history"><button className="deposit-step-history">Historique</button></Link>
-      </header>
-      <div className="deposit-step-summary mx-4 mt-4 flex items-center justify-between p-4">
-        <div><p className="text-xs text-gray-500">Montant à déposer</p><p className="text-xl font-bold text-[#E85D00]">{Number(amount).toLocaleString()} FCFA</p></div>
-        <button onClick={() => setStep("amount")} className="text-xs text-[#E85D00] underline">Modifier</button>
-      </div>
-      <div className="deposit-step-content">
-        <div className="deposit-step-card deposit-step-card-orange p-4">
-          <p className="mb-2 text-sm font-bold text-gray-900">Pays du paiement</p>
-          <select value={depositCountry} onChange={e => setDepositCountry(e.target.value)} className="deposit-step-field w-full appearance-none px-4 py-4 text-sm text-gray-700 outline-none">
-            <option value="">Sélectionnez un pays</option>
-            {activeDepositCountries.map(c => <option key={c.code} value={c.code}>{c.name} ({c.currency})</option>)}
-          </select>
-          <p className="mt-2 text-xs text-gray-500">Seuls les pays activés par l’administration sont affichés.</p>
-        </div>
-        {depositCountry && !depositMethodsLoading &&
-          (depositMethodsError || depositMethods.length === 0 || depositMethods.length > 1) && (
-            <p role="alert" className="mt-4 text-sm text-red-700">
-              {depositMethodsError
-                ? "Impossible de vérifier les options de paiement pour ce pays."
-                : depositMethods.length > 1
-                  ? "Plusieurs options de paiement sont configurées pour ce pays. Contactez le service client."
-                  : "Aucune option de paiement n’est disponible pour ce pays."}
-            </p>
-          )}
-        <button
-          onClick={openRobotPay}
-          disabled={!depositCountry || depositMethodsLoading || !selectedDepositMethod}
-          className="deposit-step-primary mt-5 w-full py-3 disabled:opacity-50"
-        >
-          Continuer vers le paiement
-        </button>
-      </div>
-    </div>
-  );
-
   // ── STEP 3: Manual deposit form ────────────────────────────────────────────
   if (step === "form" && selectedNumber) return (
     <div className="deposit-step-shell">
       <DepositStepStyles />
       <header className="deposit-step-header">
-        <button className="deposit-step-back" onClick={() => setStep("select")}>
+        <button className="deposit-step-back" onClick={() => setStep("amount")}>
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">Confirmer le paiement</span>
         </button>
@@ -1386,7 +1337,7 @@ export default function DepositPage() {
     <div className="deposit-step-shell">
       <DepositStepStyles />
       <header className="deposit-step-header">
-        <button className="deposit-step-back" onClick={() => setStep("select")}>
+        <button className="deposit-step-back" onClick={() => setStep("amount")}>
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">Paiement Mobile Money</span>
         </button>
@@ -1444,7 +1395,7 @@ export default function DepositPage() {
     <div className="deposit-step-shell">
       <DepositStepStyles />
       <header className="deposit-step-header">
-        <button className="deposit-step-back" onClick={() => setStep("select")}>
+        <button className="deposit-step-back" onClick={() => setStep("amount")}>
           <ChevronLeft className="w-5 h-5" />
           <span className="font-semibold text-base">Paiement Mobile Money</span>
         </button>
