@@ -104,19 +104,23 @@ app.use((req, res, next) => {
   await seed().catch(console.error);
   
   await registerRoutes(httpServer, app);
-  startTelegramBot();
-  const scheduleTelegramSummary = () => {
-    const now = new Date();
-    const next = new Date(now);
-    next.setMinutes(0, 0, 0);
-    next.setHours(now.getHours() < 12 ? 12 : 24);
-    const delay = Math.max(1000, next.getTime() - now.getTime());
-    setTimeout(() => {
-      void sendDailyTelegramSummary().catch((error) => console.error("[telegram] summary failed:", error.message));
-      scheduleTelegramSummary();
-    }, delay);
-  };
-  scheduleTelegramSummary();
+  if (process.env.NODE_ENV === "production") {
+    startTelegramBot();
+    const scheduleTelegramSummary = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setMinutes(0, 0, 0);
+      next.setHours(now.getHours() < 12 ? 12 : 24);
+      const delay = Math.max(1000, next.getTime() - now.getTime());
+      setTimeout(() => {
+        void sendDailyTelegramSummary().catch((error) => console.error("[telegram] summary failed:", error.message));
+        scheduleTelegramSummary();
+      }, delay);
+    };
+    scheduleTelegramSummary();
+  } else {
+    log("Telegram bot polling and summaries disabled outside production", "telegram");
+  }
 
   // Process daily earnings and staking releases
   const processEarningsInterval = async () => {
