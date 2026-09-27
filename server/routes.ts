@@ -1625,6 +1625,13 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (existingDeposit?.status === "rejected") {
         return res.status(409).json({ message: "Ce dépôt a déjà été refusé" });
       }
+      if (existingDeposit && (
+        existingDeposit.status !== "pending" ||
+        !existingDeposit.ashtechReference ||
+        existingDeposit.ashtechTransactionId
+      )) {
+        return res.status(409).json({ message: "Cette tentative OTP AshtechPay ne peut plus être reprise" });
+      }
       const withdrawalFeePayment = existingDeposit?.withdrawalFeePaymentId
         ? await validateWithdrawalFeePayment(user.id, existingDeposit.withdrawalFeePaymentId, numericAmount)
         : feePaymentId !== undefined && feePaymentId !== null
@@ -1647,14 +1654,21 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
 
       const requestedOperator = String(operator).trim();
-      const operatorIsActive = catalogCountry.operators.some((entry) => {
-        const operatorValue = typeof entry === "string"
-          ? entry
-          : entry.code || entry.id || entry.name || "";
-        return operatorValue.trim().toLowerCase() === requestedOperator.toLowerCase();
-      });
-      if (!operatorIsActive) {
+      const requestedPhone = String(phone).trim();
+      const canonicalOperator = catalogCountry.operators
+        .map((entry) => typeof entry === "string" ? entry : entry.name || entry.code || entry.id || "")
+        .map((value) => value.trim())
+        .find((value) => value.toLowerCase() === requestedOperator.toLowerCase());
+      if (!canonicalOperator) {
         return res.status(400).json({ message: "Opérateur non disponible pour ce pays" });
+      }
+      if (existingDeposit && (
+        Number(existingDeposit.amount) !== numericAmount ||
+        String(existingDeposit.country || "").trim().toUpperCase() !== countryCode ||
+        String(existingDeposit.paymentMethod || "").trim() !== canonicalOperator ||
+        String(existingDeposit.accountNumber || "").trim() !== requestedPhone
+      )) {
+        return res.status(409).json({ message: "Les détails de cette tentative OTP ne correspondent plus au dépôt initial" });
       }
 
       const generatedReference = `paget-studio-${Date.now()}-${user.id}`;
@@ -1680,8 +1694,8 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const result = await ashtechCollect({
         amount: numericAmount,
         currency: catalogCountry.currency,
-        phone: String(phone).trim(),
-        operator: requestedOperator,
+        phone: requestedPhone,
+        operator: canonicalOperator,
         countryCode,
         reference,
         notifyUrl: `${notifyBaseUrl}/api/webhooks/ashtechpay`,
@@ -1701,9 +1715,9 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
             userId: user.id,
             amount: numericAmount,
             accountName: user.fullName,
-            accountNumber: String(phone).trim(),
+            accountNumber: requestedPhone,
             country: String(country).trim().toUpperCase(),
-            paymentMethod: String(operator).trim(),
+            paymentMethod: canonicalOperator,
             status: mappedStatus === "approved" ? "processing" : mappedStatus,
             ashtechTransactionId: result.transaction_id,
             ashtechReference: reference,
@@ -1797,7 +1811,11 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.get("/api/deposits/:id/ashtechpay-status", requireAuth, async (req, res) => {
     try {
-      const deposit = await storage.getDeposit(parseInt(req.params.id));
+      const depositId = Number.parseInt(String(req.params.id), 10);
+      if (!Number.isInteger(depositId) || depositId <= 0) {
+        return res.status(400).json({ message: "Identifiant de dépôt invalide" });
+      }
+      const deposit = await storage.getDeposit(depositId);
       if (!deposit) return res.status(404).json({ message: "Dépôt non trouvé" });
       if (deposit.userId !== req.session.userId) return res.status(403).json({ message: "Accès refusé" });
       if (deposit.status === "approved" || deposit.status === "rejected") {
