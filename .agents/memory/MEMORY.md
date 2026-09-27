@@ -15,7 +15,7 @@
 - [Dev workflow port conflict](workflow-port-conflict.md) — a failed restart can leave a prior server child listening on port 5000; inspect the listener before retrying.
 - [Withdrawal balance policy](withdrawal-balance-policy.md) — deposits remain protected; only earnings, commissions, bonuses, and other non-deposit funds are withdrawable.
 - [VIP duration](vip-duration.md) — Product cycle length is admin-managed; startup code must never force a fixed duration.
-- [Mockup sandbox dependencies](mockup-sandbox-dependencies.md) — The standalone preview needs its own Tailwind dependencies; root modules do not satisfy its CSS transform.
+- [Mockup sandbox isolation](mockup-sandbox-dependencies.md) — Separate dependencies and preview ports mean a main-app screenshot can misreport a healthy sandbox preview.
 - [Workflow secret scope](workflow-secret-scope.md) — One-off shell commands may lack secrets available to the managed app workflow; use scoped presence checks and guarded execution.
 - [External payment configuration rollback](external-payment-config-rollback.md) — Restoring payment source files from GitHub does not undo provider settings already persisted in external Supabase.
 - [Clapay contract configuration](clapay-contract-configuration.md) — Keep provider credentials in Plesk and verify deposits only through Clapay’s authenticated status API.

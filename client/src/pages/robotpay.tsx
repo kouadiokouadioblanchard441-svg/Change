@@ -202,13 +202,6 @@ export default function RobotPayPage() {
   const loadingOperators = isSoleaspayFlow
     ? soleaspayServicesLoading
      : manualNumbersLoading || providerLoading || sendavaLoading || ashtechLoading || clapayLoading;
-  const operatorMethodLabel = (item: Operator) => {
-    if (item.manualNumber) return item.manualNumber.paymentLink ? "Paiement par lien" : "Paiement par numéro";
-    if (item.provider === "ashtech") return "Mobile Money avec code de confirmation";
-    if (item.provider === "clapay") return "Paiement Mobile Money";
-    return "Mobile Money avec confirmation sur téléphone";
-  };
-
   const sendavaMutation = useMutation({
     mutationFn: async () => {
       if (!operator?.id) throw new Error("Sélectionnez un opérateur");
@@ -478,7 +471,33 @@ export default function RobotPayPage() {
                     : "Sélectionnez le mode de paiement :"}
               </p>
                {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-blue-500" /> : operators.length === 0 ? <p className="text-center text-gray-500">{providerError instanceof Error ? sanitizeDepositDisplayText(providerError.message, "Aucun opérateur disponible pour ce pays.") : "Aucun opérateur disponible pour ce pays."}</p> : (
-                 <div className="space-y-3">{operators.map((op, i) => <button key={`${op.id || op.name}-${i}`} onClick={() => chooseOperator(op)} className={`w-full flex items-center justify-between rounded-lg px-4 py-4 border-2 text-left ${operator === op ? "border-[#2885d8] bg-blue-50" : "border-gray-100 bg-white shadow-sm"}`}><span><span className="block font-semibold text-lg text-[#14538a]">{op.name}</span><span className="block text-xs text-gray-500">{operatorMethodLabel(op)}</span></span><ChevronRight className="text-gray-400" /></button>)}</div>
+                  <div className="space-y-3">
+                    {operators.map((op, i) => (
+                      <button
+                        key={`${op.id || op.name}-${i}`}
+                        type="button"
+                        onClick={() => chooseOperator(op)}
+                        aria-label={`Sélectionner ${op.name || op.code || "cet opérateur"}`}
+                        className={`group flex min-h-[72px] w-full items-center justify-between gap-4 rounded-2xl border-2 px-5 py-4 text-left transition duration-200 ease-out active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#c7e3ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#4b91ef] ${
+                          operator === op
+                            ? "border-[#14538a] bg-[#f3f8ff] ring-2 ring-[#14538a]/15"
+                            : "border-white/90 bg-white shadow-[0_8px_20px_rgba(19,69,123,0.16)] hover:-translate-y-0.5 hover:border-[#d7e9fb] hover:shadow-[0_12px_24px_rgba(19,69,123,0.22)]"
+                        }`}
+                      >
+                        <span className="min-w-0 flex-1 text-lg font-bold leading-snug text-[#14538a]">
+                          {op.name}
+                        </span>
+                        <ChevronRight
+                          aria-hidden="true"
+                          className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
+                            operator === op
+                              ? "translate-x-0.5 text-[#14538a]"
+                              : "text-[#6d8aa8] group-hover:translate-x-0.5 group-hover:text-[#14538a]"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
               )}
             </div>
           )}
