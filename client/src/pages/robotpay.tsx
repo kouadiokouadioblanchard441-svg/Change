@@ -61,12 +61,19 @@ export default function RobotPayPage() {
     : "";
   const feePaymentId = Number(params.get("feePaymentId") || 0) || undefined;
   const withdrawalAmount = Number(params.get("withdrawalAmount") || 0) || undefined;
+  const parsedClapayReturnDepositId = forcedProvider === "clapay"
+    ? Number(params.get("clapayDepositId") || 0)
+    : 0;
+  const clapayReturnDepositId = Number.isSafeInteger(parsedClapayReturnDepositId) && parsedClapayReturnDepositId > 0
+    ? parsedClapayReturnDepositId
+    : null;
   const isWithdrawalFeePayment = Boolean(feePaymentId);
   // 0 = operator, 1 = phone, 2 = confirmation, 3 = success
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(clapayReturnDepositId ? 2 : 0);
   const [phone, setPhone] = useState("");
+  const [clapayOperatorOtp, setClapayOperatorOtp] = useState("");
   const [operator, setOperator] = useState<Operator | null>(null);
-  const [depositId, setDepositId] = useState<number | null>(null);
+  const [depositId, setDepositId] = useState<number | null>(clapayReturnDepositId);
   const [transactionReference] = useState(() => `dépôt-${Math.floor(10000 + Math.random() * 90000)}`);
   const [paymentToken, setPaymentToken] = useState("");
   const [otpToken, setOtpToken] = useState("");
@@ -74,9 +81,11 @@ export default function RobotPayPage() {
   const [ashtechOtp, setAshtechOtp] = useState("");
   const [ashtechOtpRequired, setAshtechOtpRequired] = useState(false);
   const [ussd, setUssd] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(
+    clapayReturnDepositId ? "Retour reçu. Vérification du paiement auprès de Clapay…" : "",
+  );
   const [redirectUrl, setRedirectUrl] = useState("");
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState(clapayReturnDepositId ? "processing" : "pending");
   const [manualTransactionReference, setManualTransactionReference] = useState("");
   const [manualSubmitted, setManualSubmitted] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -172,7 +181,7 @@ export default function RobotPayPage() {
   const sendavaOperators: Operator[] = availableProviders.some(item => item.provider === "sendavapay")
     ? (sendavaData?.data || []).filter((x: Operator) => x.status === "online").map(x => ({ ...x, provider: "sendavapay" as const }))
     : [];
-  const { data: clapayData, isLoading: clapayLoading } = useQuery<{ operators: Array<{ id: string; name: string }> }>({
+  const { data: clapayData, isLoading: clapayLoading } = useQuery<{ operators: Array<{ id: string; name: string; requiresOtp?: boolean }> }>({
     queryKey: ["/api/clapay/operators", country],
     queryFn: async () => {
       const res = await fetch(`/api/clapay/operators/${encodeURIComponent(country)}`, { credentials: "include" });
@@ -185,6 +194,7 @@ export default function RobotPayPage() {
   const clapayOperators: Operator[] = (clapayData?.operators || []).map((item) => ({
     id: item.id,
     name: item.name,
+    requiresOtp: item.requiresOtp,
     provider: "clapay",
   }));
   const automaticOperators: Operator[] = isSoleaspayFlow
@@ -274,8 +284,10 @@ export default function RobotPayPage() {
         country,
         operatorId: operator.id,
         operatorName: operator.name,
+        operatorOtp: operator.requiresOtp ? clapayOperatorOtp.trim() : undefined,
         phone: paymentPhone,
         feePaymentId,
+        withdrawalAmount,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(sanitizeDepositDisplayText(data.message, "Impossible d’initier le paiement."));
@@ -410,6 +422,10 @@ export default function RobotPayPage() {
   const submitPhone = () => {
     if (!phone.trim()) { toast({ title: "Numéro requis", description: "Saisissez le numéro Mobile Money utilisé.", variant: "destructive" }); return; }
     if (!operator) { toast({ title: "Opérateur requis", description: "Sélectionnez votre opérateur.", variant: "destructive" }); return; }
+    if (activeProvider === "clapay" && operator.requiresOtp && !clapayOperatorOtp.trim()) {
+      toast({ title: "Code OTP requis", description: "Saisissez le code demandé par cet opérateur.", variant: "destructive" });
+      return;
+    }
     if (operator.manualNumber) manualMutation.mutate();
     else if (activeProvider === "ashtech") ashtechMutation.mutate(undefined);
     else if (activeProvider === "soleaspay") soleaspayMutation.mutate();
@@ -493,6 +509,7 @@ export default function RobotPayPage() {
   const chooseOperator = (nextOperator: Operator) => {
     setOperator(nextOperator);
     setManualTransactionReference("");
+    setClapayOperatorOtp("");
     setStep(1);
   };
 
@@ -603,6 +620,22 @@ export default function RobotPayPage() {
                 <span className="shrink-0 border-r border-gray-300 pr-2 text-[#111827]">+{phonePrefix}</span>
                 <input id="robotpay-payer-phone" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 12))} type="tel" inputMode="numeric" className="w-full px-3 py-2.5 text-[#111827] outline-none" />
               </div>
+              {activeProvider === "clapay" && operator?.requiresOtp && (
+                <div className="text-left">
+                  <label htmlFor="robotpay-clapay-operator-otp" className="mb-1.5 block text-sm font-semibold text-[#111827]">
+                    Code OTP opérateur <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="robotpay-clapay-operator-otp"
+                    value={clapayOperatorOtp}
+                    onChange={event => setClapayOperatorOtp(event.target.value.trim().slice(0, 64))}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    className="w-full rounded-[11px] border-2 border-[#111827] px-3 py-2.5 text-center font-mono text-lg text-[#111827] outline-none transition focus:border-[#FF7A14] focus:ring-2 focus:ring-[#FF7A14]/20"
+                  />
+                  <p className="mt-1 text-xs text-gray-600">Saisissez le code demandé par votre opérateur Mobile Money.</p>
+                </div>
+              )}
               {operator?.manualNumber && (
                 <div className="border-t border-gray-200 pt-3 text-left">
                   <label htmlFor="robotpay-transaction-reference" className="mb-1.5 block text-sm font-semibold text-[#111827]">
@@ -627,7 +660,7 @@ export default function RobotPayPage() {
               )}
               <div className="flex items-center justify-center gap-3 pt-1">
                 <button onClick={() => { setOperator(null); setStep(0); }} className="flex-1 rounded-[11px] border-2 border-[#111827] bg-white py-2.5 font-semibold text-[#111827] shadow-[0_3px_0_#111827] transition active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2">Retour</button>
-               <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !manualTransactionReference.trim())} className="flex-1 rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-2.5 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Vérifier" : "Continuer"}</button>
+               <button onClick={submitPhone} disabled={busy || !phone.trim() || (activeProvider === "clapay" && !!operator?.requiresOtp && !clapayOperatorOtp.trim()) || (!!operator?.manualNumber && !manualTransactionReference.trim())} className="flex-1 rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-2.5 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Vérifier" : "Continuer"}</button>
               </div>
             </div>
           )}

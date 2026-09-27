@@ -1,11 +1,18 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 type JsonRecord = Record<string, unknown>;
 
 export type ClapayOperator = {
   id: string;
   name: string;
+  requiresOtp: boolean;
 };
 
 type RequestValues = Record<string, string | number>;
+type ClapayRequestError = Error & {
+  httpStatus?: number;
+  requestMayHaveReachedProvider?: boolean;
+};
 
 type ClapayConfig = {
   baseUrl: URL;
@@ -27,6 +34,8 @@ type ClapayConfig = {
   operatorsResponsePath: string;
   operatorIdPath: string;
   operatorNamePath: string;
+  webhookSecret: string;
+  webhookUniqueKey: string;
 };
 
 function requiredEnv(name: string): string {
@@ -44,29 +53,52 @@ function parseJsonEnv(name: string): unknown {
   }
 }
 
-function parseStatusSet(name: string): Set<string> {
-  const values = requiredEnv(name)
-    .split(",")
+function parseStatusSet(name: string, defaults: string[]): Set<string> {
+  const raw = process.env[name]?.trim();
+  const values = (raw ? raw.split(",") : defaults)
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
   if (!values.length) throw new Error(`La variable Plesk ${name} ne contient aucun statut`);
   return new Set(values);
 }
 
+const DEFAULT_INITIATE_BODY_TEMPLATE: JsonRecord = {
+  transaction_id: "{{reference}}",
+  additional_infos: {
+    customer_email: "{{accountEmail}}",
+    customer_lastname: "{{accountLastName}}",
+    customer_firstname: "{{accountFirstName}}",
+    customer_phone: "{{phone}}",
+  },
+  amount: "{{amount}}",
+  callback_url: "{{callbackUrl}}",
+  return_url: "{{returnUrl}}",
+  country_code: "{{country}}",
+  operators_code: ["{{operatorId}}"],
+  method: "MERCHANT",
+  tunnel: "API",
+};
+
+function optionalJsonEnv(name: string, fallback: unknown): unknown {
+  if (!process.env[name]?.trim()) return fallback;
+  return parseJsonEnv(name);
+}
+
 function loadConfig(): ClapayConfig {
-  const baseUrlRaw = requiredEnv("CLAPAY_API_BASE_URL");
+  const baseUrlRaw = process.env.CLAPAY_API_BASE_URL?.trim()
+    || "https://nw-api.clapay.app/nowallet/api/v3";
   let baseUrl: URL;
   try {
     baseUrl = new URL(baseUrlRaw);
   } catch {
     throw new Error("CLAPAY_API_BASE_URL doit être une URL valide");
   }
-  if (baseUrl.protocol !== "https:" && baseUrl.protocol !== "http:") {
-    throw new Error("CLAPAY_API_BASE_URL doit utiliser HTTP ou HTTPS");
+  if (baseUrl.protocol !== "https:") {
+    throw new Error("CLAPAY_API_BASE_URL doit utiliser HTTPS");
   }
   baseUrl.pathname = `${baseUrl.pathname.replace(/\/+$/, "")}/`;
 
-  const authHeader = requiredEnv("CLAPAY_API_KEY_HEADER");
+  const authHeader = process.env.CLAPAY_API_KEY_HEADER?.trim() || "Authorization";
   if (!/^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/.test(authHeader)) {
     throw new Error("CLAPAY_API_KEY_HEADER n'est pas un nom d'en-tête HTTP valide");
   }
@@ -75,22 +107,35 @@ function loadConfig(): ClapayConfig {
     baseUrl,
     apiKey: requiredEnv("CLAPAY_API_KEY"),
     authHeader,
-    authPrefix: process.env.CLAPAY_API_KEY_PREFIX?.trim() || "",
-    initiatePath: requiredEnv("CLAPAY_INITIATE_PATH"),
-    initiateBodyTemplate: parseJsonEnv("CLAPAY_INITIATE_REQUEST_TEMPLATE"),
-    initiateSignaturePath: requiredEnv("CLAPAY_INITIATE_SIGNATURE_PATH"),
+    authPrefix: process.env.CLAPAY_API_KEY_PREFIX === undefined
+      ? "Bearer"
+      : process.env.CLAPAY_API_KEY_PREFIX.trim(),
+    initiatePath: process.env.CLAPAY_INITIATE_PATH?.trim() || "init/payment",
+    initiateBodyTemplate: optionalJsonEnv(
+      "CLAPAY_INITIATE_REQUEST_TEMPLATE",
+      DEFAULT_INITIATE_BODY_TEMPLATE,
+    ),
+    initiateSignaturePath: process.env.CLAPAY_INITIATE_SIGNATURE_PATH?.trim() || "signature",
     initiateRedirectPath: process.env.CLAPAY_INITIATE_REDIRECT_PATH?.trim() || "",
-    initiateMessagePath: process.env.CLAPAY_INITIATE_MESSAGE_PATH?.trim() || "",
-    statusPath: process.env.CLAPAY_STATUS_PATH?.trim() || "/nowallet/api/check/status/payment",
-    statusBodyTemplate: parseJsonEnv("CLAPAY_STATUS_REQUEST_TEMPLATE"),
-    statusValuePath: requiredEnv("CLAPAY_STATUS_VALUE_PATH"),
-    successStatuses: parseStatusSet("CLAPAY_STATUS_SUCCESS_VALUES"),
-    failureStatuses: parseStatusSet("CLAPAY_STATUS_FAILURE_VALUES"),
-    operatorsPath: process.env.CLAPAY_OPERATORS_PATH?.trim() || "/nowallet/api/operators/data",
-    operatorsCountryParam: requiredEnv("CLAPAY_OPERATORS_COUNTRY_PARAM"),
-    operatorsResponsePath: requiredEnv("CLAPAY_OPERATORS_RESPONSE_PATH"),
-    operatorIdPath: requiredEnv("CLAPAY_OPERATOR_ID_PATH"),
-    operatorNamePath: requiredEnv("CLAPAY_OPERATOR_NAME_PATH"),
+    initiateMessagePath: process.env.CLAPAY_INITIATE_MESSAGE_PATH?.trim() || "message",
+    statusPath: process.env.CLAPAY_STATUS_PATH?.trim() || "check/status/payment",
+    statusBodyTemplate: optionalJsonEnv(
+      "CLAPAY_STATUS_REQUEST_TEMPLATE",
+      { signature: "{{signature}}" },
+    ),
+    statusValuePath: process.env.CLAPAY_STATUS_VALUE_PATH?.trim() || "status",
+    successStatuses: parseStatusSet("CLAPAY_STATUS_SUCCESS_VALUES", ["SUCCESSFUL"]),
+    failureStatuses: parseStatusSet(
+      "CLAPAY_STATUS_FAILURE_VALUES",
+      ["FAILED", "SIGNATURE_DESTROYED"],
+    ),
+    operatorsPath: process.env.CLAPAY_OPERATORS_PATH?.trim() || "operators/data",
+    operatorsCountryParam: process.env.CLAPAY_OPERATORS_COUNTRY_PARAM?.trim() || "country",
+    operatorsResponsePath: process.env.CLAPAY_OPERATORS_RESPONSE_PATH?.trim() || "",
+    operatorIdPath: process.env.CLAPAY_OPERATOR_ID_PATH?.trim() || "codeoperator",
+    operatorNamePath: process.env.CLAPAY_OPERATOR_NAME_PATH?.trim() || "name",
+    webhookSecret: requiredEnv("CLAPAY_WEBHOOK_SECRET"),
+    webhookUniqueKey: requiredEnv("CLAPAY_WEBHOOK_UNIQUE_KEY"),
   };
 }
 
@@ -154,7 +199,10 @@ function fillTemplate(template: unknown, values: RequestValues): unknown {
 }
 
 function endpointUrl(config: ClapayConfig, path: string): URL {
-  const url = new URL(path, config.baseUrl);
+  const normalizedPath = path.trim();
+  const url = /^\/nowallet\/api(?:\/|$)/.test(normalizedPath)
+    ? new URL(normalizedPath, config.baseUrl.origin)
+    : new URL(normalizedPath.replace(/^\/+/, ""), config.baseUrl);
   if (url.origin !== config.baseUrl.origin) {
     throw new Error("Le chemin API Clapay doit rester sur l'hôte CLAPAY_API_BASE_URL");
   }
@@ -190,19 +238,40 @@ async function callClapay(
     });
   } catch (error: any) {
     const reason = error?.name === "AbortError" ? "délai dépassé" : "connexion impossible";
-    throw new Error(`Clapay : ${reason}`);
+    throw Object.assign(new Error(`Clapay : ${reason}`), {
+      requestMayHaveReachedProvider: true,
+    } satisfies Partial<ClapayRequestError>);
   } finally {
     clearTimeout(timeout);
   }
 
-  const responseText = await response.text();
+  let responseText: string;
+  try {
+    responseText = await response.text();
+  } catch {
+    throw Object.assign(
+      new Error("Clapay a interrompu sa réponse"),
+      { httpStatus: response.status, requestMayHaveReachedProvider: true } satisfies Partial<ClapayRequestError>,
+    );
+  }
   let payload: unknown;
   try {
     payload = responseText ? JSON.parse(responseText) : {};
   } catch {
-    throw new Error(`Clapay a renvoyé une réponse non JSON (HTTP ${response.status})`);
+    throw Object.assign(
+      new Error(`Clapay a renvoyé une réponse non JSON (HTTP ${response.status})`),
+      { httpStatus: response.status, requestMayHaveReachedProvider: true } satisfies Partial<ClapayRequestError>,
+    );
   }
-  if (!response.ok) throw new Error(`Clapay a refusé la requête (HTTP ${response.status})`);
+  if (!response.ok) {
+    throw Object.assign(
+      new Error(`Clapay a refusé la requête (HTTP ${response.status})`),
+      {
+        httpStatus: response.status,
+        requestMayHaveReachedProvider: response.status >= 500,
+      } satisfies Partial<ClapayRequestError>,
+    );
+  }
   return payload;
 }
 
@@ -211,8 +280,21 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
   const data = await callClapay(config, config.operatorsPath, {
     query: { [config.operatorsCountryParam]: country.trim().toUpperCase() },
   });
-  const rawOperators = getAtPath(data, config.operatorsResponsePath);
-  if (!Array.isArray(rawOperators)) {
+  const configuredOperators = getAtPath(data, config.operatorsResponsePath);
+  let rawOperators = Array.isArray(configuredOperators) ? configuredOperators : undefined;
+  if (!rawOperators) {
+    const commonList = [getAtPath(data, "operators"), getAtPath(data, "data")]
+      .find(Array.isArray);
+    if (Array.isArray(commonList)) rawOperators = commonList;
+  }
+  if (!rawOperators && data && typeof data === "object" && !Array.isArray(data)) {
+    const id = getAtPath(data, config.operatorIdPath);
+    const name = getAtPath(data, config.operatorNamePath);
+    if ((typeof id === "string" || typeof id === "number") && typeof name === "string") {
+      rawOperators = [data];
+    }
+  }
+  if (!rawOperators) {
     throw new Error("La réponse Clapay ne contient pas la liste d'opérateurs configurée");
   }
 
@@ -222,10 +304,17 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
     if ((typeof id !== "string" && typeof id !== "number") || typeof name !== "string") {
       throw new Error("Un opérateur Clapay ne contient pas l'identifiant ou le nom attendu");
     }
-    return { id: String(id), name };
+    return {
+      id: String(id),
+      name,
+      active: getAtPath(operator, "active"),
+      requiresOtp: getAtPath(operator, "otpstarter.MERCHANT") === true,
+    };
   });
 
-  return operators.filter((operator) => isAllowedClapayOperator(country, operator.name));
+  return operators
+    .filter((operator) => operator.active !== false && isAllowedClapayOperator(country, operator.name))
+    .map(({ id, name, requiresOtp }) => ({ id, name, requiresOtp }));
 }
 
 export async function initiateClapayPayment(values: RequestValues): Promise<{
@@ -235,20 +324,45 @@ export async function initiateClapayPayment(values: RequestValues): Promise<{
 }> {
   const config = loadConfig();
   const body = fillTemplate(config.initiateBodyTemplate, values);
+  const operatorOtp = values.operatorOtp;
+  if (typeof operatorOtp === "string" && operatorOtp.trim()) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      throw new Error("Le modèle de requête Clapay doit être un objet pour transmettre l’OTP opérateur");
+    }
+    (body as JsonRecord).operator_otp = operatorOtp.trim();
+  }
   const data = await callClapay(config, config.initiatePath, { method: "POST", body });
   const signature = getAtPath(data, config.initiateSignaturePath);
   if (typeof signature !== "string" && typeof signature !== "number") {
-    throw new Error("La réponse Clapay ne contient pas la signature configurée");
+    throw Object.assign(
+      new Error("La réponse Clapay ne contient pas la signature configurée"),
+      { requestMayHaveReachedProvider: true } satisfies Partial<ClapayRequestError>,
+    );
   }
-  const redirectValue = config.initiateRedirectPath
+  const redirectValue = (config.initiateRedirectPath
     ? getAtPath(data, config.initiateRedirectPath)
-    : undefined;
+    : undefined)
+    ?? getAtPath(data, "payment_url_operator")
+    ?? getAtPath(data, "payment_url");
   const messageValue = config.initiateMessagePath
     ? getAtPath(data, config.initiateMessagePath)
     : undefined;
+  let redirectUrl: string | undefined;
+  if (typeof redirectValue === "string" && redirectValue.trim()) {
+    try {
+      const parsedRedirectUrl = new URL(redirectValue);
+      if (parsedRedirectUrl.protocol !== "https:") throw new Error();
+      redirectUrl = parsedRedirectUrl.toString();
+    } catch {
+      throw Object.assign(
+        new Error("Clapay a renvoyé une URL de paiement invalide"),
+        { requestMayHaveReachedProvider: true } satisfies Partial<ClapayRequestError>,
+      );
+    }
+  }
   return {
     signature: String(signature),
-    redirectUrl: typeof redirectValue === "string" ? redirectValue : undefined,
+    redirectUrl,
     message: typeof messageValue === "string" ? messageValue : undefined,
   };
 }
@@ -272,4 +386,39 @@ export async function checkClapayPayment(signature: string): Promise<{
       ? "rejected"
       : "pending";
   return { rawStatus, status };
+}
+
+export function verifyClapayWebhookSignature(body: unknown, headerValue: string | undefined): boolean {
+  const webhookSecret = process.env.CLAPAY_WEBHOOK_SECRET?.trim();
+  const webhookUniqueKey = process.env.CLAPAY_WEBHOOK_UNIQUE_KEY?.trim();
+  if (!webhookSecret || !webhookUniqueKey || !headerValue || !body || typeof body !== "object") {
+    return false;
+  }
+
+  let key: string | undefined;
+  const signatures: string[] = [];
+  for (const component of headerValue.split(",")) {
+    const separator = component.indexOf("=");
+    if (separator < 0) continue;
+    const name = component.slice(0, separator).trim().toLowerCase();
+    const value = component.slice(separator + 1).trim();
+    if (name === "key") key = value;
+    if (name === "signature" && value) signatures.push(value);
+  }
+  if (!key || !signatures.length) return false;
+
+  const encryptedKey = createHmac("sha256", webhookUniqueKey).update(key).digest("hex");
+  const serializedBody = JSON.stringify(body);
+  if (typeof serializedBody !== "string") return false;
+  const expected = createHmac("sha256", webhookSecret)
+    .update(`${encryptedKey}${serializedBody}`)
+    .digest("hex");
+  const expectedBuffer = Buffer.from(expected, "hex");
+
+  return signatures.some((signature) => {
+    if (!/^[a-f0-9]{64}$/i.test(signature)) return false;
+    const actualBuffer = Buffer.from(signature, "hex");
+    return actualBuffer.length === expectedBuffer.length
+      && timingSafeEqual(actualBuffer, expectedBuffer);
+  });
 }

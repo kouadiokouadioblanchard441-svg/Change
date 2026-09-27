@@ -64,6 +64,7 @@ import {
   getClapayOperators,
   initiateClapayPayment,
   isClapayConfigured,
+  verifyClapayWebhookSignature,
 } from "./clapay";
 import {
   formatTelegramValue,
@@ -3648,6 +3649,65 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     }
   });
 
+  app.post("/api/clapay/webhook", async (req, res) => {
+    if (!isClapayConfigured()) {
+      return res.status(503).json({ message: "La configuration API de Clapay est incomplète" });
+    }
+    if (!verifyClapayWebhookSignature(req.body, req.get("Nowallet-Signature"))) {
+      return res.status(401).json({ message: "Signature Clapay invalide" });
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const transactionId = typeof body.transaction_id === "string" ? body.transaction_id : "";
+    const signature = typeof body.signature === "string" ? body.signature : "";
+    const referenceMatch = transactionId.match(/^CLAPAY-(\d+)-\d+$/);
+    if (!referenceMatch || !signature) {
+      return res.status(400).json({ message: "Référence de transaction Clapay invalide" });
+    }
+
+    const depositId = Number(referenceMatch[1]);
+    if (!Number.isSafeInteger(depositId) || depositId <= 0) {
+      return res.status(400).json({ message: "Identifiant de dépôt Clapay invalide" });
+    }
+
+    let deposit: Awaited<ReturnType<typeof storage.getDeposit>> | undefined;
+    try {
+      deposit = await storage.getDeposit(depositId);
+      if (!deposit || !deposit.paymentMethod.startsWith("Clapay — ")) {
+        return res.status(404).json({ message: "Dépôt Clapay introuvable" });
+      }
+      if (deposit.status === "approved" || deposit.status === "rejected") {
+        return res.json({ received: true, status: deposit.status });
+      }
+      if (deposit.reference !== signature && deposit.reference !== transactionId) {
+        return res.status(409).json({ message: "La signature Clapay ne correspond pas au dépôt" });
+      }
+
+      if (deposit.reference === transactionId) {
+        await storage.updateDeposit(deposit.id, { reference: signature });
+      }
+      const verification = await checkClapayPayment(signature);
+      if (verification.status === "approved") {
+        const claimedDeposit = await storage.claimDepositApproval(deposit.id);
+        if (claimedDeposit) await creditApprovedDeposit(claimedDeposit);
+      } else if (verification.status === "rejected") {
+        await storage.updateDeposit(deposit.id, { status: "rejected", processedAt: new Date() });
+      }
+      const finalDeposit = await storage.getDeposit(deposit.id);
+      return res.json({ received: true, status: finalDeposit?.status || deposit.status });
+    } catch (error: any) {
+      console.error("[clapay] webhook verification error:", error);
+      notifyTelegramPaymentError({
+        operation: "Vérification du webhook Clapay",
+        error,
+        recordId: depositId,
+        userId: deposit?.userId,
+        paymentMethod: "Clapay",
+      });
+      return res.status(502).json({ message: "Impossible de confirmer la notification Clapay" });
+    }
+  });
+
   app.get("/api/clapay/operators/:country", requireAuth, async (req, res) => {
     try {
       const country = String(req.params.country || "").trim().toUpperCase();
@@ -3671,6 +3731,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
   app.post("/api/clapay/initiate", requireAuth, async (req, res) => {
     let depositId: number | undefined;
+    let providerMayHaveAcceptedInitiation = false;
     try {
       const user = await storage.getUser(req.session.userId!);
       if (!user) return res.status(401).json({ message: "Non authentifié" });
@@ -3697,6 +3758,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const feePaymentId = req.body.feePaymentId === undefined || req.body.feePaymentId === null
         ? undefined
         : Number(req.body.feePaymentId);
+      const requestedWithdrawalAmount = Number(req.body.withdrawalAmount);
+      const returnWithdrawalAmount = Number.isFinite(requestedWithdrawalAmount) && requestedWithdrawalAmount > 0
+        ? requestedWithdrawalAmount
+        : undefined;
       const withdrawalFeePayment = feePaymentId === undefined
         ? undefined
         : await validateWithdrawalFeePayment(user.id, feePaymentId, amount);
@@ -3717,6 +3782,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (!selectedOperator || selectedOperator.name !== operatorName) {
         return res.status(400).json({ message: "Cet opérateur Clapay n'est plus disponible" });
       }
+      const operatorOtp = selectedOperator.requiresOtp ? String(req.body.operatorOtp || "").trim() : "";
+      if (selectedOperator.requiresOtp && !operatorOtp) {
+        return res.status(400).json({ message: "Saisissez le code OTP demandé par cet opérateur" });
+      }
 
       const deposit = await storage.createDeposit({
         userId: user.id,
@@ -3730,28 +3799,53 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       });
       depositId = deposit.id;
       const orderReference = `CLAPAY-${deposit.id}-${Date.now()}`;
+      await storage.updateDeposit(deposit.id, { reference: orderReference });
+      const configuredPublicUrl = new URL(getPublicBaseUrl(req));
+      if (configuredPublicUrl.protocol !== "https:") {
+        throw new Error("L’URL publique du site doit utiliser HTTPS pour Clapay");
+      }
+      const publicBaseUrl = configuredPublicUrl.origin;
+      const returnUrl = new URL("/robotpay", publicBaseUrl);
+      returnUrl.searchParams.set("amount", String(amount));
+      returnUrl.searchParams.set("country", country);
+      returnUrl.searchParams.set("provider", "clapay");
+      returnUrl.searchParams.set("clapayDepositId", String(deposit.id));
+      if (feePaymentId !== undefined) returnUrl.searchParams.set("feePaymentId", String(feePaymentId));
+      if (returnWithdrawalAmount !== undefined) {
+        returnUrl.searchParams.set("withdrawalAmount", String(returnWithdrawalAmount));
+      }
+      const nameParts = user.fullName.trim().split(/\s+/).filter(Boolean);
+      const accountFirstName = nameParts[0] || user.fullName;
+      const accountLastName = nameParts.slice(1).join(" ") || accountFirstName;
       const payment = await initiateClapayPayment({
         amount,
         country,
         operator: operatorName,
         operatorId,
         operatorName,
+        ...(operatorOtp ? { operatorOtp } : {}),
         phone: parsedPhone.data,
         accountNumber: parsedPhone.data,
         accountName: user.fullName,
+        accountFirstName,
+        accountLastName,
         accountEmail: `user${user.id}@chargepoint.app`,
         reference: orderReference,
         depositId: deposit.id,
-        callbackUrl: "",
+        callbackUrl: new URL("/api/clapay/webhook", publicBaseUrl).toString(),
+        returnUrl: returnUrl.toString(),
       });
-      await storage.updateDeposit(deposit.id, { reference: payment.signature, status: "processing" });
+      providerMayHaveAcceptedInitiation = true;
+      await storage.updateDeposit(deposit.id, { reference: payment.signature });
       return res.json({
         depositId: deposit.id,
         redirectUrl: payment.redirectUrl,
         message: payment.message || "Confirmez le paiement sur votre téléphone.",
       });
     } catch (error: any) {
-      if (depositId) {
+      const initiationMayHaveReachedProvider =
+        providerMayHaveAcceptedInitiation || error?.requestMayHaveReachedProvider === true;
+      if (depositId && !initiationMayHaveReachedProvider) {
         await storage.updateDeposit(depositId, { status: "rejected", processedAt: new Date() }).catch(() => undefined);
       }
       console.error("[clapay] initiation error:", error);
@@ -3764,6 +3858,12 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         country: req.body?.country,
         paymentMethod: req.body?.operatorName || "Clapay",
       });
+      if (depositId && initiationMayHaveReachedProvider) {
+        return res.status(202).json({
+          depositId,
+          message: "L’état de la demande est incertain. Ne relancez pas le paiement; la vérification se poursuit automatiquement.",
+        });
+      }
       return res.status(502).json({ message: error.message || "Impossible d'initier le paiement Clapay" });
     }
   });
@@ -3784,6 +3884,9 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         return res.json({ status: deposit.status });
       }
       if (!deposit.reference) return res.json({ status: deposit.status });
+      if (deposit.reference.startsWith(`CLAPAY-${deposit.id}-`)) {
+        return res.json({ status: deposit.status });
+      }
 
       const verification = await checkClapayPayment(deposit.reference);
       if (verification.status === "approved") {
