@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronRight, Copy, ExternalLink, Hash, Loader2, Phone, ShieldCheck } from "lucide-react";
+import { Check, ChevronRight, Clock3, Copy, ExternalLink, Hash, Loader2, Phone, RefreshCw, ShieldCheck } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,12 @@ type SoleaspayServiceResponse = {
 };
 
 const SOLEASPAY_PENDING_DEPOSIT_KEY = "soleaspay-pending-deposit";
+
+function formatTimeRemaining(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
 
 function Stepper({ step }: { step: number }) {
   return (
@@ -73,6 +79,13 @@ export default function RobotPayPage() {
   const [status, setStatus] = useState("pending");
   const [manualTransactionReference, setManualTransactionReference] = useState("");
   const [manualSubmitted, setManualSubmitted] = useState(false);
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  const [manualVerificationDeadline, setManualVerificationDeadline] = useState<number | null>(null);
+  const checkoutDeadline = useRef(Date.now() + 15 * 60 * 1000);
+  const checkoutSecondsLeft = Math.max(0, Math.ceil((checkoutDeadline.current - clockNow) / 1000));
+  const manualVerificationSecondsLeft = manualVerificationDeadline
+    ? Math.max(0, Math.ceil((manualVerificationDeadline - clockNow) / 1000))
+    : 0;
 
   const { data: loadedCountries, isError: countriesError } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
   const countries = getCountriesForDisplay(loadedCountries, countriesError);
@@ -344,9 +357,11 @@ export default function RobotPayPage() {
       return res.json();
     },
     onSuccess: (data) => {
-      setDepositId(data.deposit?.id || null);
+      const nextDepositId = Number(data.deposit?.id) || null;
+      setDepositId(nextDepositId);
       setManualSubmitted(true);
       setStatus("pending");
+      setManualVerificationDeadline(nextDepositId ? Date.now() + 5 * 60 * 1000 : null);
       setStep(3);
       queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
     },
@@ -413,6 +428,56 @@ export default function RobotPayPage() {
   };
   const busy = sendavaMutation.isPending || ashtechMutation.isPending || soleaspayMutation.isPending || clapayMutation.isPending || manualMutation.isPending;
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (
+      step !== 3 ||
+      !manualSubmitted ||
+      !depositId ||
+      status !== "pending" ||
+      !manualVerificationDeadline
+    ) return;
+
+    let cancelled = false;
+    let timer: number | undefined;
+
+    const checkManualDepositStatus = async () => {
+      try {
+        const res = await fetch("/api/deposits/history", { credentials: "include" });
+        if (res.ok) {
+          const deposits = await res.json() as Array<{ id?: number | string; status?: string }>;
+          const currentDeposit = Array.isArray(deposits)
+            ? deposits.find(deposit => Number(deposit.id) === depositId)
+            : undefined;
+
+          if (currentDeposit?.status === "approved" || currentDeposit?.status === "rejected") {
+            if (!cancelled) {
+              setStatus(currentDeposit.status);
+              queryClient.invalidateQueries({ queryKey: ["/api/deposits/history"] });
+              if (currentDeposit.status === "approved") void refreshUser();
+            }
+            return;
+          }
+        }
+      } catch {
+        // Keep checking until the five-minute monitoring window ends.
+      }
+
+      if (cancelled || Date.now() >= manualVerificationDeadline) return;
+      timer = window.setTimeout(checkManualDepositStatus, 5000);
+    };
+
+    void checkManualDepositStatus();
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [step, manualSubmitted, depositId, status, manualVerificationDeadline, queryClient, refreshUser]);
+
   const copyPaymentNumber = async () => {
     const number = operator?.manualNumber;
     if (!number) return;
@@ -434,6 +499,15 @@ export default function RobotPayPage() {
    if (!amount || !country) return <main className="flex min-h-screen items-center justify-center bg-[#FF7A14] p-6 text-center text-[#111827]"><p className="rounded-xl border-2 border-[#111827] bg-white p-5 font-semibold shadow-[0_4px_0_#111827]">Données de dépôt invalides.</p></main>;
   return (
       <main className="min-h-screen bg-[#FF7A14] p-3 text-[#111827] sm:p-6">
+       <aside
+         role="timer"
+         aria-label={`Compte à rebours de la recharge : ${formatTimeRemaining(checkoutSecondsLeft)}`}
+         title="Compte à rebours de la session de recharge"
+         className="fixed right-3 top-3 z-50 flex items-center gap-1.5 rounded-full border-2 border-[#111827] bg-white px-2.5 py-1.5 text-sm font-bold text-[#111827] shadow-[0_3px_0_#111827]"
+       >
+         <Clock3 aria-hidden="true" className="h-4 w-4 text-[#b84d00]" />
+         <span className="font-mono tabular-nums">{formatTimeRemaining(checkoutSecondsLeft)}</span>
+       </aside>
       <div className="max-w-xl mx-auto">
          <div className={`${isManualFlow ? "px-3 pb-3 pt-2 sm:px-4 sm:pt-3 sm:pb-4" : "px-4 pb-5 pt-3 sm:px-5 sm:pt-4 sm:pb-6"} text-[#111827]`}>
            <p className={`${isManualFlow ? "text-xs" : "text-sm"} font-bold uppercase tracking-[0.12em] text-[#5b2500]`}>{isManualFlow ? "Montant" : "Montant du dépôt"}</p>
@@ -622,7 +696,32 @@ export default function RobotPayPage() {
                   <b>Montant :</b> {amount.toLocaleString()} {currency}<br />
                   <b>ID :</b> <span className="break-all font-mono">{manualTransactionReference.trim()}</span>
                 </div>
-                <p className="text-sm font-semibold text-amber-700">En attente de validation</p>
+                {status === "approved" ? (
+                  <p role="status" className="text-sm font-semibold text-green-700">Dépôt approuvé</p>
+                ) : status === "rejected" ? (
+                  <p role="status" className="text-sm font-semibold text-red-600">Demande refusée</p>
+                ) : manualVerificationDeadline && manualVerificationSecondsLeft > 0 ? (
+                  <div role="status" aria-live="polite" className="space-y-1">
+                    <p className="flex items-center justify-center gap-2 text-sm font-semibold text-[#b84d00]">
+                      <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                      Vérification en cours · {formatTimeRemaining(manualVerificationSecondsLeft)}
+                    </p>
+                    <p className="text-xs text-amber-700">En attente de validation</p>
+                  </div>
+                ) : manualVerificationDeadline ? (
+                  <div className="space-y-2">
+                    <p role="status" className="text-sm font-semibold text-amber-700">Demande toujours en attente</p>
+                    <button
+                      type="button"
+                      onClick={() => setManualVerificationDeadline(Date.now() + 5 * 60 * 1000)}
+                      className="mx-auto inline-flex items-center justify-center gap-2 rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] px-4 py-2 text-sm font-bold text-[#111827] shadow-[0_3px_0_#111827] transition hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2"
+                    >
+                      <RefreshCw aria-hidden="true" className="h-4 w-4" /> Vérifier à nouveau
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-sm font-semibold text-amber-700">En attente de validation</p>
+                )}
                 <button onClick={() => navigate("/")} className="text-base font-semibold text-[#111827] underline decoration-[#FF7A14] underline-offset-4 hover:text-[#b84d00]">Retour au site</button>
               </div>
             ) : (
