@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronRight, Clock3, Copy, ExternalLink, Hash, Loader2, Phone, RefreshCw, ShieldCheck } from "lucide-react";
+import { Check, ChevronRight, Clock3, Copy, ExternalLink, Loader2, Phone, RefreshCw, ShieldCheck } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -609,7 +609,6 @@ export default function RobotPayPage() {
                     ID de transaction <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center rounded-[11px] border-2 border-[#111827] px-3 shadow-[0_2px_5px_rgba(17,24,39,0.1)] transition focus-within:border-[#FF7A14] focus-within:ring-2 focus-within:ring-[#FF7A14]/20">
-                    <Hash aria-hidden="true" className="h-4 w-4 shrink-0 text-[#b84d00]" />
                     <input
                       id="robotpay-transaction-reference"
                       type="text"
