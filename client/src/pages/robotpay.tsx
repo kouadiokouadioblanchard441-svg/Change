@@ -504,63 +504,45 @@ export default function RobotPayPage() {
           {step === 1 && (
             <div className="space-y-5">
               {operator?.manualNumber && (
-                <div className="rounded-2xl border border-[#d9e7f5] bg-[#f7fbff] p-4 text-left shadow-sm">
-                  <div className="mb-3 flex items-center gap-3">
-                    {operator.manualNumber.logoUrl ? (
-                      <img src={operator.manualNumber.logoUrl} alt="" className="h-10 w-10 rounded-xl border border-[#e5edf5] bg-white p-1 object-contain" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e5edf5] bg-white">
-                        <Phone aria-hidden="true" className="h-5 w-5 text-[#14538a]" />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-500">Moyen de paiement</p>
-                      <p className="truncate text-sm font-bold text-[#14538a]">{operator.name || operator.code}</p>
-                    </div>
+                <div className="rounded-xl border border-[#cbd5e1] bg-white p-3 text-left shadow-sm">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <p className="max-w-[55%] truncate text-xs font-semibold text-[#14538a]">{operator.name || operator.code}</p>
+                    <p className="shrink-0 text-[10px] font-medium text-slate-500">Numéro de paiement</p>
                   </div>
                   {operator.manualNumber.paymentLink ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-[#d9e7f5] bg-white p-2">
-                      <div className="min-w-0 flex-1 px-1">
-                        <p className="text-[11px] font-medium text-gray-500">Lien de paiement</p>
-                        <a
-                          href={operator.manualNumber.paymentLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-[#14538a] underline decoration-[#b7cee5] underline-offset-2"
-                        >
-                          <ExternalLink aria-hidden="true" className="h-4 w-4" /> Ouvrir le lien
-                        </a>
-                      </div>
+                    <div className="flex min-h-11 items-center gap-2 rounded-lg border-2 border-[#7894af] bg-[#f8fbff] px-2 py-1.5">
+                      <a
+                        href={operator.manualNumber.paymentLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-w-0 flex-1 items-center gap-1 truncate text-xs font-semibold text-[#14538a]"
+                      >
+                        <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0" /> Ouvrir le lien
+                      </a>
                       <button
                         type="button"
                         onClick={copyPaymentNumber}
                         aria-label="Copier le lien de paiement"
-                        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[#d9e7f5] bg-[#f3f8ff] px-2.5 text-xs font-semibold text-[#14538a] transition hover:bg-[#e8f2fc] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8]"
+                        className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-[#14538a] bg-[#14538a] px-2 text-[11px] font-semibold text-white transition hover:bg-[#104674] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8]"
                       >
-                        <Copy aria-hidden="true" className="h-4 w-4" /> Copier
+                        <Copy aria-hidden="true" className="h-3.5 w-3.5" /> Copier
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 rounded-xl border border-[#d9e7f5] bg-white p-2">
-                      <div className="min-w-0 flex-1 px-1">
-                        <p className="text-[11px] font-medium text-gray-500">Numéro destinataire</p>
-                        <p className="break-all font-mono text-base font-bold tabular-nums tracking-wide text-[#14538a] sm:text-lg">
-                          {operator.manualNumber.phone}
-                        </p>
-                      </div>
+                    <div className="flex min-h-11 items-center gap-2 rounded-lg border-2 border-[#7894af] bg-[#f8fbff] px-2.5 py-1.5">
+                      <p className="min-w-0 flex-1 break-all font-mono text-base font-bold tabular-nums tracking-wide text-[#17324d]">
+                        {operator.manualNumber.phone}
+                      </p>
                       <button
                         type="button"
                         onClick={copyPaymentNumber}
                         aria-label={`Copier le numéro ${operator.manualNumber.phone}`}
-                        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[#d9e7f5] bg-[#f3f8ff] px-2.5 text-xs font-semibold text-[#14538a] transition hover:bg-[#e8f2fc] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8]"
+                        className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-[#14538a] bg-[#14538a] px-2 text-[11px] font-semibold text-white transition hover:bg-[#104674] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8]"
                       >
-                        <Copy aria-hidden="true" className="h-4 w-4" /> Copier
+                        <Copy aria-hidden="true" className="h-3.5 w-3.5" /> Copier
                       </button>
                     </div>
                   )}
-                  <p className="mt-2.5 text-xs text-gray-500">
-                    Payez le montant affiché, puis joignez la preuve.
-                  </p>
                 </div>
               )}
               <label htmlFor="robotpay-payer-phone" className="block text-sm font-semibold">Votre numéro pour le paiement</label>
