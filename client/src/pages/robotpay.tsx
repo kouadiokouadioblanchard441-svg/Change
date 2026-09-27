@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronRight, ClipboardCheck, Copy, ExternalLink, ImageIcon, Loader2, Phone, ShieldCheck } from "lucide-react";
+import { Check, ChevronRight, Copy, ExternalLink, Hash, Loader2, Phone, ShieldCheck } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +43,6 @@ export default function RobotPayPage() {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const phonePrefilled = useRef(false);
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const amount = Number(params.get("amount") || 0);
@@ -72,9 +71,7 @@ export default function RobotPayPage() {
   const [message, setMessage] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("");
   const [status, setStatus] = useState("pending");
-  const [screenshot, setScreenshot] = useState("");
-  const [screenshotName, setScreenshotName] = useState("");
-  const [paymentMessage, setPaymentMessage] = useState("");
+  const [manualTransactionReference, setManualTransactionReference] = useState("");
   const [manualSubmitted, setManualSubmitted] = useState(false);
 
   const { data: loadedCountries, isError: countriesError } = useQuery<ApiCountry[]>({ queryKey: ["/api/countries"] });
@@ -331,7 +328,7 @@ export default function RobotPayPage() {
       const number = operator?.manualNumber;
       if (!number) throw new Error("Numéro de paiement indisponible");
       if (!phone.trim()) throw new Error("Saisissez le numéro depuis lequel vous avez payé");
-      if (!screenshot) throw new Error("Ajoutez la capture d'écran du paiement");
+      if (!manualTransactionReference.trim()) throw new Error("Saisissez l'ID de transaction du SMS ou du reçu");
       const res = await apiRequest("POST", "/api/deposits", {
         amount,
         feePaymentId,
@@ -341,8 +338,7 @@ export default function RobotPayPage() {
         country,
         paymentNumberId: number.id,
          channelName: number.paymentLink ? `${number.operatorName} - Lien de paiement` : `${number.operatorName} - ${number.phone}`,
-        screenshot,
-        paymentMessage: paymentMessage.trim() || null,
+        transactionReference: manualTransactionReference.trim(),
       });
       if (!res.ok) throw new Error((await res.json()).message || "Envoi impossible");
       return res.json();
@@ -429,25 +425,9 @@ export default function RobotPayPage() {
     }
   };
 
-  const handleScreenshotChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Fichier trop grand", description: "La capture doit faire 5 Mo maximum", variant: "destructive" });
-      return;
-    }
-    setScreenshotName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => setScreenshot(String(reader.result || ""));
-    reader.readAsDataURL(file);
-  };
-
   const chooseOperator = (nextOperator: Operator) => {
     setOperator(nextOperator);
-    setScreenshot("");
-    setScreenshotName("");
-    setPaymentMessage("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setManualTransactionReference("");
     setStep(1);
   };
 
@@ -551,24 +531,34 @@ export default function RobotPayPage() {
                 <input id="robotpay-payer-phone" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 12))} type="tel" inputMode="numeric" placeholder="Numéro de téléphone" className="w-full px-3 py-3 text-[#111827] placeholder:text-gray-500 outline-none" />
               </div>
               {operator?.manualNumber && (
-                <div className="space-y-4 border-t border-gray-200 pt-4 text-left">
-                  <div>
-                    <p className="mb-2 text-sm font-semibold text-[#111827]">Capture d'écran du paiement <span className="text-red-500">*</span></p>
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleScreenshotChange} className="hidden" />
-                    <button onClick={() => fileInputRef.current?.click()} className="flex w-full flex-col items-center gap-2 rounded-[11px] border-2 border-dashed border-[#111827] bg-white py-5 transition duration-150 hover:border-[#FF7A14] hover:bg-[#fffaf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2">
-                      {screenshot ? <><ClipboardCheck className="h-7 w-7 text-green-500" /><span className="text-sm text-green-600">{screenshotName}</span></> : <><ImageIcon className="h-7 w-7 text-gray-400" /><span className="text-sm text-gray-600">Ajouter la capture</span><span className="text-xs text-gray-400">JPG, PNG — max 5 Mo</span></>}
-                    </button>
-                    {screenshot && <img src={screenshot} alt="Aperçu de la capture" className="mt-2 max-h-44 w-full rounded-lg border object-contain" />}
+                <div className="border-t border-gray-200 pt-4 text-left">
+                  <label htmlFor="robotpay-transaction-reference" className="mb-2 block text-sm font-semibold text-[#111827]">
+                    ID de transaction <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center rounded-[11px] border-2 border-[#111827] px-3 shadow-[0_2px_5px_rgba(17,24,39,0.1)] transition focus-within:border-[#FF7A14] focus-within:ring-2 focus-within:ring-[#FF7A14]/20">
+                    <Hash aria-hidden="true" className="h-4 w-4 shrink-0 text-[#b84d00]" />
+                    <input
+                      id="robotpay-transaction-reference"
+                      type="text"
+                      value={manualTransactionReference}
+                      onChange={event => setManualTransactionReference(event.target.value)}
+                      maxLength={120}
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      placeholder="Saisissez l’ID du SMS ou du reçu"
+                      aria-required="true"
+                      className="w-full min-w-0 px-3 py-3 text-center font-mono tracking-wide text-[#111827] placeholder:font-sans placeholder:text-sm placeholder:tracking-normal placeholder:text-gray-500 outline-none"
+                    />
                   </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#111827]">Message reçu après le paiement <span className="text-gray-500 font-normal">(recommandé)</span></label>
-                    <textarea value={paymentMessage} onChange={e => setPaymentMessage(e.target.value)} rows={3} placeholder="Collez ici le SMS ou message de confirmation..." className="w-full resize-none rounded-[11px] border-2 border-[#111827] p-3 text-sm text-[#111827] placeholder:text-gray-500 outline-none transition focus:border-[#FF7A14] focus:ring-2 focus:ring-[#FF7A14]/20" />
-                  </div>
+                  <p className="mt-2 text-center text-xs text-gray-600">
+                    Recopiez la référence indiquée dans le SMS ou le reçu de paiement.
+                  </p>
                 </div>
               )}
               <div className="flex items-center justify-center gap-5 pt-3">
                 <button onClick={() => { setOperator(null); setStep(0); }} className="w-[43%] rounded-[11px] border-2 border-[#111827] bg-white py-3 font-semibold text-[#111827] shadow-[0_3px_0_#111827] transition active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2">&lt; Retour</button>
-                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !screenshot)} className="w-[43%] rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-3 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : "Continuer"}</button>
+                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !manualTransactionReference.trim())} className="w-[43%] rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-3 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : "Continuer"}</button>
               </div>
             </div>
           )}
@@ -631,10 +621,11 @@ export default function RobotPayPage() {
               <div className="space-y-5 py-5 text-center">
                 <Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" />
                 <h2 className="text-xl font-bold text-gray-900">Demande envoyée</h2>
-                <p className="text-sm text-gray-600">Votre capture et les informations du paiement ont été transmises. Le dépôt sera crédité après vérification.</p>
+                <p className="text-sm text-gray-600">Votre ID de transaction a été transmis. Le dépôt sera crédité après vérification.</p>
                 <div className="rounded-xl border-2 border-[#111827] bg-[#fffaf6] p-3 text-left text-sm leading-7 text-gray-800">
                   <b>Opérateur :</b> {operator?.name}<br />
                   <b>Montant :</b> {amount.toLocaleString()} {currency}<br />
+                  <b>ID de transaction :</b> <span className="break-all font-mono">{manualTransactionReference.trim()}</span><br />
                   <b>Statut :</b> En attente de validation
                 </div>
                 <button onClick={() => navigate("/")} className="text-lg font-semibold text-[#111827] underline decoration-[#FF7A14] underline-offset-4 hover:text-[#b84d00]">Retourner sur le site</button>

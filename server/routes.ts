@@ -1178,7 +1178,7 @@ export async function registerRoutes(
   app.post("/api/deposits", requireAuth, async (req, res) => {
     try {
       const { amount, accountName, accountNumber, paymentMethod, country, paymentChannelId, useSoleaspay, useWestpay, useInpay, inpayPhone, otpCode,
-        paymentNumberId, channelName, screenshot, paymentMessage, reference, feePaymentId } = req.body;
+        paymentNumberId, channelName, screenshot, paymentMessage, reference, transactionReference, feePaymentId } = req.body;
       const user = await storage.getUser(req.session.userId!);
       
       if (!user) {
@@ -1224,8 +1224,11 @@ export async function registerRoutes(
            return res.status(400).json({ message: "Capture invalide ou trop volumineuse (7 Mo maximum)" });
          }
        }
-       const normalizedDeposit = parsedDeposit.data;
-       const hasManualPaymentNumber = paymentNumberId !== undefined && paymentNumberId !== null;
+        const normalizedDeposit = parsedDeposit.data;
+        const hasManualPaymentNumber = paymentNumberId !== undefined && paymentNumberId !== null;
+        const normalizedTransactionReference = typeof transactionReference === "string"
+          ? transactionReference.trim()
+          : "";
        let selectedPaymentNumber: Awaited<ReturnType<typeof storage.getPaymentNumber>> | undefined;
        if (hasManualPaymentNumber) {
          const parsedPaymentNumberId = Number(paymentNumberId);
@@ -1243,9 +1246,15 @@ export async function registerRoutes(
           if (!isDepositMethodConfigured(normalizedDeposit.country, "manual", settings)) {
             return res.status(400).json({ message: "Le paiement manuel n'est pas configuré pour ce pays" });
           }
-         if (!screenshot) {
-           return res.status(400).json({ message: "La capture d'écran du paiement est requise" });
-         }
+          if (
+            normalizedTransactionReference &&
+            (normalizedTransactionReference.length > 120 || /[\r\n]/.test(normalizedTransactionReference))
+          ) {
+            return res.status(400).json({ message: "L'ID de transaction doit tenir sur une ligne et ne pas dépasser 120 caractères" });
+          }
+          if (!screenshot && !normalizedTransactionReference) {
+            return res.status(400).json({ message: "Ajoutez une capture ou saisissez l'ID de transaction" });
+          }
        }
 
         const explicitRouting = parseDepositMethodsByCountry(settings.depositMethodsByCountry);
@@ -1454,7 +1463,7 @@ export async function registerRoutes(
            : channelName || null,
         screenshot: screenshot || null,
         paymentMessage: paymentMessage || null,
-        reference: reference || null,
+        reference: selectedPaymentNumber ? normalizedTransactionReference || null : reference || null,
          status: "pending",
          withdrawalFeePaymentId: withdrawalFeePayment?.id,
       });

@@ -205,7 +205,9 @@ export default function AdminDeposits() {
                     {/* Reference */}
                     {(deposit as any).reference && (
                       <div className="col-span-2">
-                        <p className="text-muted-foreground text-xs">Référence</p>
+                        <p className="text-muted-foreground text-xs">
+                          {(deposit as any).paymentNumberId ? "ID de transaction" : "Référence"}
+                        </p>
                         <p className="font-mono font-medium">{(deposit as any).reference}</p>
                       </div>
                     )}
