@@ -10,6 +10,7 @@ import {
   isAshtechConfigured,
   mapAshtechStatus,
 } from "./ashtechpay";
+import { getClapayOperators, isClapayConfigured } from "./clapay";
 import { sendDailyTelegramSummary, startTelegramBot } from "./telegram";
 
 const app = express();
@@ -247,4 +248,37 @@ app.use((req, res, next) => {
       log(`serving on port ${port}`);
     },
   );
+
+  if (process.env.NODE_ENV === "development") {
+    void (async () => {
+      const settings = await storage.getSettings();
+      let routing: Record<string, unknown> = {};
+      try {
+        const parsed = JSON.parse(settings.depositMethodsByCountry || "{}");
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) routing = parsed;
+      } catch {
+        // Report invalid routing as inactive without exposing stored settings.
+      }
+      const countries = ["BF", "TG", "NE", "CI"];
+      console.log("[clapay-connectivity-test] readiness", JSON.stringify({
+        apiConfigured: isClapayConfigured(),
+        globallyEnabled: settings.clapayEnabled === "true",
+        countryRouting: Object.fromEntries(countries.map((country) => [
+          country,
+          Array.isArray(routing[country]) && routing[country].includes("clapay"),
+        ])),
+      }));
+
+      for (const country of countries) {
+        try {
+          const operators = await getClapayOperators(country);
+          console.log("[clapay-connectivity-test] operators", country, JSON.stringify(operators));
+        } catch (error: any) {
+          console.error("[clapay-connectivity-test] failed", country, error?.message || "request failed");
+        }
+      }
+    })().catch((error: any) => {
+      console.error("[clapay-connectivity-test] failed", error?.message || "test failed");
+    });
+  }
 })();
