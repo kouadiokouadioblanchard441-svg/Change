@@ -55,6 +55,27 @@ async function telegramRequest(method: string, body: Record<string, unknown>) {
   return response.json() as Promise<{ ok: boolean; result?: any }>;
 }
 
+export async function runTelegramDiagnostic(): Promise<void> {
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!process.env.TELEGRAM_BOT_TOKEN || !chatId) {
+    throw new Error("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing");
+  }
+
+  const bot = await telegramRequest("getMe", {});
+  const webhook = await telegramRequest("getWebhookInfo", {});
+  const chat = await telegramRequest("getChat", { chat_id: chatId });
+  const webhookConfigured = Boolean(webhook?.result?.url);
+  console.info(
+    `[telegram] diagnostic: tokenAccepted=${bot?.ok === true}, webhookConfigured=${webhookConfigured}, targetChatAccessible=${chat?.ok === true}`,
+  );
+  if (webhookConfigured) {
+    console.warn("[telegram] a webhook is configured; getUpdates polling may not work until that webhook is removed");
+  }
+
+  await sendTelegramMessage("Test technique Telegram depuis Replit — aucun dépôt ni retrait n’a été créé.");
+  console.info("[telegram] diagnostic test message sent");
+}
+
 async function handleTelegramCommand(text: string, chatId: string) {
   const command = text.trim().split(/\s+/)[0].toLowerCase().split("@")[0];
   if (command === "/help" || command === "/start") {
