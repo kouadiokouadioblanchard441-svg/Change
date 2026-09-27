@@ -25,13 +25,13 @@ function Stepper({ step }: { step: number }) {
     <div className="flex items-center justify-between mb-7">
       {["Numéro de téléphone", "Informations de confirmation", "Paiement terminé"].map((label, i) => (
         <div key={label} className="flex items-center flex-1 last:flex-none">
-          <div className={`flex flex-col items-center text-center ${i <= step ? "text-[#1877d2]" : "text-gray-400"}`}>
-            <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold ${i <= step ? "border-[#8fc4d8] bg-[#eef9fc]" : "border-gray-300 bg-white"}`}>
+          <div className={`flex flex-col items-center text-center ${i <= step ? "text-[#111827]" : "text-gray-400"}`}>
+            <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold ${i <= step ? "border-[#111827] bg-[#FF7A14] text-[#111827] shadow-[0_2px_0_#111827]" : "border-gray-300 bg-white"}`}>
               {i < step ? <Check className="w-5 h-5" /> : i + 1}
             </div>
             <span className="text-[11px] leading-tight mt-1 w-24">{label}</span>
           </div>
-          {i < 2 && <div className={`h-px flex-1 mx-1 mt-[-18px] ${i < step ? "bg-[#8fc4d8]" : "bg-gray-300"}`} />}
+          {i < 2 && <div className={`h-px flex-1 mx-1 mt-[-18px] ${i < step ? "bg-[#FF7A14]" : "bg-gray-300"}`} />}
         </div>
       ))}
     </div>
@@ -451,26 +451,26 @@ export default function RobotPayPage() {
     setStep(1);
   };
 
-   if (!amount || !country) return <div className="min-h-screen flex items-center justify-center p-6 text-center">Données de dépôt invalides.</div>;
+   if (!amount || !country) return <main className="flex min-h-screen items-center justify-center bg-[#FF7A14] p-6 text-center text-[#111827]"><p className="rounded-xl border-2 border-[#111827] bg-white p-5 font-semibold shadow-[0_4px_0_#111827]">Données de dépôt invalides.</p></main>;
   return (
-     <main className="min-h-screen bg-[#4b91ef] p-3 sm:p-6">
+      <main className="min-h-screen bg-[#FF7A14] p-3 text-[#111827] sm:p-6">
       <div className="max-w-xl mx-auto">
-        <div className="text-white px-5 pt-4 pb-6">
-          <p className="text-xl">Montant:</p>
-          <p className="text-4xl font-bold">{amount.toLocaleString()} <span className="text-2xl font-normal">{currency}</span></p>
+         <div className="px-4 pb-5 pt-3 text-[#111827] sm:px-5 sm:pt-4 sm:pb-6">
+           <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#5b2500]">Montant du dépôt</p>
+           <p className="mt-1 text-4xl font-extrabold tracking-tight">{amount.toLocaleString()} <span className="text-2xl font-bold">{currency}</span></p>
         </div>
-        <section className={step === 0 ? "space-y-5" : "rounded-xl bg-white p-5 shadow-xl sm:p-8"}>
+         <section className="rounded-2xl border-2 border-[#111827] bg-white p-4 shadow-[0_5px_0_#111827,0_10px_18px_rgba(17,24,39,0.18)] sm:p-6">
           {step > 0 && <Stepper step={Math.max(0, Math.min(2, step - 1))} />}
           {step === 0 && (
             <div className="space-y-5">
-              <p className="px-1 text-xl text-white">
+               <p className="px-1 text-lg font-bold text-[#111827]">
                 {isManualFlow
                   ? "Sélectionnez le numéro de paiement :"
                   : isSoleaspayFlow
                     ? "Sélectionnez votre opérateur Mobile Money :"
                     : "Sélectionnez le mode de paiement :"}
               </p>
-               {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-blue-500" /> : operators.length === 0 ? <p className="text-center text-gray-500">{providerError instanceof Error ? sanitizeDepositDisplayText(providerError.message, "Aucun opérateur disponible pour ce pays.") : "Aucun opérateur disponible pour ce pays."}</p> : (
+               {loadingOperators ? <Loader2 className="w-7 h-7 animate-spin mx-auto text-[#FF7A14]" /> : operators.length === 0 ? <p className="text-center text-gray-500">{providerError instanceof Error ? sanitizeDepositDisplayText(providerError.message, "Aucun opérateur disponible pour ce pays.") : "Aucun opérateur disponible pour ce pays."}</p> : (
                   <div className="space-y-3">
                     {operators.map((op, i) => (
                       <button
@@ -478,21 +478,21 @@ export default function RobotPayPage() {
                         type="button"
                         onClick={() => chooseOperator(op)}
                         aria-label={`Sélectionner ${op.name || op.code || "cet opérateur"}`}
-                        className={`group flex min-h-[72px] w-full items-center justify-between gap-4 rounded-2xl border-2 px-5 py-4 text-left transition duration-200 ease-out active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#c7e3ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#4b91ef] ${
+                        className={`group flex min-h-[68px] w-full items-center justify-between gap-4 rounded-xl border-2 border-[#111827] px-4 py-3.5 text-left transition duration-200 ease-out active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FF7A14]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:px-5 ${
                           operator === op
-                            ? "border-[#14538a] bg-[#f3f8ff] ring-2 ring-[#14538a]/15"
-                            : "border-white/90 bg-white shadow-[0_8px_20px_rgba(19,69,123,0.16)] hover:-translate-y-0.5 hover:border-[#d7e9fb] hover:shadow-[0_12px_24px_rgba(19,69,123,0.22)]"
+                            ? "bg-[#fff1e6] ring-2 ring-[#FF7A14]/35 shadow-[0_3px_0_#111827,0_6px_12px_rgba(17,24,39,0.12)]"
+                            : "bg-white shadow-[0_3px_0_#111827,0_6px_12px_rgba(17,24,39,0.12)] hover:-translate-y-0.5 hover:bg-[#fffaf6] hover:shadow-[0_5px_0_#111827,0_9px_16px_rgba(17,24,39,0.16)]"
                         }`}
                       >
-                        <span className="min-w-0 flex-1 text-lg font-bold leading-snug text-[#14538a]">
+                        <span className="min-w-0 flex-1 text-lg font-bold leading-snug text-[#111827]">
                           {op.name}
                         </span>
                         <ChevronRight
                           aria-hidden="true"
                           className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
                             operator === op
-                              ? "translate-x-0.5 text-[#14538a]"
-                              : "text-[#6d8aa8] group-hover:translate-x-0.5 group-hover:text-[#14538a]"
+                              ? "translate-x-0.5 text-[#b84d00]"
+                              : "text-gray-500 group-hover:translate-x-0.5 group-hover:text-[#b84d00]"
                           }`}
                         />
                       </button>
@@ -506,27 +506,27 @@ export default function RobotPayPage() {
               {operator?.manualNumber && (
                 <section
                   aria-label="Informations de paiement manuel"
-                  className="mx-auto w-full max-w-md rounded-2xl border-2 border-[#14538a] bg-[#f7fbff] p-3 text-center shadow-[0_4px_14px_rgba(20,83,138,0.16)]"
+                  className="mx-auto w-full max-w-md rounded-2xl border-2 border-[#111827] bg-white p-3 text-center shadow-[0_3px_0_#111827,0_7px_14px_rgba(17,24,39,0.14)]"
                 >
-                  <div className="mb-3 flex flex-col items-center border-b border-[#d7e3ef] pb-2.5 text-center">
+                  <div className="mb-3 flex flex-col items-center border-b border-gray-200 pb-2.5 text-center">
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
                       {operator.manualNumber.paymentLink ? "Lien de paiement" : "Numéro de paiement"}
                     </p>
-                    <p className="mt-0.5 text-sm font-bold text-[#14538a]">{operator.name || operator.code}</p>
+                    <p className="mt-0.5 text-sm font-bold text-[#111827]">{operator.name || operator.code}</p>
                   </div>
                   {operator.manualNumber.paymentLink ? (
-                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#14538a] bg-white px-3 py-2 shadow-inner">
+                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#111827] bg-white px-3 py-2 shadow-[0_2px_5px_rgba(17,24,39,0.12)]">
                       <a
                         href={operator.manualNumber.paymentLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-w-0 items-center justify-center gap-1.5 text-center text-sm font-semibold text-[#14538a] underline decoration-[#b7cee5] underline-offset-2"
+                        className="inline-flex min-w-0 items-center justify-center gap-1.5 text-center text-sm font-semibold text-[#111827] underline decoration-[#FF7A14] underline-offset-2"
                       >
                         <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" /> Ouvrir le lien
                       </a>
                     </div>
                   ) : (
-                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#14538a] bg-white px-3 py-2 shadow-inner">
+                    <div className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#111827] bg-white px-3 py-2 shadow-[0_2px_5px_rgba(17,24,39,0.12)]">
                       <p className="break-all text-center font-mono text-xl font-bold tabular-nums tracking-[0.08em] text-[#17324d]">
                         {operator.manualNumber.phone}
                       </p>
@@ -538,46 +538,123 @@ export default function RobotPayPage() {
                     aria-label={operator.manualNumber.paymentLink
                       ? "Copier le lien de paiement"
                       : `Copier le numéro ${operator.manualNumber.phone}`}
-                    className="mx-auto mt-2.5 flex h-9 min-w-28 items-center justify-center gap-1.5 rounded-lg border-2 border-[#14538a] bg-[#14538a] px-4 text-xs font-bold text-white shadow-sm transition hover:bg-[#104674] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc4d8] focus-visible:ring-offset-2"
+                    className="mx-auto mt-2.5 flex h-10 min-w-28 items-center justify-center gap-1.5 rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] px-4 text-xs font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2"
                   >
                     <Copy aria-hidden="true" className="h-4 w-4" /> Copier
                   </button>
                 </section>
               )}
-              <label htmlFor="robotpay-payer-phone" className="block text-sm font-semibold">Votre numéro pour le paiement</label>
-              <div className="flex items-center rounded-lg border border-gray-300 px-3">
-                <Phone className="h-4 w-4 text-gray-400" />
-                <span className="shrink-0 border-r border-gray-200 pr-2 text-gray-600">+{phonePrefix}</span>
-                <input id="robotpay-payer-phone" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 12))} type="tel" inputMode="numeric" placeholder="Numéro de téléphone" className="w-full px-3 py-3 outline-none" />
+              <label htmlFor="robotpay-payer-phone" className="block text-sm font-semibold text-[#111827]">Votre numéro pour le paiement</label>
+              <div className="flex items-center rounded-[11px] border-2 border-[#111827] px-3 shadow-[0_2px_5px_rgba(17,24,39,0.1)] transition focus-within:border-[#FF7A14] focus-within:ring-2 focus-within:ring-[#FF7A14]/20">
+                <Phone className="h-4 w-4 text-[#111827]" />
+                <span className="shrink-0 border-r border-gray-300 pr-2 text-[#111827]">+{phonePrefix}</span>
+                <input id="robotpay-payer-phone" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 12))} type="tel" inputMode="numeric" placeholder="Numéro de téléphone" className="w-full px-3 py-3 text-[#111827] placeholder:text-gray-500 outline-none" />
               </div>
               {operator?.manualNumber && (
                 <div className="space-y-4 border-t border-gray-200 pt-4 text-left">
                   <div>
-                    <p className="mb-2 text-sm font-semibold text-gray-800">Capture d'écran du paiement <span className="text-red-500">*</span></p>
+                    <p className="mb-2 text-sm font-semibold text-[#111827]">Capture d'écran du paiement <span className="text-red-500">*</span></p>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleScreenshotChange} className="hidden" />
-                    <button onClick={() => fileInputRef.current?.click()} className="flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 py-5">
+                    <button onClick={() => fileInputRef.current?.click()} className="flex w-full flex-col items-center gap-2 rounded-[11px] border-2 border-dashed border-[#111827] bg-white py-5 transition duration-150 hover:border-[#FF7A14] hover:bg-[#fffaf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2">
                       {screenshot ? <><ClipboardCheck className="h-7 w-7 text-green-500" /><span className="text-sm text-green-600">{screenshotName}</span></> : <><ImageIcon className="h-7 w-7 text-gray-400" /><span className="text-sm text-gray-600">Ajouter la capture</span><span className="text-xs text-gray-400">JPG, PNG — max 5 Mo</span></>}
                     </button>
                     {screenshot && <img src={screenshot} alt="Aperçu de la capture" className="mt-2 max-h-44 w-full rounded-lg border object-contain" />}
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-800">Message reçu après le paiement <span className="text-gray-400 font-normal">(recommandé)</span></label>
-                    <textarea value={paymentMessage} onChange={e => setPaymentMessage(e.target.value)} rows={3} placeholder="Collez ici le SMS ou message de confirmation..." className="w-full resize-none rounded-lg border border-gray-300 p-3 text-sm outline-none" />
+                    <label className="mb-2 block text-sm font-semibold text-[#111827]">Message reçu après le paiement <span className="text-gray-500 font-normal">(recommandé)</span></label>
+                    <textarea value={paymentMessage} onChange={e => setPaymentMessage(e.target.value)} rows={3} placeholder="Collez ici le SMS ou message de confirmation..." className="w-full resize-none rounded-[11px] border-2 border-[#111827] p-3 text-sm text-[#111827] placeholder:text-gray-500 outline-none transition focus:border-[#FF7A14] focus:ring-2 focus:ring-[#FF7A14]/20" />
                   </div>
                 </div>
               )}
               <div className="flex items-center justify-center gap-5 pt-3">
-                <button onClick={() => { setOperator(null); setStep(0); }} className="w-[43%] rounded-md bg-[#78b9df] py-3 font-semibold text-white shadow-sm">&lt; Retour</button>
-                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !screenshot)} className="w-[43%] rounded-md bg-[#078ee8] py-3 font-semibold text-white shadow-sm disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : "Continuer"}</button>
+                <button onClick={() => { setOperator(null); setStep(0); }} className="w-[43%] rounded-[11px] border-2 border-[#111827] bg-white py-3 font-semibold text-[#111827] shadow-[0_3px_0_#111827] transition active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2">&lt; Retour</button>
+                <button onClick={submitPhone} disabled={busy || !phone.trim() || (!!operator?.manualNumber && !screenshot)} className="w-[43%] rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-3 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition duration-150 hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A14] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : operator?.manualNumber ? "Envoyer la demande" : "Continuer"}</button>
               </div>
             </div>
           )}
           {step === 2 && (
             <div className="space-y-5 text-center">
-              {redirectUrl ? <><p className="text-gray-700">{message || "Ouvrez la page sécurisée pour terminer votre paiement."}</p><a href={redirectUrl} target="_blank" rel="noreferrer" className="block rounded-lg bg-[#1486d8] text-white py-3 font-semibold">Ouvrir la page de paiement</a></> : (otpToken || ashtechOtpRequired) ? <>{ussd && <p className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-3 text-center font-mono text-xl font-bold tracking-widest text-[#00a526]">{ussd}</p>}<p className="text-sm text-gray-600">{ussd ? "Composez ce code sur votre téléphone pour obtenir le code OTP, puis saisissez-le ci-dessous." : "Un code OTP vous a été envoyé. Saisissez-le ci-dessous."}</p><input value={activeProvider === "ashtech" ? ashtechOtp : otp} onChange={e => activeProvider === "ashtech" ? setAshtechOtp(e.target.value.replace(/\D/g, "")) : setOtp(e.target.value)} inputMode="numeric" placeholder="Saisissez le code OTP" className="w-full border rounded-lg p-3 text-center text-xl" /><button onClick={submitOtp} disabled={busy} className="w-full rounded-lg bg-[#1486d8] py-3 font-semibold text-white disabled:opacity-50">Confirmer</button></> : status === "rejected" ? <><ShieldCheck className="mx-auto h-16 w-16 text-red-400" /><p className="font-semibold text-lg text-red-600">Paiement refusé</p><p className="text-sm text-gray-500">Le paiement n’a pas été confirmé. Vous pouvez réessayer.</p><button onClick={() => { setDepositId(null); setStatus("pending"); setStep(1); }} className="w-full rounded-lg bg-[#1486d8] py-3 font-semibold text-white">Réessayer</button></> : <><ShieldCheck className="mx-auto h-16 w-16 animate-pulse text-green-400" /><p className="font-semibold text-lg">Paiement en cours de confirmation</p><p className="text-sm text-gray-500">{message || "Validez la demande sur votre téléphone. La page se met à jour automatiquement."}</p></>}
+              {redirectUrl ? (
+                <>
+                  <p className="text-gray-700">{message || "Ouvrez la page sécurisée pour terminer votre paiement."}</p>
+                  <a
+                    href={redirectUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-3 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827]"
+                  >
+                    Ouvrir la page de paiement
+                  </a>
+                </>
+              ) : (otpToken || ashtechOtpRequired) ? (
+                <>
+                  {ussd && <p className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-3 text-center font-mono text-xl font-bold tracking-widest text-[#00a526]">{ussd}</p>}
+                  <p className="text-sm text-gray-600">{ussd ? "Composez ce code sur votre téléphone pour obtenir le code OTP, puis saisissez-le ci-dessous." : "Un code OTP vous a été envoyé. Saisissez-le ci-dessous."}</p>
+                  <input
+                    value={activeProvider === "ashtech" ? ashtechOtp : otp}
+                    onChange={e => activeProvider === "ashtech" ? setAshtechOtp(e.target.value.replace(/\D/g, "")) : setOtp(e.target.value)}
+                    inputMode="numeric"
+                    placeholder="Saisissez le code OTP"
+                    className="w-full rounded-[11px] border-2 border-[#111827] p-3 text-center text-xl text-[#111827] outline-none transition focus:border-[#FF7A14] focus:ring-2 focus:ring-[#FF7A14]/20"
+                  />
+                  <button
+                    onClick={submitOtp}
+                    disabled={busy}
+                    className="w-full rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-3 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Confirmer
+                  </button>
+                </>
+              ) : status === "rejected" ? (
+                <>
+                  <ShieldCheck className="mx-auto h-16 w-16 text-red-400" />
+                  <p className="text-lg font-semibold text-red-600">Paiement refusé</p>
+                  <p className="text-sm text-gray-500">Le paiement n’a pas été confirmé. Vous pouvez réessayer.</p>
+                  <button
+                    onClick={() => { setDepositId(null); setStatus("pending"); setStep(1); }}
+                    className="w-full rounded-[11px] border-2 border-[#111827] bg-[#FF7A14] py-3 font-bold text-[#111827] shadow-[0_3px_0_#111827,0_5px_10px_rgba(17,24,39,0.16)] transition hover:brightness-95 active:translate-y-[2px] active:shadow-[0_1px_0_#111827]"
+                  >
+                    Réessayer
+                  </button>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="mx-auto h-16 w-16 animate-pulse text-green-400" />
+                  <p className="text-lg font-semibold">Paiement en cours de confirmation</p>
+                  <p className="text-sm text-gray-500">{message || "Validez la demande sur votre téléphone. La page se met à jour automatiquement."}</p>
+                </>
+              )}
             </div>
           )}
-          {step === 3 && (manualSubmitted ? <div className="space-y-5 py-5 text-center"><Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-700">Demande envoyée</h2><p className="text-sm text-gray-500">Votre capture et les informations du paiement ont été transmises. Le dépôt sera crédité après vérification.</p><div className="rounded bg-gray-100 p-3 text-left text-sm leading-7 text-gray-700"><b>Opérateur :</b> {operator?.name}<br /><b>Montant :</b> {amount.toLocaleString()} {currency}<br /><b>Statut :</b> En attente de validation</div><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div> : <div className="space-y-5 py-5 text-center"><div className="text-left border-b pb-3 text-xl text-gray-700">Paiement — {countryInfo?.name || country}</div><p className="text-left text-2xl text-gray-900">{amount.toLocaleString()} {currency}</p><Check className="w-24 h-24 mx-auto rounded-full bg-green-500 p-4 text-white" /><h2 className="text-xl text-gray-600">Votre paiement a été approuvé</h2><div className="rounded bg-gray-200 p-3 text-left text-sm leading-7 text-gray-700"><b>Payeur :</b> {phone}<br /><b>ID Transaction :</b> {transactionReference}<br /><b>Date Paiement :</b> {new Date().toLocaleString("fr-FR")}</div><p className="pt-12 text-gray-500">🔒 Paiement vérifié</p><button onClick={() => navigate("/")} className="text-lg text-[#4b91ef]">Retourner sur le site</button></div>)}
+          {step === 3 && (
+            manualSubmitted ? (
+              <div className="space-y-5 py-5 text-center">
+                <Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" />
+                <h2 className="text-xl font-bold text-gray-900">Demande envoyée</h2>
+                <p className="text-sm text-gray-600">Votre capture et les informations du paiement ont été transmises. Le dépôt sera crédité après vérification.</p>
+                <div className="rounded-xl border-2 border-[#111827] bg-[#fffaf6] p-3 text-left text-sm leading-7 text-gray-800">
+                  <b>Opérateur :</b> {operator?.name}<br />
+                  <b>Montant :</b> {amount.toLocaleString()} {currency}<br />
+                  <b>Statut :</b> En attente de validation
+                </div>
+                <button onClick={() => navigate("/")} className="text-lg font-semibold text-[#111827] underline decoration-[#FF7A14] underline-offset-4 hover:text-[#b84d00]">Retourner sur le site</button>
+              </div>
+            ) : (
+              <div className="space-y-5 py-5 text-center">
+                <div className="border-b border-gray-200 pb-3 text-left text-xl font-semibold text-gray-900">Paiement — {countryInfo?.name || country}</div>
+                <p className="text-left text-2xl font-bold text-gray-900">{amount.toLocaleString()} {currency}</p>
+                <Check className="mx-auto h-24 w-24 rounded-full bg-green-500 p-4 text-white" />
+                <h2 className="text-xl font-bold text-gray-900">Votre paiement a été approuvé</h2>
+                <div className="rounded-xl border-2 border-[#111827] bg-[#fffaf6] p-3 text-left text-sm leading-7 text-gray-800">
+                  <b>Payeur :</b> {phone}<br />
+                  <b>ID Transaction :</b> {transactionReference}<br />
+                  <b>Date Paiement :</b> {new Date().toLocaleString("fr-FR")}
+                </div>
+                <p className="pt-6 text-gray-600">🔒 Paiement vérifié</p>
+                <button onClick={() => navigate("/")} className="text-lg font-semibold text-[#111827] underline decoration-[#FF7A14] underline-offset-4 hover:text-[#b84d00]">Retourner sur le site</button>
+              </div>
+            )
+          )}
         </section>
       </div>
     </main>
