@@ -498,7 +498,7 @@ export default function HistoryPage() {
                       <div className="history-card-top">
                         <div>
                           <p className="history-amount">
-                            {isRegistration ? "—" : `+${currency} ${amount.toLocaleString("fr-FR")}`}
+                            {isRegistration ? "—" : `+${amount.toLocaleString("fr-FR")} ${currency}`}
                           </p>
                            <p className="history-card-label">{transaction.type === "deposit" ? "Dépôt" : transaction.description}</p>
                         </div>
