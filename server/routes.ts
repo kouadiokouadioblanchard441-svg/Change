@@ -3849,9 +3849,12 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         await storage.updateDeposit(depositId, { status: "rejected", processedAt: new Date() }).catch(() => undefined);
       }
       console.error("[clapay] initiation error:", error);
+      const telegramError = typeof error?.providerDetail === "string"
+        ? new Error(`${error.message || "Erreur Clapay"} — détail Clapay : ${error.providerDetail}`)
+        : error;
       notifyTelegramPaymentError({
         operation: "Initiation du dépôt Clapay",
-        error,
+        error: telegramError,
         recordId: depositId,
         userId: req.session.userId,
         amount: req.body?.amount,

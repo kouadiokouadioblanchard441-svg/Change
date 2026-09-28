@@ -12,6 +12,7 @@ type RequestValues = Record<string, string | number>;
 type ClapayRequestError = Error & {
   httpStatus?: number;
   requestMayHaveReachedProvider?: boolean;
+  providerDetail?: string;
 };
 
 type ClapayConfig = {
@@ -209,6 +210,57 @@ function endpointUrl(config: ClapayConfig, path: string): URL {
   return url;
 }
 
+function sanitizeProviderDetail(value: string): string {
+  return value
+    .replace(/Bearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [redacted]")
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[email redacted]")
+    .replace(/\+?\d[\d .()-]{6,}\d/g, "[number redacted]")
+    .replace(/((?:api[_-]?key|secret|token)\s*[:=]\s*)[^\s,;]+/gi, "$1[redacted]")
+    .replace(/[\r\n\t]+/g, " ")
+    .trim()
+    .slice(0, 240);
+}
+
+function getProviderDetail(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return undefined;
+  const record = payload as JsonRecord;
+  const nestedError = record.error && typeof record.error === "object" && !Array.isArray(record.error)
+    ? record.error as JsonRecord
+    : undefined;
+  const rawCode = record.error_code ?? record.code ?? nestedError?.error_code ?? nestedError?.code;
+  const code = (typeof rawCode === "string" || typeof rawCode === "number")
+    ? String(rawCode).trim()
+    : "";
+  const rawMessage = [
+    record.message,
+    record.error_description,
+    record.detail,
+    record.description,
+    typeof record.error === "string" ? record.error : undefined,
+    nestedError?.message,
+  ].find((value): value is string => typeof value === "string" && value.trim().length > 0);
+  const errorMessages = Array.isArray(record.errors)
+    ? record.errors
+      .map((entry) => {
+        if (typeof entry === "string") return entry;
+        if (!entry || typeof entry !== "object" || Array.isArray(entry)) return "";
+        const message = (entry as JsonRecord).message;
+        const field = (entry as JsonRecord).field;
+        if (typeof message !== "string") return "";
+        return typeof field === "string" && field.trim()
+          ? `${field.trim()}: ${message}`
+          : message;
+      })
+      .filter(Boolean)
+      .slice(0, 3)
+      .join("; ")
+    : "";
+  const message = rawMessage || errorMessages;
+  const detail = [code ? `code ${code}` : "", message || ""].filter(Boolean).join(": ");
+  const sanitized = sanitizeProviderDetail(detail);
+  return sanitized || undefined;
+}
+
 async function callClapay(
   config: ClapayConfig,
   path: string,
@@ -264,11 +316,13 @@ async function callClapay(
     );
   }
   if (!response.ok) {
+    const providerDetail = getProviderDetail(payload);
     throw Object.assign(
       new Error(`Clapay a refusé la requête (HTTP ${response.status})`),
       {
         httpStatus: response.status,
         requestMayHaveReachedProvider: response.status >= 500,
+        ...(providerDetail ? { providerDetail } : {}),
       } satisfies Partial<ClapayRequestError>,
     );
   }
