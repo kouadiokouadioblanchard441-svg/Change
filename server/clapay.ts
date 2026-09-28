@@ -377,10 +377,18 @@ export async function initiateClapayPayment(values: RequestValues): Promise<{
   message?: string;
 }> {
   const config = loadConfig();
+  const { countryPhonePrefix, ...templateValues } = values;
+  const phonePrefix = String(countryPhonePrefix ?? "").replace(/\D/g, "");
+  const normalizePhone = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    return value.trim().startsWith("+") && phonePrefix && digits.startsWith(phonePrefix)
+      ? digits.slice(phonePrefix.length)
+      : digits;
+  };
   const requestValues = {
-    ...values,
-    ...(typeof values.phone === "string" ? { phone: values.phone.replace(/^\+/, "") } : {}),
-    ...(typeof values.accountNumber === "string" ? { accountNumber: values.accountNumber.replace(/^\+/, "") } : {}),
+    ...templateValues,
+    ...(typeof values.phone === "string" ? { phone: normalizePhone(values.phone) } : {}),
+    ...(typeof values.accountNumber === "string" ? { accountNumber: normalizePhone(values.accountNumber) } : {}),
   };
   const body = fillTemplate(config.initiateBodyTemplate, requestValues);
   const operatorOtp = values.operatorOtp;

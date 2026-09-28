@@ -3742,7 +3742,8 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const rawPhone = String(req.body.phone || "").trim();
       const amount = Number(req.body.amount);
       const activeCountries = await storage.getActiveCountries();
-      if (!activeCountries.some((entry) => entry.code.toUpperCase() === country)) {
+      const selectedCountry = activeCountries.find((entry) => entry.code.toUpperCase() === country);
+      if (!selectedCountry) {
         return res.status(400).json({ message: "Pays indisponible" });
       }
       const settings = await storage.getSettings();
@@ -3826,6 +3827,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         ...(operatorOtp ? { operatorOtp } : {}),
         phone: parsedPhone.data,
         accountNumber: parsedPhone.data,
+        countryPhonePrefix: selectedCountry.phonePrefix,
         accountName: user.fullName,
         accountFirstName,
         accountLastName,
