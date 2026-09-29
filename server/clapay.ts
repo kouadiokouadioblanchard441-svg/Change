@@ -445,6 +445,31 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
   return parseClapayOperators(config, data, normalizedCountry, "MERCHANT");
 }
 
+function getClapayPayoutPhonePrefixes(
+  country: string,
+  operator: Pick<ClapayOperator, "id" | "name" | "phonePrefixes">,
+): string[] | undefined {
+  const prefixes = operator.phonePrefixes ? [...operator.phonePrefixes] : undefined;
+  const normalizedName = operator.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const isBurkinaOrangePayout = country.trim().toUpperCase() === "BF"
+    && operator.id === "OM"
+    && normalizedName.includes("orange");
+
+  // The merchant confirmed 46 as an Orange BF payout prefix; keep the override payout-only.
+  if (isBurkinaOrangePayout) {
+    const payoutPrefixes = prefixes || [];
+    if (!payoutPrefixes.some((prefix) => prefix.replace(/\D/g, "") === "46")) {
+      payoutPrefixes.push("46");
+    }
+    return payoutPrefixes;
+  }
+
+  return prefixes;
+}
+
 export async function getClapayPayoutOptions(country: string): Promise<ClapayPayoutOptions> {
   const normalizedCountry = country.trim().toUpperCase();
   if (normalizedCountry !== "NE" && normalizedCountry !== "BF") {
@@ -452,11 +477,14 @@ export async function getClapayPayoutOptions(country: string): Promise<ClapayPay
   }
   const operators = await getClapayOperators(normalizedCountry);
   return {
-    operators: operators.map(({ id, name, phonePrefixes }) => ({
-      id,
-      name,
-      ...(phonePrefixes ? { phonePrefixes } : {}),
-    })),
+    operators: operators.map((operator) => {
+      const phonePrefixes = getClapayPayoutPhonePrefixes(normalizedCountry, operator);
+      return {
+        id: operator.id,
+        name: operator.name,
+        ...(phonePrefixes ? { phonePrefixes } : {}),
+      };
+    }),
   };
 }
 

@@ -16,3 +16,9 @@ If an initiation request times out or returns an ambiguous response, preserve th
 **Why:** The operator's OTP metadata describes the Clapay deposit flow, not payouts. Reusing it for payout validation incorrectly blocks payouts for operators that require OTP only when depositing.
 
 **How to apply:** Keep deposit OTP handling separate from the payout options, form, server validation, and payout request body.
+
+For Burkina Faso payouts only, accept prefix `46` for Orange Money (`codeoperator: OM`) even if Clapay's live `startwith` metadata omits it. Do not apply this exception to deposit validation or other operators.
+
+**Why:** The merchant confirmed `46` as an Orange BF payout number, while the live operator metadata did not include it and otherwise rejected the payout before contacting Clapay.
+
+**How to apply:** Keep the override scoped to BF Orange payout options and their server-side prefix check. Preserve Clapay's metadata for deposits and keep other BF operator checks unchanged.
