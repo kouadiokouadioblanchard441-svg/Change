@@ -55,7 +55,6 @@ type ClapayConfig = {
   operatorNamePath: string;
   payoutInitiatePath: string;
   payoutStatusPath: string;
-  payoutOperatorsPath: string;
   webhookSecret: string;
   webhookUniqueKey: string;
 };
@@ -187,8 +186,6 @@ function loadConfig(): ClapayConfig {
       || "/nowallet/api/init/payment",
     payoutStatusPath: process.env.CLAPAY_PAYOUT_STATUS_PATH?.trim()
       || "/nowallet/api/check/status/payment",
-    payoutOperatorsPath: process.env.CLAPAY_PAYOUT_OPERATORS_PATH?.trim()
-      || "/nowallet/api/operators/data",
     webhookSecret: requiredEnv("CLAPAY_WEBHOOK_SECRET"),
     webhookUniqueKey: requiredEnv("CLAPAY_WEBHOOK_UNIQUE_KEY"),
   };
@@ -449,13 +446,11 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
 }
 
 export async function getClapayPayoutOptions(country: string): Promise<ClapayPayoutOptions> {
-  const config = loadConfig();
   const normalizedCountry = country.trim().toUpperCase();
-  const operatorsData = await callClapay(config, config.payoutOperatorsPath, {
-    query: { [config.operatorsCountryParam]: normalizedCountry },
-  });
-  const operators = parseClapayOperators(config, operatorsData, normalizedCountry, "CASHIN");
-  return { operators };
+  if (normalizedCountry !== "NE" && normalizedCountry !== "BF") {
+    throw new Error("Les payouts Clapay sont limités au Niger et au Burkina Faso");
+  }
+  return { operators: await getClapayOperators(normalizedCountry) };
 }
 
 export async function initiateClapayPayment(values: RequestValues): Promise<{

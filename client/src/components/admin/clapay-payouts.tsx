@@ -227,7 +227,7 @@ export default function AdminClapayPayouts() {
             )}
             {optionsQuery.data && (
               <p className="text-xs text-muted-foreground md:col-span-2">
-                Les opérateurs affichés sont ceux que Clapay autorise pour les payouts dans ce pays.
+                Les opérateurs disponibles pour ce pays sont chargés depuis Clapay.
               </p>
             )}
 
