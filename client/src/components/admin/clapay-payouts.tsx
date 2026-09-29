@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
 type PayoutOptions = {
-  operators: Array<{ id: string; name: string; requiresOtp: boolean; phonePrefixes?: string[] }>;
+  operators: Array<{ id: string; name: string; phonePrefixes?: string[] }>;
 };
 
 type PayoutRow = Pick<
@@ -77,7 +77,6 @@ export default function AdminClapayPayouts() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [amount, setAmount] = useState("");
-  const [operatorOtp, setOperatorOtp] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
@@ -117,7 +116,6 @@ export default function AdminClapayPayouts() {
           email,
           operatorCode,
           operatorName: selectedOperator?.name,
-          operatorOtp: operatorOtp || undefined,
         }),
       });
       return responseJson<PayoutResponse>(response);
@@ -132,7 +130,6 @@ export default function AdminClapayPayouts() {
       setPhone("");
       setEmail("");
       setAmount("");
-      setOperatorOtp("");
       setConfirmed(false);
       setIdempotencyKey(crypto.randomUUID());
     },
@@ -142,7 +139,6 @@ export default function AdminClapayPayouts() {
       }
       toast({ title: "Payout non envoyé", description: error.message, variant: "destructive" });
     },
-    onSettled: () => setOperatorOtp(""),
   });
 
   const checkMutation = useMutation({
@@ -191,7 +187,6 @@ export default function AdminClapayPayouts() {
                 onChange={(event) => {
                   setCountry(event.target.value as "NE" | "BF");
                   setOperatorCode("");
-                  setOperatorOtp("");
                   setConfirmed(false);
                 }}
               >
@@ -206,10 +201,7 @@ export default function AdminClapayPayouts() {
                 id="clapay-payout-operator"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
                 value={operatorCode}
-                onChange={(event) => {
-                  setOperatorCode(event.target.value);
-                  setOperatorOtp("");
-                }}
+                onChange={(event) => setOperatorCode(event.target.value)}
                 disabled={optionsQuery.isLoading || !optionsQuery.data?.operators.length}
                 required
               >
@@ -282,24 +274,6 @@ export default function AdminClapayPayouts() {
               />
             </label>
 
-            {selectedOperator?.requiresOtp && (
-              <label className="space-y-1.5 text-sm font-medium md:col-span-2" htmlFor="clapay-payout-otp">
-                Code OTP opérateur
-                <Input
-                  id="clapay-payout-otp"
-                  type="password"
-                  value={operatorOtp}
-                  onChange={(event) => setOperatorOtp(event.target.value)}
-                  autoComplete="off"
-                  maxLength={64}
-                  required
-                />
-                <span className="block text-xs font-normal text-muted-foreground">
-                  Envoyé directement à Clapay; il n’est pas enregistré dans l’historique.
-                </span>
-              </label>
-            )}
-
             <label className="flex items-start gap-2 text-sm md:col-span-2">
               <input
                 type="checkbox"
@@ -322,7 +296,6 @@ export default function AdminClapayPayouts() {
                   || !recipientName.trim()
                   || !phone.trim()
                   || !confirmed
-                  || (Boolean(selectedOperator?.requiresOtp) && !operatorOtp.trim())
                 }
               >
                 {createMutation.isPending

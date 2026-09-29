@@ -10,7 +10,7 @@ export type ClapayOperator = {
 };
 
 export type ClapayPayoutOptions = {
-  operators: ClapayOperator[];
+  operators: Array<Omit<ClapayOperator, "requiresOtp">>;
 };
 
 export type ClapayStatusResult = {
@@ -450,7 +450,14 @@ export async function getClapayPayoutOptions(country: string): Promise<ClapayPay
   if (normalizedCountry !== "NE" && normalizedCountry !== "BF") {
     throw new Error("Les payouts Clapay sont limités au Niger et au Burkina Faso");
   }
-  return { operators: await getClapayOperators(normalizedCountry) };
+  const operators = await getClapayOperators(normalizedCountry);
+  return {
+    operators: operators.map(({ id, name, phonePrefixes }) => ({
+      id,
+      name,
+      ...(phonePrefixes ? { phonePrefixes } : {}),
+    })),
+  };
 }
 
 export async function initiateClapayPayment(values: RequestValues): Promise<{
@@ -528,7 +535,6 @@ export async function initiateClapayPayout(values: {
   accountEmail?: string;
   callbackUrl: string;
   returnUrl: string;
-  operatorOtp?: string;
 }): Promise<{ signature: string }> {
   const config = loadConfig();
   const country = values.country.trim().toUpperCase();
@@ -560,7 +566,9 @@ export async function initiateClapayPayout(values: {
     accountEmail: values.accountEmail || "",
     callbackUrl: values.callbackUrl,
     returnUrl: values.returnUrl,
-    operatorOtp: values.operatorOtp || "",
+    // Keep the legacy placeholder available for customized templates, but
+    // payouts never require or send an operator OTP.
+    operatorOtp: "",
   };
   const templateBody = fillTemplate(config.payoutBodyTemplate, templateValues);
   if (!templateBody || typeof templateBody !== "object" || Array.isArray(templateBody)) {
@@ -585,8 +593,7 @@ export async function initiateClapayPayout(values: {
   body.operators_code = [values.operatorId];
   body.method = "CASHIN";
   body.tunnel = "API";
-  if (values.operatorOtp?.trim()) body.operator_otp = values.operatorOtp.trim();
-  else delete body.operator_otp;
+  delete body.operator_otp;
 
   const data = await callClapay(config, config.payoutInitiatePath, {
     method: "POST",

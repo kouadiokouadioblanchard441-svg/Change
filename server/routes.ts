@@ -3077,7 +3077,6 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       email: z.union([z.string().trim().email().max(254), z.literal("")]).optional(),
       operatorCode: z.string().trim().min(1).max(80),
       operatorName: z.string().trim().min(1).max(100),
-      operatorOtp: z.string().trim().max(64).optional(),
     });
     const parsed = inputSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -3143,10 +3142,6 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (!normalizedPrefixes.length || !normalizedPrefixes.some((prefix) => localPhone.startsWith(prefix))) {
         return res.status(400).json({ message: "Le numéro ne correspond pas aux préfixes de cet opérateur" });
       }
-      if (operator.requiresOtp && !input.operatorOtp?.trim()) {
-        return res.status(400).json({ message: "Le code OTP de l'opérateur est requis" });
-      }
-
       const openPayout = await storage.getOpenClapayPayout(
         input.country,
         localPhone,
@@ -3220,13 +3215,17 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
           accountEmail: input.email || "",
           callbackUrl: new URL("/api/clapay/webhook", getPublicBaseUrl(req)).toString(),
           returnUrl: new URL(`/admin?clapayPayoutId=${payout.id}`, getPublicBaseUrl(req)).toString(),
-          operatorOtp: operator.requiresOtp ? input.operatorOtp : undefined,
         });
       } catch (error: any) {
         const mayHaveReachedProvider = error?.requestMayHaveReachedProvider === true;
+        const providerDetail = typeof error?.providerDetail === "string"
+          ? error.providerDetail
+          : undefined;
         const message = mayHaveReachedProvider
           ? "Clapay n'a pas confirmé l'initiation. Le payout reste en vérification ; ne le renvoyez pas."
-          : error?.message || "Clapay a refusé l'initiation du payout";
+          : [error?.message || "Clapay a refusé l'initiation du payout", providerDetail]
+            .filter(Boolean)
+            .join(" : ");
         let updated = payout;
         try {
           updated = (await storage.updateClapayPayout(payout.id, {
