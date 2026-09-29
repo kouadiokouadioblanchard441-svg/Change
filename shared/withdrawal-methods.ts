@@ -1,6 +1,6 @@
 const WITHDRAWAL_METHOD_OVERRIDES: Readonly<Record<string, readonly string[]>> = {
   CI: ["Wave"],
-  NE: ["Airtel Money", "NITA TRANSFERT"],
+  NE: ["Airtel Money", "NITA TRANSFERT", "Wave"],
 };
 
 export function getWithdrawalMethods(
