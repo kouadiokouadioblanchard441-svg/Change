@@ -3131,11 +3131,6 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
     try {
       const options = await getClapayPayoutOptions(input.country);
-      if (input.amount < options.minAmount || input.amount > options.maxAmount) {
-        return res.status(400).json({
-          message: `Le montant doit être compris entre ${options.minAmount} et ${options.maxAmount} ${country.currency}`,
-        });
-      }
       const operator = options.operators.find((entry) =>
         entry.id === input.operatorCode && entry.name === input.operatorName,
       );

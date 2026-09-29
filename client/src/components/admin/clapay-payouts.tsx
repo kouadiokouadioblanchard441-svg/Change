@@ -11,8 +11,6 @@ import { queryClient } from "@/lib/queryClient";
 
 type PayoutOptions = {
   operators: Array<{ id: string; name: string; requiresOtp: boolean; phonePrefixes?: string[] }>;
-  minAmount: number;
-  maxAmount: number;
 };
 
 type PayoutRow = Pick<
@@ -102,12 +100,7 @@ export default function AdminClapayPayouts() {
     [optionsQuery.data?.operators, operatorCode],
   );
   const numericAmount = Number(amount);
-  const amountIsValid = Boolean(
-    optionsQuery.data
-    && Number.isInteger(numericAmount)
-    && numericAmount >= optionsQuery.data.minAmount
-    && numericAmount <= optionsQuery.data.maxAmount,
-  );
+  const amountIsValid = Number.isSafeInteger(numericAmount) && numericAmount >= 10;
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -234,8 +227,7 @@ export default function AdminClapayPayouts() {
             )}
             {optionsQuery.data && (
               <p className="text-xs text-muted-foreground md:col-span-2">
-                Limites Clapay pour {country}: {optionsQuery.data.minAmount.toLocaleString("fr-FR")}–{optionsQuery.data.maxAmount.toLocaleString("fr-FR")} FCFA.
-                {" "}Les opérateurs affichés sont ceux que Clapay autorise pour les payouts.
+                Les opérateurs affichés sont ceux que Clapay autorise pour les payouts dans ce pays.
               </p>
             )}
 
@@ -270,8 +262,7 @@ export default function AdminClapayPayouts() {
               <Input
                 id="clapay-payout-amount"
                 type="number"
-                min={optionsQuery.data?.minAmount || 10}
-                max={optionsQuery.data?.maxAmount}
+                min={10}
                 step={1}
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}

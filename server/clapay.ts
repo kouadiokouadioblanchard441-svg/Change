@@ -11,8 +11,6 @@ export type ClapayOperator = {
 
 export type ClapayPayoutOptions = {
   operators: ClapayOperator[];
-  minAmount: number;
-  maxAmount: number;
 };
 
 export type ClapayStatusResult = {
@@ -58,7 +56,6 @@ type ClapayConfig = {
   payoutInitiatePath: string;
   payoutStatusPath: string;
   payoutOperatorsPath: string;
-  payoutLimitsPath: string;
   webhookSecret: string;
   webhookUniqueKey: string;
 };
@@ -192,8 +189,6 @@ function loadConfig(): ClapayConfig {
       || "/nowallet/api/check/status/payment",
     payoutOperatorsPath: process.env.CLAPAY_PAYOUT_OPERATORS_PATH?.trim()
       || "/nowallet/api/operators/data",
-    payoutLimitsPath: process.env.CLAPAY_PAYOUT_LIMITS_PATH?.trim()
-      || "/nowallet/api/limitation/payment",
     webhookSecret: requiredEnv("CLAPAY_WEBHOOK_SECRET"),
     webhookUniqueKey: requiredEnv("CLAPAY_WEBHOOK_UNIQUE_KEY"),
   };
@@ -456,29 +451,11 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
 export async function getClapayPayoutOptions(country: string): Promise<ClapayPayoutOptions> {
   const config = loadConfig();
   const normalizedCountry = country.trim().toUpperCase();
-  const [operatorsData, limitsData] = await Promise.all([
-    callClapay(config, config.payoutOperatorsPath, {
-      query: { [config.operatorsCountryParam]: normalizedCountry },
-    }),
-    callClapay(config, config.payoutLimitsPath, {
-      query: { country: normalizedCountry },
-    }),
-  ]);
+  const operatorsData = await callClapay(config, config.payoutOperatorsPath, {
+    query: { [config.operatorsCountryParam]: normalizedCountry },
+  });
   const operators = parseClapayOperators(config, operatorsData, normalizedCountry, "CASHIN");
-  const rawLimits = Array.isArray(limitsData) ? limitsData : getAtPath(limitsData, "data");
-  if (!Array.isArray(rawLimits)) {
-    throw new Error("Clapay n'a pas renvoyé les limites de paiement attendues");
-  }
-  const limit = rawLimits.find((entry) =>
-    String(getAtPath(entry, "method") || "").toUpperCase() === "CASHIN"
-    && String(getAtPath(entry, "country") || "").toUpperCase() === normalizedCountry,
-  );
-  const minAmount = Number(getAtPath(limit, "min_amount"));
-  const maxAmount = Number(getAtPath(limit, "max_amount"));
-  if (!Number.isFinite(minAmount) || !Number.isFinite(maxAmount) || minAmount <= 0 || maxAmount < minAmount) {
-    throw new Error(`Clapay n'a pas renvoyé de limites CASHIN valides pour ${normalizedCountry}`);
-  }
-  return { operators, minAmount, maxAmount };
+  return { operators };
 }
 
 export async function initiateClapayPayment(values: RequestValues): Promise<{
