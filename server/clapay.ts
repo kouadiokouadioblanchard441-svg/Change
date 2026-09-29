@@ -6,6 +6,22 @@ export type ClapayOperator = {
   id: string;
   name: string;
   requiresOtp: boolean;
+  phonePrefixes?: string[];
+};
+
+export type ClapayPayoutOptions = {
+  operators: ClapayOperator[];
+  minAmount: number;
+  maxAmount: number;
+};
+
+export type ClapayStatusResult = {
+  rawStatus: string;
+  status: "approved" | "rejected" | "pending";
+  transactionId?: string;
+  transactionMethod?: string;
+  amount?: number;
+  country?: string;
 };
 
 type RequestValues = Record<string, string | number>;
@@ -25,9 +41,13 @@ type ClapayConfig = {
   initiateSignaturePath: string;
   initiateRedirectPath: string;
   initiateMessagePath: string;
+  payoutBodyTemplate: unknown;
+  payoutSignaturePath: string;
   statusPath: string;
   statusBodyTemplate: unknown;
   statusValuePath: string;
+  payoutStatusBodyTemplate: unknown;
+  payoutStatusValuePath: string;
   successStatuses: Set<string>;
   failureStatuses: Set<string>;
   operatorsPath: string;
@@ -35,6 +55,10 @@ type ClapayConfig = {
   operatorsResponsePath: string;
   operatorIdPath: string;
   operatorNamePath: string;
+  payoutInitiatePath: string;
+  payoutStatusPath: string;
+  payoutOperatorsPath: string;
+  payoutLimitsPath: string;
   webhookSecret: string;
   webhookUniqueKey: string;
 };
@@ -80,6 +104,23 @@ const DEFAULT_INITIATE_BODY_TEMPLATE: JsonRecord = {
   tunnel: "API",
 };
 
+const DEFAULT_PAYOUT_BODY_TEMPLATE: JsonRecord = {
+  transaction_id: "{{reference}}",
+  additional_infos: {
+    customer_email: "{{accountEmail}}",
+    customer_lastname: "{{accountLastName}}",
+    customer_firstname: "{{accountFirstName}}",
+    customer_phone: "{{phone}}",
+  },
+  amount: "{{amount}}",
+  callback_url: "{{callbackUrl}}",
+  return_url: "{{returnUrl}}",
+  country_code: "{{country}}",
+  operators_code: ["{{operatorId}}"],
+  method: "CASHIN",
+  tunnel: "API",
+};
+
 function optionalJsonEnv(name: string, fallback: unknown): unknown {
   if (!process.env[name]?.trim()) return fallback;
   return parseJsonEnv(name);
@@ -119,12 +160,22 @@ function loadConfig(): ClapayConfig {
     initiateSignaturePath: process.env.CLAPAY_INITIATE_SIGNATURE_PATH?.trim() || "signature",
     initiateRedirectPath: process.env.CLAPAY_INITIATE_REDIRECT_PATH?.trim() || "",
     initiateMessagePath: process.env.CLAPAY_INITIATE_MESSAGE_PATH?.trim() || "message",
+    payoutBodyTemplate: optionalJsonEnv(
+      "CLAPAY_PAYOUT_REQUEST_TEMPLATE",
+      DEFAULT_PAYOUT_BODY_TEMPLATE,
+    ),
+    payoutSignaturePath: process.env.CLAPAY_PAYOUT_SIGNATURE_PATH?.trim() || "signature",
     statusPath: process.env.CLAPAY_STATUS_PATH?.trim() || "check/status/payment",
     statusBodyTemplate: optionalJsonEnv(
       "CLAPAY_STATUS_REQUEST_TEMPLATE",
       { signature: "{{signature}}" },
     ),
     statusValuePath: process.env.CLAPAY_STATUS_VALUE_PATH?.trim() || "status",
+    payoutStatusBodyTemplate: optionalJsonEnv(
+      "CLAPAY_PAYOUT_STATUS_REQUEST_TEMPLATE",
+      { signature: "{{signature}}" },
+    ),
+    payoutStatusValuePath: process.env.CLAPAY_PAYOUT_STATUS_VALUE_PATH?.trim() || "status",
     successStatuses: parseStatusSet("CLAPAY_STATUS_SUCCESS_VALUES", ["SUCCESSFUL"]),
     failureStatuses: parseStatusSet(
       "CLAPAY_STATUS_FAILURE_VALUES",
@@ -135,6 +186,14 @@ function loadConfig(): ClapayConfig {
     operatorsResponsePath: process.env.CLAPAY_OPERATORS_RESPONSE_PATH?.trim() || "",
     operatorIdPath: process.env.CLAPAY_OPERATOR_ID_PATH?.trim() || "codeoperator",
     operatorNamePath: process.env.CLAPAY_OPERATOR_NAME_PATH?.trim() || "name",
+    payoutInitiatePath: process.env.CLAPAY_PAYOUT_INITIATE_PATH?.trim()
+      || "/nowallet/api/init/payment",
+    payoutStatusPath: process.env.CLAPAY_PAYOUT_STATUS_PATH?.trim()
+      || "/nowallet/api/check/status/payment",
+    payoutOperatorsPath: process.env.CLAPAY_PAYOUT_OPERATORS_PATH?.trim()
+      || "/nowallet/api/operators/data",
+    payoutLimitsPath: process.env.CLAPAY_PAYOUT_LIMITS_PATH?.trim()
+      || "/nowallet/api/limitation/payment",
     webhookSecret: requiredEnv("CLAPAY_WEBHOOK_SECRET"),
     webhookUniqueKey: requiredEnv("CLAPAY_WEBHOOK_UNIQUE_KEY"),
   };
@@ -329,11 +388,12 @@ async function callClapay(
   return payload;
 }
 
-export async function getClapayOperators(country: string): Promise<ClapayOperator[]> {
-  const config = loadConfig();
-  const data = await callClapay(config, config.operatorsPath, {
-    query: { [config.operatorsCountryParam]: country.trim().toUpperCase() },
-  });
+function parseClapayOperators(
+  config: ClapayConfig,
+  data: unknown,
+  country: string,
+  method: "MERCHANT" | "CASHIN",
+): ClapayOperator[] {
   const configuredOperators = getAtPath(data, config.operatorsResponsePath);
   let rawOperators = Array.isArray(configuredOperators) ? configuredOperators : undefined;
   if (!rawOperators) {
@@ -362,13 +422,63 @@ export async function getClapayOperators(country: string): Promise<ClapayOperato
       id: String(id),
       name,
       active: getAtPath(operator, "active"),
-      requiresOtp: getAtPath(operator, "otpstarter.MERCHANT") === true,
+      methodCode: getAtPath(operator, `code.${method}`),
+      requiresOtp: getAtPath(operator, `otpstarter.${method}`) === true,
+      phonePrefixes: getAtPath(operator, "startwith"),
     };
   });
 
   return operators
-    .filter((operator) => operator.active !== false && isAllowedClapayOperator(country, operator.name))
-    .map(({ id, name, requiresOtp }) => ({ id, name, requiresOtp }));
+    .filter((operator) => operator.active !== false
+      && isAllowedClapayOperator(country, operator.name)
+      && (method === "MERCHANT"
+        || (typeof operator.methodCode === "string" && operator.methodCode.trim().toLowerCase() !== "none"))
+      && (method === "MERCHANT" || Array.isArray(operator.phonePrefixes)))
+    .map(({ id, name, requiresOtp, phonePrefixes }) => ({
+      id,
+      name,
+      requiresOtp,
+      ...(Array.isArray(phonePrefixes)
+        ? { phonePrefixes: phonePrefixes.filter((prefix): prefix is string => typeof prefix === "string") }
+        : {}),
+    }));
+}
+
+export async function getClapayOperators(country: string): Promise<ClapayOperator[]> {
+  const config = loadConfig();
+  const normalizedCountry = country.trim().toUpperCase();
+  const data = await callClapay(config, config.operatorsPath, {
+    query: { [config.operatorsCountryParam]: normalizedCountry },
+  });
+  return parseClapayOperators(config, data, normalizedCountry, "MERCHANT");
+}
+
+export async function getClapayPayoutOptions(country: string): Promise<ClapayPayoutOptions> {
+  const config = loadConfig();
+  const normalizedCountry = country.trim().toUpperCase();
+  const [operatorsData, limitsData] = await Promise.all([
+    callClapay(config, config.payoutOperatorsPath, {
+      query: { [config.operatorsCountryParam]: normalizedCountry },
+    }),
+    callClapay(config, config.payoutLimitsPath, {
+      query: { country: normalizedCountry },
+    }),
+  ]);
+  const operators = parseClapayOperators(config, operatorsData, normalizedCountry, "CASHIN");
+  const rawLimits = Array.isArray(limitsData) ? limitsData : getAtPath(limitsData, "data");
+  if (!Array.isArray(rawLimits)) {
+    throw new Error("Clapay n'a pas renvoyé les limites de paiement attendues");
+  }
+  const limit = rawLimits.find((entry) =>
+    String(getAtPath(entry, "method") || "").toUpperCase() === "CASHIN"
+    && String(getAtPath(entry, "country") || "").toUpperCase() === normalizedCountry,
+  );
+  const minAmount = Number(getAtPath(limit, "min_amount"));
+  const maxAmount = Number(getAtPath(limit, "max_amount"));
+  if (!Number.isFinite(minAmount) || !Number.isFinite(maxAmount) || minAmount <= 0 || maxAmount < minAmount) {
+    throw new Error(`Clapay n'a pas renvoyé de limites CASHIN valides pour ${normalizedCountry}`);
+  }
+  return { operators, minAmount, maxAmount };
 }
 
 export async function initiateClapayPayment(values: RequestValues): Promise<{
@@ -434,14 +544,102 @@ export async function initiateClapayPayment(values: RequestValues): Promise<{
   };
 }
 
-export async function checkClapayPayment(signature: string): Promise<{
-  rawStatus: string;
-  status: "approved" | "rejected" | "pending";
-}> {
+export async function initiateClapayPayout(values: {
+  reference: string;
+  amount: number;
+  country: string;
+  operatorId: string;
+  phone: string;
+  countryPhonePrefix: string;
+  accountFirstName: string;
+  accountLastName: string;
+  accountEmail?: string;
+  callbackUrl: string;
+  returnUrl: string;
+  operatorOtp?: string;
+}): Promise<{ signature: string }> {
   const config = loadConfig();
-  const body = fillTemplate(config.statusBodyTemplate, { signature });
-  const data = await callClapay(config, config.statusPath, { method: "POST", body });
-  const rawStatusValue = getAtPath(data, config.statusValuePath);
+  const country = values.country.trim().toUpperCase();
+  if (country !== "NE" && country !== "BF") {
+    throw new Error("Les payouts Clapay sont limités au Niger et au Burkina Faso");
+  }
+  if (!Number.isSafeInteger(values.amount) || values.amount < 10) {
+    throw new Error("Le montant du payout Clapay doit être un entier d'au moins 10");
+  }
+
+  const phonePrefix = values.countryPhonePrefix.replace(/\D/g, "");
+  const phoneDigits = values.phone.replace(/\D/g, "");
+  const localPhone = values.phone.trim().startsWith("+")
+    && phonePrefix
+    && phoneDigits.startsWith(phonePrefix)
+    ? phoneDigits.slice(phonePrefix.length)
+    : phoneDigits;
+  if (!localPhone) throw new Error("Le numéro de téléphone du bénéficiaire est invalide");
+
+  const templateValues: RequestValues = {
+    reference: values.reference,
+    amount: values.amount,
+    country,
+    operatorId: values.operatorId,
+    phone: localPhone,
+    accountNumber: localPhone,
+    accountFirstName: values.accountFirstName,
+    accountLastName: values.accountLastName,
+    accountEmail: values.accountEmail || "",
+    callbackUrl: values.callbackUrl,
+    returnUrl: values.returnUrl,
+    operatorOtp: values.operatorOtp || "",
+  };
+  const templateBody = fillTemplate(config.payoutBodyTemplate, templateValues);
+  if (!templateBody || typeof templateBody !== "object" || Array.isArray(templateBody)) {
+    throw new Error("Le modèle de requête Clapay doit être un objet pour le payout");
+  }
+  const body = templateBody as JsonRecord;
+  const additionalInfos = body.additional_infos;
+  body.transaction_id = values.reference;
+  body.additional_infos = {
+    ...(additionalInfos && typeof additionalInfos === "object" && !Array.isArray(additionalInfos)
+      ? additionalInfos as JsonRecord
+      : {}),
+    customer_email: values.accountEmail || "",
+    customer_lastname: values.accountLastName,
+    customer_firstname: values.accountFirstName,
+    customer_phone: localPhone,
+  };
+  body.amount = values.amount;
+  body.callback_url = values.callbackUrl;
+  body.return_url = values.returnUrl;
+  body.country_code = country;
+  body.operators_code = [values.operatorId];
+  body.method = "CASHIN";
+  body.tunnel = "API";
+  if (values.operatorOtp?.trim()) body.operator_otp = values.operatorOtp.trim();
+  else delete body.operator_otp;
+
+  const data = await callClapay(config, config.payoutInitiatePath, {
+    method: "POST",
+    body,
+  });
+  const signature = getAtPath(data, config.payoutSignaturePath);
+  if (typeof signature !== "string" && typeof signature !== "number") {
+    throw Object.assign(
+      new Error("La réponse Clapay ne contient pas la signature configurée"),
+      { requestMayHaveReachedProvider: true } satisfies Partial<ClapayRequestError>,
+    );
+  }
+  return { signature: String(signature) };
+}
+
+async function checkClapayTransaction(
+  signature: string,
+  statusPath: string,
+  statusBodyTemplate: unknown,
+  statusValuePath: string,
+): Promise<ClapayStatusResult> {
+  const config = loadConfig();
+  const body = fillTemplate(statusBodyTemplate, { signature });
+  const data = await callClapay(config, statusPath, { method: "POST", body });
+  const rawStatusValue = getAtPath(data, statusValuePath);
   if (typeof rawStatusValue !== "string" && typeof rawStatusValue !== "number") {
     throw new Error("La réponse de vérification Clapay ne contient pas le statut configuré");
   }
@@ -452,7 +650,38 @@ export async function checkClapayPayment(signature: string): Promise<{
     : config.failureStatuses.has(normalizedStatus)
       ? "rejected"
       : "pending";
-  return { rawStatus, status };
+  const transactionId = getAtPath(data, "transaction_id");
+  const transactionMethod = getAtPath(data, "transaction_method");
+  const amount = Number(getAtPath(data, "amount"));
+  const country = getAtPath(data, "transaction_country_code");
+  return {
+    rawStatus,
+    status,
+    ...(typeof transactionId === "string" ? { transactionId } : {}),
+    ...(typeof transactionMethod === "string" ? { transactionMethod } : {}),
+    ...(Number.isFinite(amount) ? { amount } : {}),
+    ...(typeof country === "string" ? { country } : {}),
+  };
+}
+
+export async function checkClapayPayment(signature: string): Promise<ClapayStatusResult> {
+  const config = loadConfig();
+  return checkClapayTransaction(
+    signature,
+    config.statusPath,
+    config.statusBodyTemplate,
+    config.statusValuePath,
+  );
+}
+
+export async function checkClapayPayout(signature: string): Promise<ClapayStatusResult> {
+  const config = loadConfig();
+  return checkClapayTransaction(
+    signature,
+    config.payoutStatusPath,
+    config.payoutStatusBodyTemplate,
+    config.payoutStatusValuePath,
+  );
 }
 
 export function verifyClapayWebhookSignature(body: unknown, headerValue: string | undefined): boolean {

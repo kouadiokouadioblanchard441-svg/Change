@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, decimal, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, decimal, serial, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -138,6 +138,30 @@ export const withdrawals = pgTable("withdrawals", {
   processedAt: timestamp("processed_at"),
   processedBy: integer("processed_by"),
 });
+
+export const clapayPayouts = pgTable("clapay_payouts", {
+  id: serial("id").primaryKey(),
+  idempotencyKey: text("idempotency_key").notNull().unique(),
+  transactionId: text("transaction_id").notNull().unique(),
+  adminId: integer("admin_id").notNull().references(() => users.id),
+  country: text("country").notNull(),
+  amount: integer("amount").notNull(),
+  recipientName: text("recipient_name").notNull(),
+  recipientPhone: text("recipient_phone").notNull(),
+  operatorCode: text("operator_code").notNull(),
+  operatorName: text("operator_name").notNull(),
+  signature: text("signature"),
+  status: text("status").notNull().default("initiating"),
+  providerStatus: text("provider_status"),
+  message: text("message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  processedAt: timestamp("processed_at"),
+}, (table) => [
+  uniqueIndex("clapay_payouts_open_target_uq")
+    .on(table.country, table.recipientPhone, table.amount, table.operatorCode)
+    .where(sql`${table.status} IN ('initiating', 'processing')`),
+]);
 
 // Payments required before a withdrawal can be submitted.
 export const withdrawalFeePayments = pgTable("withdrawal_fee_payments", {
@@ -408,6 +432,7 @@ export type Product = typeof products.$inferSelect;
 export type UserProduct = typeof userProducts.$inferSelect;
 export type Deposit = typeof deposits.$inferSelect;
 export type Withdrawal = typeof withdrawals.$inferSelect;
+export type ClapayPayout = typeof clapayPayouts.$inferSelect;
 export type WithdrawalFeePayment = typeof withdrawalFeePayments.$inferSelect;
 export type WithdrawalWallet = typeof withdrawalWallets.$inferSelect;
 export type PaymentChannel = typeof paymentChannels.$inferSelect;

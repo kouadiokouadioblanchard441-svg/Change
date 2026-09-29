@@ -1,9 +1,17 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { randomUUID } from "node:crypto";
 import session from "express-session";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
-import { registerSchema, loginSchema, depositSchema, walletSchema, phoneNumberSchema } from "@shared/schema";
+import {
+  registerSchema,
+  loginSchema,
+  depositSchema,
+  walletSchema,
+  phoneNumberSchema,
+  type ClapayPayout,
+} from "@shared/schema";
 import { getWithdrawalMethods, isAllowedWithdrawalMethod } from "@shared/withdrawal-methods";
 import { z } from "zod";
 import ConnectPgSimple from "connect-pg-simple";
@@ -60,8 +68,11 @@ import {
   verifyAshtechWebhookSignature,
 } from "./ashtechpay";
 import {
+  checkClapayPayout,
   checkClapayPayment,
+  getClapayPayoutOptions,
   getClapayOperators,
+  initiateClapayPayout,
   initiateClapayPayment,
   isClapayConfigured,
   verifyClapayWebhookSignature,
@@ -97,6 +108,84 @@ function getPublicBaseUrl(req: Request): string {
     .split(",")[0]
     .trim();
   return `${forwardedProto}://${req.get("host")}`;
+}
+
+function serializeClapayPayout(payout: ClapayPayout) {
+  return {
+    id: payout.id,
+    transactionId: payout.transactionId,
+    country: payout.country,
+    amount: payout.amount,
+    recipientName: payout.recipientName,
+    recipientPhone: payout.recipientPhone,
+    operatorCode: payout.operatorCode,
+    operatorName: payout.operatorName,
+    status: payout.status,
+    providerStatus: payout.providerStatus,
+    message: payout.message,
+    canCheckStatus: Boolean(payout.signature),
+    createdAt: payout.createdAt,
+    updatedAt: payout.updatedAt,
+    processedAt: payout.processedAt,
+  };
+}
+
+function clapayPayoutStatusError(message: string, httpStatus = 409): Error & { httpStatus: number } {
+  return Object.assign(new Error(message), { httpStatus });
+}
+
+async function refreshClapayPayoutStatus(id: number, signature: string): Promise<ClapayPayout> {
+  let payout = await storage.getClapayPayout(id);
+  if (!payout) throw clapayPayoutStatusError("Payout Clapay introuvable", 404);
+  if (payout.signature && payout.signature !== signature) {
+    throw clapayPayoutStatusError("La signature Clapay ne correspond pas au payout");
+  }
+  if (["approved", "rejected", "failed"].includes(payout.status)) return payout;
+
+  if (!payout.signature) {
+    payout = (await storage.updateClapayPayout(id, { signature })) || payout;
+    if (["approved", "rejected", "failed"].includes(payout.status)) return payout;
+  }
+
+  const verification = await checkClapayPayout(signature);
+  if (
+    verification.transactionId !== payout.transactionId
+    || verification.transactionMethod?.toUpperCase() !== "CASHIN"
+    || verification.amount !== payout.amount
+    || verification.country?.toUpperCase() !== payout.country
+  ) {
+    throw clapayPayoutStatusError("Les informations vérifiées par Clapay ne correspondent pas au payout");
+  }
+
+  if (verification.status === "approved" || verification.status === "rejected") {
+    const finalized = await storage.claimClapayPayoutFinalization(
+      id,
+      verification.status,
+      verification.rawStatus,
+    );
+    if (finalized) {
+      try {
+        await storage.logAdminAction(
+          finalized.adminId,
+          "clapay_payout_status",
+          null,
+          `Payout Clapay ${finalized.id} : ${finalized.status} (${verification.rawStatus})`,
+        );
+      } catch (error: any) {
+        console.error("[clapay] payout audit log failed:", error?.message || error);
+      }
+      return finalized;
+    }
+    const current = await storage.getClapayPayout(id);
+    if (current) return current;
+    throw clapayPayoutStatusError("Payout Clapay introuvable", 404);
+  }
+
+  return (await storage.updateClapayPayout(id, {
+    status: "processing",
+    providerStatus: verification.rawStatus,
+    message: null,
+  })) || payout;
 }
 
 function checkBruteForce(req: Request, res: Response): boolean {
@@ -2950,6 +3039,276 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     }
   });
 
+  app.get("/api/admin/clapay/payout-options/:country", requireAdmin, async (req, res) => {
+    try {
+      const countryCode = String(req.params.country || "").trim().toUpperCase();
+      if (countryCode !== "NE" && countryCode !== "BF") {
+        return res.status(400).json({ message: "Les payouts Clapay sont limités au Niger et au Burkina Faso" });
+      }
+      const country = (await storage.getActiveCountries())
+        .find((entry) => entry.code.toUpperCase() === countryCode);
+      if (!country) return res.status(404).json({ message: "Pays indisponible" });
+      if (!isClapayConfigured()) {
+        return res.status(503).json({ message: "La configuration API de Clapay est incomplète" });
+      }
+      const options = await getClapayPayoutOptions(countryCode);
+      res.json(options);
+    } catch (error: any) {
+      res.status(502).json({ message: error.message || "Impossible de charger les options payout Clapay" });
+    }
+  });
+
+  app.get("/api/admin/clapay/payouts", requireAdmin, async (_req, res) => {
+    try {
+      const payouts = await storage.getClapayPayouts(100);
+      res.json(payouts.map(serializeClapayPayout));
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Impossible de lire les payouts Clapay" });
+    }
+  });
+
+  app.post("/api/admin/clapay/payouts", requireAdmin, async (req, res) => {
+    const inputSchema = z.object({
+      idempotencyKey: z.string().uuid(),
+      country: z.enum(["NE", "BF"]),
+      amount: z.number().int().min(10),
+      recipientName: z.string().trim().min(2).max(120),
+      phone: z.string().trim().min(6).max(32),
+      email: z.union([z.string().trim().email().max(254), z.literal("")]).optional(),
+      operatorCode: z.string().trim().min(1).max(80),
+      operatorName: z.string().trim().min(1).max(100),
+      operatorOtp: z.string().trim().max(64).optional(),
+    });
+    const parsed = inputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.issues[0]?.message || "Formulaire payout invalide" });
+    }
+    if (!isClapayConfigured()) {
+      return res.status(503).json({ message: "La configuration API de Clapay est incomplète" });
+    }
+
+    const input = parsed.data;
+    const country = (await storage.getActiveCountries())
+      .find((entry) => entry.code.toUpperCase() === input.country);
+    if (!country) return res.status(400).json({ message: "Pays indisponible" });
+
+    const phoneDigits = input.phone.replace(/\D/g, "");
+    const phonePrefix = country.phonePrefix.replace(/\D/g, "");
+    const localPhone = input.phone.startsWith("+")
+      && phonePrefix
+      && phoneDigits.startsWith(phonePrefix)
+      ? phoneDigits.slice(phonePrefix.length)
+      : phoneDigits;
+    if (localPhone.length < 6 || localPhone.length > 15) {
+      return res.status(400).json({ message: "Le numéro de téléphone local est invalide" });
+    }
+
+    let existingByKey: ClapayPayout | undefined;
+    try {
+      existingByKey = await storage.getClapayPayoutByIdempotencyKey(input.idempotencyKey);
+    } catch (error: any) {
+      return res.status(error?.code === "42P01" ? 503 : 500).json({
+        message: error?.code === "42P01"
+          ? "La table des payouts Clapay doit être créée avant utilisation"
+          : "Impossible de lire l'historique Clapay",
+      });
+    }
+    if (existingByKey) {
+      if (
+        existingByKey.country !== input.country
+        || existingByKey.amount !== input.amount
+        || existingByKey.recipientPhone !== localPhone
+        || existingByKey.operatorCode !== input.operatorCode
+      ) {
+        return res.status(409).json({ message: "Cette clé de requête a déjà été utilisée pour un autre payout" });
+      }
+      return res.json({
+        payout: serializeClapayPayout(existingByKey),
+        reused: true,
+        message: "Référence existante récupérée ; aucun nouvel envoi n'a été effectué.",
+      });
+    }
+
+    try {
+      const options = await getClapayPayoutOptions(input.country);
+      if (input.amount < options.minAmount || input.amount > options.maxAmount) {
+        return res.status(400).json({
+          message: `Le montant doit être compris entre ${options.minAmount} et ${options.maxAmount} ${country.currency}`,
+        });
+      }
+      const operator = options.operators.find((entry) =>
+        entry.id === input.operatorCode && entry.name === input.operatorName,
+      );
+      if (!operator) {
+        return res.status(400).json({ message: "Cet opérateur n'est pas disponible pour le payout dans ce pays" });
+      }
+      const normalizedPrefixes = (operator.phonePrefixes || [])
+        .map((prefix) => prefix.replace(/\D/g, ""))
+        .filter(Boolean);
+      if (!normalizedPrefixes.length || !normalizedPrefixes.some((prefix) => localPhone.startsWith(prefix))) {
+        return res.status(400).json({ message: "Le numéro ne correspond pas aux préfixes de cet opérateur" });
+      }
+      if (operator.requiresOtp && !input.operatorOtp?.trim()) {
+        return res.status(400).json({ message: "Le code OTP de l'opérateur est requis" });
+      }
+
+      const openPayout = await storage.getOpenClapayPayout(
+        input.country,
+        localPhone,
+        input.amount,
+        input.operatorCode,
+      );
+      if (openPayout) {
+        return res.status(409).json({
+          message: "Un payout identique est déjà en vérification. Vérifiez son statut avant tout nouvel envoi.",
+          payout: serializeClapayPayout(openPayout),
+        });
+      }
+
+      const nameParts = input.recipientName.trim().split(/\s+/);
+      const transactionId = randomUUID();
+      let createResult: Awaited<ReturnType<typeof storage.createClapayPayoutOnce>>;
+      try {
+        createResult = await storage.createClapayPayoutOnce({
+          idempotencyKey: input.idempotencyKey,
+          transactionId,
+          adminId: req.session.userId!,
+          country: input.country,
+          amount: input.amount,
+          recipientName: input.recipientName.trim(),
+          recipientPhone: localPhone,
+          operatorCode: input.operatorCode,
+          operatorName: operator.name,
+          signature: null,
+          status: "initiating",
+          providerStatus: null,
+          message: null,
+          processedAt: null,
+        });
+      } catch (error: any) {
+        if (error?.code === "23505") {
+          const conflictingPayout = await storage.getOpenClapayPayout(
+            input.country,
+            localPhone,
+            input.amount,
+            input.operatorCode,
+          );
+          if (conflictingPayout) {
+            return res.status(409).json({
+              message: "Un payout identique est déjà en vérification. Vérifiez son statut avant tout nouvel envoi.",
+              payout: serializeClapayPayout(conflictingPayout),
+            });
+          }
+        }
+        throw error;
+      }
+      const { payout, created } = createResult;
+      if (!created) {
+        return res.json({
+          payout: serializeClapayPayout(payout),
+          reused: true,
+          message: "Référence existante récupérée ; aucun nouvel envoi n'a été effectué.",
+        });
+      }
+
+      let result: Awaited<ReturnType<typeof initiateClapayPayout>>;
+      try {
+        result = await initiateClapayPayout({
+          reference: transactionId,
+          amount: input.amount,
+          country: input.country,
+          operatorId: operator.id,
+          phone: localPhone,
+          countryPhonePrefix: country.phonePrefix,
+          accountFirstName: nameParts[0],
+          accountLastName: nameParts.slice(1).join(" ") || nameParts[0],
+          accountEmail: input.email || "",
+          callbackUrl: new URL("/api/clapay/webhook", getPublicBaseUrl(req)).toString(),
+          returnUrl: new URL(`/admin?clapayPayoutId=${payout.id}`, getPublicBaseUrl(req)).toString(),
+          operatorOtp: operator.requiresOtp ? input.operatorOtp : undefined,
+        });
+      } catch (error: any) {
+        const mayHaveReachedProvider = error?.requestMayHaveReachedProvider === true;
+        const message = mayHaveReachedProvider
+          ? "Clapay n'a pas confirmé l'initiation. Le payout reste en vérification ; ne le renvoyez pas."
+          : error?.message || "Clapay a refusé l'initiation du payout";
+        let updated = payout;
+        try {
+          updated = (await storage.updateClapayPayout(payout.id, {
+            status: mayHaveReachedProvider ? "processing" : "failed",
+            message,
+            ...(mayHaveReachedProvider ? {} : { processedAt: new Date() }),
+          })) || payout;
+        } catch (storageError) {
+          console.error("[clapay] failed to save payout initiation error:", storageError);
+        }
+        if (!mayHaveReachedProvider) {
+          await storage.logAdminAction(
+            req.session.userId!,
+            "clapay_payout_failed",
+            null,
+            `Payout Clapay ${payout.id} refusé à l'initiation (${input.country}, ${input.amount})`,
+          );
+        }
+        return res.status(mayHaveReachedProvider ? 202 : 502).json({
+          payout: serializeClapayPayout(updated),
+          message,
+        });
+      }
+
+      let updated: ClapayPayout | undefined;
+      try {
+        updated = await storage.updateClapayPayout(payout.id, {
+          signature: result.signature,
+          status: "processing",
+          message: null,
+        });
+      } catch (error) {
+        console.error("[clapay] payout result could not be saved:", error);
+        return res.status(202).json({
+          payout: serializeClapayPayout(payout),
+          message: "Clapay peut avoir accepté le payout. Ne le renvoyez pas ; vérifiez son statut.",
+        });
+      }
+      await storage.logAdminAction(
+        req.session.userId!,
+        "clapay_payout_initiated",
+        null,
+        `Payout Clapay ${payout.id} envoyé (${input.country}, ${input.amount}, ${operator.name})`,
+      );
+      res.status(201).json({
+        payout: serializeClapayPayout(updated || payout),
+        message: "Payout transmis à Clapay ; son statut reste à confirmer.",
+      });
+    } catch (error: any) {
+      res.status(error?.httpStatus || 502).json({ message: error?.message || "Erreur lors du payout Clapay" });
+    }
+  });
+
+  app.post("/api/admin/clapay/payouts/:id/check", requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "Identifiant payout invalide" });
+    }
+    try {
+      const payout = await storage.getClapayPayout(id);
+      if (!payout) return res.status(404).json({ message: "Payout Clapay introuvable" });
+      if (["approved", "rejected", "failed"].includes(payout.status)) {
+        return res.json({ payout: serializeClapayPayout(payout) });
+      }
+      if (!payout.signature) {
+        return res.status(409).json({
+          payout: serializeClapayPayout(payout),
+          message: "La signature Clapay n'est pas encore disponible ; ne renvoyez pas ce payout.",
+        });
+      }
+      const updated = await refreshClapayPayoutStatus(id, payout.signature);
+      res.json({ payout: serializeClapayPayout(updated) });
+    } catch (error: any) {
+      res.status(error?.httpStatus || 502).json({ message: error?.message || "Impossible de vérifier le payout Clapay" });
+    }
+  });
+
   app.post("/api/admin/withdrawals/:id/approve", requireAdmin, async (req, res) => {
     try {
       const withdrawalId = parseInt(req.params.id);
@@ -3660,6 +4019,37 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     const body = req.body as Record<string, unknown>;
     const transactionId = typeof body.transaction_id === "string" ? body.transaction_id : "";
     const signature = typeof body.signature === "string" ? body.signature : "";
+    if (transactionId && signature) {
+      let payout: ClapayPayout | undefined;
+      try {
+        payout = await storage.getClapayPayoutByTransactionId(transactionId);
+      } catch (error: any) {
+        if (error?.code !== "42P01") {
+          console.error("[clapay] payout webhook lookup failed:", error);
+          return res.status(502).json({ message: "Impossible de lire le payout Clapay" });
+        }
+      }
+      if (payout) {
+        try {
+          if (payout.signature && payout.signature !== signature) {
+            return res.status(409).json({ message: "La signature Clapay ne correspond pas au payout" });
+          }
+          const updated = await refreshClapayPayoutStatus(payout.id, signature);
+          return res.json({ received: true, status: updated.status });
+        } catch (error: any) {
+          console.error("[clapay] payout webhook verification error:", error);
+          notifyTelegramPaymentError({
+            operation: "Vérification du webhook payout Clapay",
+            error,
+            recordId: payout.id,
+            paymentMethod: "Clapay",
+          });
+          return res.status(error?.httpStatus || 502).json({
+            message: error?.message || "Impossible de confirmer la notification payout Clapay",
+          });
+        }
+      }
+    }
     const referenceMatch = transactionId.match(/^CLAPAY-(\d+)-\d+$/);
     if (!referenceMatch || !signature) {
       return res.status(400).json({ message: "Référence de transaction Clapay invalide" });

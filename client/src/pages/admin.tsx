@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import AdminDashboard from "@/components/admin/dashboard";
 import AdminDeposits from "@/components/admin/deposits";
 import AdminWithdrawals from "@/components/admin/withdrawals";
+import AdminClapayPayouts from "@/components/admin/clapay-payouts";
 import AdminUsers from "@/components/admin/users";
 import AdminProducts from "@/components/admin/products";
 import AdminPaymentNumbers from "@/components/admin/payment-numbers";
@@ -38,6 +39,7 @@ export default function AdminPage() {
               <TabsTrigger value="dashboard" data-testid="tab-dashboard">Tableau de bord</TabsTrigger>
               <TabsTrigger value="deposits" data-testid="tab-deposits">Depots</TabsTrigger>
               <TabsTrigger value="withdrawals" data-testid="tab-withdrawals">Retraits</TabsTrigger>
+              <TabsTrigger value="clapay-payouts" data-testid="tab-clapay-payouts">Payout Clapay</TabsTrigger>
               <TabsTrigger value="users" data-testid="tab-users">Utilisateurs</TabsTrigger>
               <TabsTrigger value="products" data-testid="tab-products">Produits</TabsTrigger>
               <TabsTrigger value="payment-numbers" data-testid="tab-payment-numbers">Numéros</TabsTrigger>
@@ -58,6 +60,10 @@ export default function AdminPage() {
 
           <TabsContent value="withdrawals" className="mt-4">
             <AdminWithdrawals />
+          </TabsContent>
+
+          <TabsContent value="clapay-payouts" className="mt-4">
+            <AdminClapayPayouts />
           </TabsContent>
 
           <TabsContent value="users" className="mt-4">

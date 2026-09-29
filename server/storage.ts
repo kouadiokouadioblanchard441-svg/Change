@@ -2,11 +2,11 @@ import {
   users, products, userProducts, deposits, withdrawals, withdrawalWallets,
   withdrawalFeePayments,
   paymentChannels, paymentNumbers, stakingProducts, userStakings, referralCommissions, tasks, userTasks, transactions, platformSettings, adminAuditLog,
-  giftCodes, giftCodeClaims, countries,
+  giftCodes, giftCodeClaims, countries, clapayPayouts,
   type User, type Product, type UserProduct, type Deposit, type Withdrawal, type WithdrawalWallet,
   type PaymentChannel, type PaymentNumber, type StakingProduct, type UserStaking, type ReferralCommission, type Task, type UserTask, type Transaction, type PlatformSetting,
-  type GiftCode, type GiftCodeClaim, type Country
-  , type WithdrawalFeePayment
+  type GiftCode, type GiftCodeClaim, type Country,
+  type WithdrawalFeePayment, type ClapayPayout
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, gte, lte, or, isNull, inArray } from "drizzle-orm";
@@ -90,6 +90,23 @@ export interface IStorage {
   updateWithdrawal(id: number, data: Partial<Withdrawal>): Promise<Withdrawal>;
   claimWithdrawalFinalization(id: number, status: "approved" | "rejected"): Promise<Withdrawal | undefined>;
   getUserWithdrawalCountToday(userId: number): Promise<number>;
+
+  // Clapay payouts
+  createClapayPayoutOnce(data: Omit<ClapayPayout, "id" | "createdAt" | "updatedAt">): Promise<{ payout: ClapayPayout; created: boolean }>;
+  getClapayPayouts(limit?: number): Promise<ClapayPayout[]>;
+  getClapayPayout(id: number): Promise<ClapayPayout | undefined>;
+  getClapayPayoutByIdempotencyKey(key: string): Promise<ClapayPayout | undefined>;
+  getClapayPayoutByTransactionId(transactionId: string): Promise<ClapayPayout | undefined>;
+  getOpenClapayPayout(country: string, phone: string, amount: number, operatorCode: string): Promise<ClapayPayout | undefined>;
+  updateClapayPayout(
+    id: number,
+    data: Partial<Pick<ClapayPayout, "signature" | "status" | "providerStatus" | "message" | "processedAt">>,
+  ): Promise<ClapayPayout | undefined>;
+  claimClapayPayoutFinalization(
+    id: number,
+    status: "approved" | "rejected",
+    providerStatus: string,
+  ): Promise<ClapayPayout | undefined>;
   
   // Wallets
   getWallets(userId: number): Promise<WithdrawalWallet[]>;
@@ -945,6 +962,100 @@ export class DatabaseStorage implements IStorage {
       });
     }
     return withdrawal;
+  }
+
+  async createClapayPayoutOnce(
+    data: Omit<ClapayPayout, "id" | "createdAt" | "updatedAt">,
+  ): Promise<{ payout: ClapayPayout; created: boolean }> {
+    const [created] = await db.insert(clapayPayouts)
+      .values(data)
+      .onConflictDoNothing({ target: clapayPayouts.idempotencyKey })
+      .returning();
+    if (created) return { payout: created, created: true };
+    const existing = await this.getClapayPayoutByIdempotencyKey(data.idempotencyKey);
+    if (!existing) throw new Error("Le payout Clapay n'a pas pu être créé ou relu");
+    return { payout: existing, created: false };
+  }
+
+  async getClapayPayouts(limit = 100): Promise<ClapayPayout[]> {
+    return db.select()
+      .from(clapayPayouts)
+      .orderBy(desc(clapayPayouts.createdAt))
+      .limit(Math.min(Math.max(limit, 1), 200));
+  }
+
+  async getClapayPayout(id: number): Promise<ClapayPayout | undefined> {
+    const [payout] = await db.select().from(clapayPayouts).where(eq(clapayPayouts.id, id));
+    return payout;
+  }
+
+  async getClapayPayoutByIdempotencyKey(key: string): Promise<ClapayPayout | undefined> {
+    const [payout] = await db.select()
+      .from(clapayPayouts)
+      .where(eq(clapayPayouts.idempotencyKey, key));
+    return payout;
+  }
+
+  async getClapayPayoutByTransactionId(transactionId: string): Promise<ClapayPayout | undefined> {
+    const [payout] = await db.select()
+      .from(clapayPayouts)
+      .where(eq(clapayPayouts.transactionId, transactionId));
+    return payout;
+  }
+
+  async getOpenClapayPayout(
+    country: string,
+    phone: string,
+    amount: number,
+    operatorCode: string,
+  ): Promise<ClapayPayout | undefined> {
+    const [payout] = await db.select()
+      .from(clapayPayouts)
+      .where(and(
+        eq(clapayPayouts.country, country),
+        eq(clapayPayouts.recipientPhone, phone),
+        eq(clapayPayouts.amount, amount),
+        eq(clapayPayouts.operatorCode, operatorCode),
+        inArray(clapayPayouts.status, ["initiating", "processing"]),
+      ))
+      .orderBy(desc(clapayPayouts.createdAt))
+      .limit(1);
+    return payout;
+  }
+
+  async updateClapayPayout(
+    id: number,
+    data: Partial<Pick<ClapayPayout, "signature" | "status" | "providerStatus" | "message" | "processedAt">>,
+  ): Promise<ClapayPayout | undefined> {
+    const [payout] = await db.update(clapayPayouts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(
+        eq(clapayPayouts.id, id),
+        sql`${clapayPayouts.status} NOT IN ('approved', 'rejected', 'failed')`,
+      ))
+      .returning();
+    return payout || this.getClapayPayout(id);
+  }
+
+  async claimClapayPayoutFinalization(
+    id: number,
+    status: "approved" | "rejected",
+    providerStatus: string,
+  ): Promise<ClapayPayout | undefined> {
+    const [payout] = await db.update(clapayPayouts)
+      .set({
+        status,
+        providerStatus,
+        message: null,
+        processedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(clapayPayouts.id, id),
+        sql`${clapayPayouts.status} NOT IN ('approved', 'rejected', 'failed')`,
+      ))
+      .returning();
+    return payout;
   }
 
   async getUserWithdrawalCountToday(userId: number): Promise<number> {
