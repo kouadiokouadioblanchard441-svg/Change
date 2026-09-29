@@ -75,6 +75,7 @@ import {
   initiateClapayPayout,
   initiateClapayPayment,
   isClapayConfigured,
+  normalizeClapayPayoutPhone,
   verifyClapayWebhookSignature,
 } from "./clapay";
 import {
@@ -3091,13 +3092,11 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       .find((entry) => entry.code.toUpperCase() === input.country);
     if (!country) return res.status(400).json({ message: "Pays indisponible" });
 
-    const phoneDigits = input.phone.replace(/\D/g, "");
-    const phonePrefix = country.phonePrefix.replace(/\D/g, "");
-    const localPhone = input.phone.startsWith("+")
-      && phonePrefix
-      && phoneDigits.startsWith(phonePrefix)
-      ? phoneDigits.slice(phonePrefix.length)
-      : phoneDigits;
+    const localPhone = normalizeClapayPayoutPhone(
+      input.phone,
+      country.phonePrefix,
+      input.country,
+    );
     if (localPhone.length < 6 || localPhone.length > 15) {
       return res.status(400).json({ message: "Le numéro de téléphone local est invalide" });
     }

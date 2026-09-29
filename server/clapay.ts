@@ -460,6 +460,28 @@ export async function getClapayPayoutOptions(country: string): Promise<ClapayPay
   };
 }
 
+export function normalizeClapayPayoutPhone(
+  phone: string,
+  countryPhonePrefix: string,
+  country: string,
+): string {
+  const digits = phone.replace(/\D/g, "");
+  const phonePrefix = countryPhonePrefix.replace(/\D/g, "");
+  const dialedDigits = digits.startsWith("00") ? digits.slice(2) : digits;
+  const normalizedCountry = country.trim().toUpperCase();
+  const expectedLocalLength = normalizedCountry === "BF" || normalizedCountry === "NE"
+    ? 8
+    : undefined;
+  const explicitlyInternational = phone.trim().startsWith("+") || digits.startsWith("00");
+  const includesCountryPrefix = Boolean(phonePrefix) && dialedDigits.startsWith(phonePrefix);
+  const hasInternationalLength = expectedLocalLength !== undefined
+    && dialedDigits.length === phonePrefix.length + expectedLocalLength;
+
+  return includesCountryPrefix && (explicitlyInternational || hasInternationalLength)
+    ? dialedDigits.slice(phonePrefix.length)
+    : digits;
+}
+
 export async function initiateClapayPayment(values: RequestValues): Promise<{
   signature: string;
   redirectUrl?: string;
@@ -545,13 +567,11 @@ export async function initiateClapayPayout(values: {
     throw new Error("Le montant du payout Clapay doit être un entier d'au moins 10");
   }
 
-  const phonePrefix = values.countryPhonePrefix.replace(/\D/g, "");
-  const phoneDigits = values.phone.replace(/\D/g, "");
-  const localPhone = values.phone.trim().startsWith("+")
-    && phonePrefix
-    && phoneDigits.startsWith(phonePrefix)
-    ? phoneDigits.slice(phonePrefix.length)
-    : phoneDigits;
+  const localPhone = normalizeClapayPayoutPhone(
+    values.phone,
+    values.countryPhonePrefix,
+    country,
+  );
   if (!localPhone) throw new Error("Le numéro de téléphone du bénéficiaire est invalide");
 
   const templateValues: RequestValues = {

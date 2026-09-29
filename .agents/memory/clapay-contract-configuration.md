@@ -11,7 +11,7 @@ If an initiation request times out or returns an ambiguous response, preserve th
 
 **Why:** A live initiation was rejected with an invalid-phone response. The user clarified that Clapay requires only the local number in every country routed to it; removing `+` alone is insufficient. Other providers may require international formatting.
 
-**How to apply:** At the Clapay server boundary, remove the configured calling code from an explicitly international number before filling phone placeholders; leave local-only numbers unchanged. Keep the displayed prefix and stored account number unchanged, and do not alter other providers' payloads. Check available documentation before changing other contract details. Keep status lookup server-side, preserve per-country routing, and make retries safe when the provider may already have accepted a request.
+**How to apply:** At the Clapay server boundary, remove the configured calling code from an explicitly international number before filling phone placeholders; for BF and NE payouts, also recognize the full 11-digit international number when the user omitted `+`/`00`, while leaving 8-digit local numbers unchanged. Keep the displayed prefix and stored account number unchanged, and do not alter other providers' payloads. Check available documentation before changing other contract details. Keep status lookup server-side, preserve per-country routing, and make retries safe when the provider may already have accepted a request.
 
 **Why:** The operator's OTP metadata describes the Clapay deposit flow, not payouts. Reusing it for payout validation incorrectly blocks payouts for operators that require OTP only when depositing.
 
