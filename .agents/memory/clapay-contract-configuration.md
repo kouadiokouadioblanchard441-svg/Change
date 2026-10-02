@@ -22,3 +22,9 @@ For Burkina Faso payouts only, accept prefix `46` for Orange Money (`codeoperato
 **Why:** The merchant confirmed `46` as an Orange BF payout number, while the live operator metadata did not include it and otherwise rejected the payout before contacting Clapay.
 
 **How to apply:** Keep the override scoped to BF Orange payout options and their server-side prefix check. Preserve Clapay's metadata for deposits and keep other BF operator checks unchanged.
+
+For deposit discovery, use Clapay's live operator API as the source of available operators. Keep the explicit country assignment and global enable setting as safety gates; Plesk credentials alone must not expose Clapay in an unassigned country. Discovery must not initiate a payment or alter payout behavior.
+
+**Why:** The user clarified that deposit methods must come from Clapay's API; a local empty-method result previously stopped the flow before the operator API was queried.
+
+**How to apply:** When Clapay is enabled and assigned to a country, query its live operators before returning Clapay as an available deposit method. Distinguish an API failure from a valid empty operator list.

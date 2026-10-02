@@ -4349,11 +4349,41 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
       const settings = await storage.getSettings();
       const manualNumbers = await storage.getPaymentNumbersByCountry(country);
-      const methods = getAssignedDepositMethods(country, settings)
-        .filter((method) => isDepositProviderGloballyEnabled(method, settings))
+      const configuredMethods = getAssignedDepositMethods(country, settings)
+        .filter((method) => isDepositProviderGloballyEnabled(method, settings));
+      const methods: Array<{ provider: DepositMethodId; name: string }> = configuredMethods
+        .filter((method) => method !== "clapay")
         .filter((method) => method !== "manual" || manualNumbers.length > 0)
-        .filter((method) => method !== "clapay" || isClapayConfigured())
         .map((provider) => ({ provider, name: getDepositMethodName(provider, settings) }));
+
+      if (configuredMethods.includes("clapay")) {
+        if (!isClapayConfigured()) {
+          return res.status(503).json({
+            message: "La configuration API de Clapay est incomplète dans Plesk",
+          });
+        }
+
+        let operators;
+        try {
+          operators = await getClapayOperators(country);
+        } catch (error: any) {
+          console.error(
+            `[clapay] deposit method discovery failed for ${country}:`,
+            error?.message || "unknown error",
+          );
+          return res.status(502).json({
+            message: "Impossible de récupérer les opérateurs Clapay pour ce pays",
+          });
+        }
+
+        if (operators.length > 0) {
+          methods.push({
+            provider: "clapay",
+            name: getDepositMethodName("clapay", settings),
+          });
+        }
+      }
+
       res.json({
         country,
         methods,
