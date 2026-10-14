@@ -85,11 +85,13 @@ export default function GiftCodePage() {
           <img className="gift-hero" src={chargepointPromo} alt="Plateforme ChargePoint et borne de recharge" data-testid="img-gift-banner" />
         </div>
         <p className="gift-description">Vous pouvez obtenir un code cadeau dans le groupe</p>
-        <a className="gift-telegram" href={settings?.groupLink || "https://t.me/sybotx"} target="_blank" rel="noreferrer">
-          <img src={telegramIcon} alt="" />
-          <strong>Groupe officiel</strong>
-          <ChevronRight aria-hidden="true" />
-        </a>
+        {settings?.groupLink && (
+          <a className="gift-telegram" href={settings.groupLink} target="_blank" rel="noreferrer">
+            <img src={telegramIcon} alt="" />
+            <strong>Groupe officiel</strong>
+            <ChevronRight aria-hidden="true" />
+          </a>
+        )}
         <form className="gift-form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
           <label className="gift-label" htmlFor="gift-code-input"><span>* </span>Code cadeau</label>
           <input

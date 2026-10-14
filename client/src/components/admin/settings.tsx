@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { DEFAULT_DEPOSIT_AMOUNT_OPTIONS_SETTING, isValidDepositAmountOptions } from "@/lib/deposit-amounts";
 import { Loader2, Save, Link, Clock, Users, Zap } from "lucide-react";
 
 type AdminCountry = { code: string; name: string; isActive: boolean };
@@ -26,6 +27,15 @@ const DEPOSIT_METHOD_OPTIONS: Array<{ value: DepositMethodId; label: string }> =
   { value: "inpay", label: "InPay" },
   { value: "clapay", label: "Clapay" },
 ];
+
+const optionalHttpsUrl = z.string().refine((value) => {
+  if (!value.trim()) return true;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}, "Entrez une URL HTTPS valide.");
 
 function getInitialDepositRouting(
   settings: Record<string, string>,
@@ -87,7 +97,7 @@ const NETWORKS = [
   { value: "youtube", label: "YouTube" },
 ];
 const settingsSchema = z.object({
-  supportLink: z.string().min(5, "Lien requis"),
+  supportLink: optionalHttpsUrl,
   supportType: z.string().min(1, "Réseau requis"),
   supportLabel: z.string().min(1, "Label requis"),
   support2Link: z.string().min(5, "Lien requis"),
@@ -96,7 +106,7 @@ const settingsSchema = z.object({
   channelLink: z.string().min(5, "Lien requis"),
   channelType: z.string().min(1, "Réseau requis"),
   channelLabel: z.string().min(1, "Label requis"),
-  groupLink: z.string().min(5, "Lien requis"),
+  groupLink: optionalHttpsUrl,
   groupType: z.string().min(1, "Réseau requis"),
   groupLabel: z.string().min(1, "Label requis"),
   popupButtonLabel: z.string().min(1, "Label requis"),
@@ -107,6 +117,10 @@ const settingsSchema = z.object({
   signupBonus: z.string().min(1, "Bonus requis"),
   minDeposit: z.string().min(1, "Montant requis"),
   minWithdrawal: z.string().min(1, "Montant requis"),
+  depositAmountOptions: z.string().refine(
+    isValidDepositAmountOptions,
+    "Entrez des montants entiers positifs et uniques, séparés par des virgules.",
+  ),
   withdrawalFees: z.string().min(1, "Frais requis"),
   maxWithdrawalsPerDay: z.string().min(1, "Requis"),
   withdrawalStartHour: z.string().min(1, "Heure requise"),
@@ -154,7 +168,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
   const form = useForm<SettingsForm>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      supportLink: "https://t.me/sybotx",
+      supportLink: "",
       supportType: "telegram",
       supportLabel: "Service client",
       support2Link: "https://t.me/sybotx",
@@ -163,7 +177,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       channelLink: "https://t.me/sybotx",
       channelType: "telegram",
       channelLabel: "Chaîne officielle",
-      groupLink: "https://t.me/sybotx",
+      groupLink: "",
       groupType: "telegram",
       groupLabel: "Groupe de discussion",
       popupButtonLabel: "Cliquez ici pour rejoindre le groupe Telegram",
@@ -172,8 +186,9 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
       channelEnabled: true,
       groupEnabled: true,
       signupBonus: "3000",
-      minDeposit: "3500",
-      minWithdrawal: "800",
+      minDeposit: "17000",
+      minWithdrawal: "3000",
+      depositAmountOptions: DEFAULT_DEPOSIT_AMOUNT_OPTIONS_SETTING,
       withdrawalFees: "5",
       maxWithdrawalsPerDay: "1",
       withdrawalStartHour: "9",
@@ -200,7 +215,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
   useEffect(() => {
     if (settings) {
       form.reset({
-        supportLink: settings.supportLink || "https://t.me/sybotx",
+        supportLink: settings.supportLink || "",
         supportType: settings.supportType || "telegram",
         supportLabel: settings.supportLabel || "Service client",
         support2Link: settings.support2Link || "https://t.me/sybotx",
@@ -209,7 +224,7 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         channelLink: settings.channelLink || "https://t.me/sybotx",
         channelType: settings.channelType || "telegram",
         channelLabel: settings.channelLabel || "Chaîne officielle",
-        groupLink: settings.groupLink || "https://t.me/sybotx",
+        groupLink: settings.groupLink || "",
         groupType: settings.groupType || "telegram",
         groupLabel: settings.groupLabel || "Groupe de discussion",
         popupButtonLabel: settings.popupButtonLabel || "Cliquez ici pour rejoindre le groupe Telegram",
@@ -218,8 +233,9 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
         channelEnabled: settings.channelEnabled !== "false",
         groupEnabled: settings.groupEnabled !== "false",
         signupBonus: settings.signupBonus || "3000",
-        minDeposit: settings.minDeposit || "3500",
-        minWithdrawal: settings.minWithdrawal || "800",
+        minDeposit: settings.minDeposit || "17000",
+        minWithdrawal: settings.minWithdrawal || "3000",
+        depositAmountOptions: settings.depositAmountOptions || DEFAULT_DEPOSIT_AMOUNT_OPTIONS_SETTING,
         withdrawalFees: settings.withdrawalFees || "5",
         maxWithdrawalsPerDay: settings.maxWithdrawalsPerDay || "1",
         withdrawalStartHour: settings.withdrawalStartHour || "9",
@@ -613,6 +629,18 @@ export default function AdminSettings({ isSuperAdmin }: AdminSettingsProps) {
                 </FormItem>
               )} />
             </div>
+            <FormField control={form.control} name="depositAmountOptions" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Montants rapides de dépôt (CDF)</FormLabel>
+                <FormControl>
+                  <Input {...field} inputMode="numeric" placeholder={DEFAULT_DEPOSIT_AMOUNT_OPTIONS_SETTING} />
+                </FormControl>
+                <FormDescription>
+                  Séparez les montants par des virgules. Les montants inférieurs au dépôt minimum ne seront pas proposés.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
 
             <FormField control={form.control} name="withdrawalPrepaymentEnabled" render={({ field }) => (
               <FormItem className="flex items-center justify-between rounded-lg border p-4">

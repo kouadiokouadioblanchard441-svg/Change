@@ -17,8 +17,12 @@ export default function ServicePage() {
   });
 
   const supportLinks = [
-    { label: "Service client", href: settings?.supportLink || "https://t.me/sybotx", testId: "button-support-link", size: "short" },
-    { label: "Groupe officiel", href: settings?.groupLink || "https://t.me/sybotx", testId: "button-group-link", size: "tall" },
+    ...(settings?.supportLink
+      ? [{ label: "Service client", href: settings.supportLink, testId: "button-support-link", size: "short" }]
+      : []),
+    ...(settings?.groupLink
+      ? [{ label: "Groupe officiel", href: settings.groupLink, testId: "button-group-link", size: "tall" }]
+      : []),
   ];
 
   return (

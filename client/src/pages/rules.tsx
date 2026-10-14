@@ -9,8 +9,8 @@ export default function RulesPage() {
   });
 
   const signupBonus = settings?.signupBonus || "3000";
-  const minDeposit = settings?.minDeposit || "3500";
-  const minWithdrawal = settings?.minWithdrawal || "800";
+  const minDeposit = settings?.minDeposit || "17000";
+  const minWithdrawal = settings?.minWithdrawal || "3000";
   const withdrawalFees = settings?.withdrawalFees || "5";
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
   const withdrawalEndHour = settings?.withdrawalEndHour || "18";

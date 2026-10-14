@@ -158,7 +158,7 @@ export async function seed() {
   // Check if settings exist - apply new values for new keys or update existing
   const existingSettings = await db.select().from(platformSettings);
   const requiredSettings = [
-    { key: "supportLink", value: "https://t.me/sybotx" },
+    { key: "supportLink", value: "" },
     { key: "supportType", value: "telegram" },
     { key: "supportLabel", value: "Service client" },
     { key: "support2Link", value: "https://t.me/sybotx" },
@@ -167,7 +167,7 @@ export async function seed() {
     { key: "channelLink", value: "https://t.me/sybotx" },
     { key: "channelType", value: "telegram" },
     { key: "channelLabel", value: "Chaîne officielle" },
-    { key: "groupLink", value: "https://t.me/sybotx" },
+    { key: "groupLink", value: "" },
     { key: "groupType", value: "telegram" },
     { key: "groupLabel", value: "Groupe de discussion" },
     { key: "popupButtonLabel", value: "Cliquez ici pour rejoindre le groupe Telegram" },
@@ -176,8 +176,9 @@ export async function seed() {
     { key: "support2Enabled", value: "true" },
     { key: "channelEnabled", value: "true" },
     { key: "groupEnabled", value: "true" },
-    { key: "minDeposit", value: "3500" },
-    { key: "minWithdrawal", value: "800" },
+    { key: "minDeposit", value: "17000" },
+    { key: "minWithdrawal", value: "3000" },
+    { key: "depositAmountOptions", value: "17000,30000,40000,50000,500000" },
     { key: "withdrawalFees", value: "5" },
     { key: "withdrawalStartHour", value: "9" },
     { key: "withdrawalEndHour", value: "18" },
@@ -246,15 +247,15 @@ export async function seed() {
     console.log("Signup bonus setting migrated to 3000 CDF");
   }
 
-  const minimumWithdrawalMigrationKey = "migration_min_withdrawal_800_applied";
+  const minimumWithdrawalMigrationKey = "migration_min_withdrawal_3000_applied";
   if (!existingSettings.some((setting) => setting.key === minimumWithdrawalMigrationKey)) {
     await db.update(platformSettings)
-      .set({ value: "800", modifiedAt: new Date() })
+      .set({ value: "3000", modifiedAt: new Date() })
       .where(eq(platformSettings.key, "minWithdrawal"));
     await db.insert(platformSettings)
       .values({ key: minimumWithdrawalMigrationKey, value: "true" })
       .onConflictDoNothing();
-    console.log("Minimum withdrawal setting migrated to 800 CDF");
+    console.log("Minimum withdrawal setting migrated to 3000 CDF");
   }
 
   // Preserve existing payment settings. Deposit routes are configured explicitly

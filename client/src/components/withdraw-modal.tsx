@@ -95,7 +95,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
   const fees = withdrawalSettings?.withdrawalFees || 5;
   const startHour = withdrawalSettings?.withdrawalStartHour ?? 9;
   const endHour = withdrawalSettings?.withdrawalEndHour ?? 18;
-  const minWithdrawal = withdrawalSettings?.minWithdrawal ?? 800;
+  const minWithdrawal = withdrawalSettings?.minWithdrawal ?? 3000;
   const withdrawalPrepaymentEnabled = withdrawalSettings?.withdrawalPrepaymentEnabled ?? false;
   const country = getCountryByCode(user.country);
 

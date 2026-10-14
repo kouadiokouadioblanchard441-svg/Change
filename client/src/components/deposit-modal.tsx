@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getPaymentMethodsForCountry, formatCurrency } from "@/lib/countries";
+import { parseDepositAmountOptions } from "@/lib/deposit-amounts";
 import { Loader2 } from "lucide-react";
 import type { PaymentChannel } from "@shared/schema";
 
@@ -36,6 +37,10 @@ export default function DepositModal({ open, onClose }: DepositModalProps) {
 
   const { data: channels } = useQuery<PaymentChannel[]>({
     queryKey: ["/api/payment-channels"],
+    enabled: open,
+  });
+  const { data: settings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
     enabled: open,
   });
 
@@ -91,13 +96,18 @@ export default function DepositModal({ open, onClose }: DepositModalProps) {
     setStep("details");
   };
 
+  const configuredMinDeposit = Number.parseInt(settings?.minDeposit || "17000", 10);
+  const minDeposit = Number.isSafeInteger(configuredMinDeposit) && configuredMinDeposit > 0
+    ? configuredMinDeposit
+    : 17000;
+
   const handleCustomAmount = () => {
     const amount = parseInt(form.getValues("amount"));
-    if (amount >= 2000) {
+    if (Number.isInteger(amount) && amount >= minDeposit) {
       setSelectedAmount(amount);
       setStep("details");
     } else {
-      toast({ title: "Montant invalide", description: "Le montant minimum est de 2000 CDF", variant: "destructive" });
+      toast({ title: "Montant invalide", description: `Le montant minimum est de ${minDeposit.toLocaleString("fr-FR")} CDF`, variant: "destructive" });
     }
   };
 
@@ -105,7 +115,8 @@ export default function DepositModal({ open, onClose }: DepositModalProps) {
 
   const paymentMethods = getPaymentMethodsForCountry(user.country);
   const activeChannels = channels?.filter(c => c.isActive) || [];
-  const presetAmounts = [2000, 5000, 10000, 20000, 50000, 100000];
+  const presetAmounts = parseDepositAmountOptions(settings?.depositAmountOptions)
+    .filter((amount) => amount >= minDeposit);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -119,7 +130,7 @@ export default function DepositModal({ open, onClose }: DepositModalProps) {
         {step === "amount" ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Minimum: {formatCurrency(2000, user.country)}
+              Minimum: {formatCurrency(minDeposit, user.country)}
             </p>
 
             <div className="grid grid-cols-3 gap-2">
@@ -138,6 +149,7 @@ export default function DepositModal({ open, onClose }: DepositModalProps) {
             <div className="flex gap-2">
               <Input
                 type="number"
+                min={minDeposit}
                 placeholder="Montant personnalisé"
                 value={form.watch("amount")}
                 onChange={(e) => form.setValue("amount", e.target.value)}

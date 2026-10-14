@@ -357,7 +357,7 @@ const PUBLIC_SETTING_KEYS = new Set([
   "channelLink", "channelType", "channelLabel", "popupButtonLabel",
   "groupLink", "groupType", "groupLabel", "noticeText",
   "supportEnabled", "support2Enabled", "channelEnabled", "groupEnabled",
-  "signupBonus", "minDeposit", "minWithdrawal", "withdrawalFees",
+  "signupBonus", "minDeposit", "minWithdrawal", "depositAmountOptions", "withdrawalFees",
   "maxWithdrawalsPerDay", "withdrawalStartHour", "withdrawalEndHour",
   "withdrawalPrepaymentEnabled",
   "level1Commission", "level2Commission", "level3Commission",
@@ -376,6 +376,26 @@ const MASKED_SETTING_VALUE = "********";
 
 function isAdminSettingKey(key: string): boolean {
   return ADMIN_SETTING_KEYS.has(key);
+}
+
+function normalizeDepositAmountOptions(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const entries = value.split(",").map((entry) => entry.trim());
+  if (entries.length === 0 || entries.some((entry) => !/^\d+$/.test(entry))) return null;
+  const amounts = entries.map(Number);
+  if (!amounts.every((amount) => Number.isSafeInteger(amount) && amount > 0)) return null;
+  if (new Set(amounts).size !== amounts.length) return null;
+  return amounts.join(",");
+}
+
+function isOptionalHttpsUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  if (!value.trim()) return true;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function parseDepositMethodsByCountry(
@@ -1262,7 +1282,7 @@ export async function registerRoutes(
       }
 
       const settings = await storage.getSettings();
-      const minDeposit = parseInt(settings.minDeposit || "3500");
+      const minDeposit = parseInt(settings.minDeposit || "17000");
        const requestedAmount = typeof amount === "number" ? amount : Number(amount);
        if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
         return res.status(400).json({ message: "Montant invalide" });
@@ -1699,7 +1719,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
 
       const settings = await storage.getSettings();
       const numericAmount = Number(amount);
-      const minDeposit = parseInt(settings.minDeposit || "3500");
+      const minDeposit = parseInt(settings.minDeposit || "17000");
       if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
         return res.status(400).json({ message: "Montant invalide" });
       }
@@ -1979,7 +1999,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (!isDepositMethodConfigured(country, "sendavapay", settings)) {
         return res.status(400).json({ message: "SendavaPay n'est pas configuré pour ce pays" });
       }
-      const minDeposit = parseInt(settings.minDeposit || "3500");
+      const minDeposit = parseInt(settings.minDeposit || "17000");
       const numericAmount = Number(amount);
       if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
         return res.status(400).json({ message: "Montant invalide" });
@@ -2519,7 +2539,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
           message: `Les retraits sont disponibles de ${withdrawalStartHour} h à ${withdrawalEndHour} h, heure de Kinshasa (RDC).`,
         });
       }
-      const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "800");
+      const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "3000");
       const withdrawalPrepaymentEnabled = settingsForWithdrawal.withdrawalPrepaymentEnabled === "true";
       if (!Number.isInteger(numericAmount) || numericAmount < minWithdrawal) {
         return res.status(400).json({ message: `Montant minimum: ${minWithdrawal} CDF` });
@@ -2870,10 +2890,10 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     try {
       const settings = await storage.getSettings();
       res.json({
-        supportLink: settings.supportLink || "https://t.me/intelappgroup",
+        supportLink: settings.supportLink || "",
         support2Link: settings.support2Link || "https://t.me/intelappgroup",
         channelLink: settings.channelLink || "https://t.me/intelappgroup",
-        groupLink: settings.groupLink || "https://t.me/intelappgroup",
+        groupLink: settings.groupLink || "",
         supportType: settings.supportType || "telegram",
         support2Type: settings.support2Type || "telegram",
         channelType: settings.channelType || "telegram",
@@ -2898,7 +2918,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         withdrawalStartHour: parseInt(settings.withdrawalStartHour || "9"),
         withdrawalEndHour: parseInt(settings.withdrawalEndHour || "18"),
         maxWithdrawalsPerDay: parseInt(settings.maxWithdrawalsPerDay || "1"),
-        minWithdrawal: parseInt(settings.minWithdrawal || "800"),
+        minWithdrawal: parseInt(settings.minWithdrawal || "3000"),
         withdrawalPrepaymentEnabled: settings.withdrawalPrepaymentEnabled === "true",
       });
     } catch (error: any) {
@@ -3851,6 +3871,30 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
           message: `Paramètre(s) non reconnu(s) : ${unknownKeys.join(", ")}`,
         });
       }
+      const invalidMinimum = entries.find(([key, value]) =>
+        (key === "minDeposit" || key === "minWithdrawal") &&
+        (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) <= 0),
+      );
+      if (invalidMinimum) {
+        return res.status(400).json({ message: "Les minimums doivent être des nombres entiers positifs en CDF." });
+      }
+      const groupLinkEntry = entries.find(([key]) => key === "groupLink");
+      if (groupLinkEntry && !isOptionalHttpsUrl(groupLinkEntry[1])) {
+        return res.status(400).json({ message: "Le lien du groupe doit être une URL HTTPS valide." });
+      }
+      const supportLinkEntry = entries.find(([key]) => key === "supportLink");
+      if (supportLinkEntry && !isOptionalHttpsUrl(supportLinkEntry[1])) {
+        return res.status(400).json({ message: "Le lien du service client doit être une URL HTTPS valide." });
+      }
+      const depositAmountOptionsEntry = entries.find(([key]) => key === "depositAmountOptions");
+      const normalizedDepositAmountOptions = depositAmountOptionsEntry
+        ? normalizeDepositAmountOptions(depositAmountOptionsEntry[1])
+        : undefined;
+      if (depositAmountOptionsEntry && !normalizedDepositAmountOptions) {
+        return res.status(400).json({
+          message: "Entrez des montants de dépôt positifs, entiers et uniques, séparés par des virgules.",
+        });
+      }
       const routingEntry = entries.find(([key]) => key === "depositMethodsByCountry");
       let normalizedRouting: Record<string, DepositMethodId[]> | undefined;
       if (routingEntry) {
@@ -3875,7 +3919,9 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         if (SENSITIVE_SETTING_KEYS.has(key) && (value === "" || value === MASKED_SETTING_VALUE)) continue;
         const serializedValue = key === "depositMethodsByCountry" && normalizedRouting
           ? JSON.stringify(normalizedRouting)
-          : value as string;
+          : key === "depositAmountOptions" && normalizedDepositAmountOptions
+            ? normalizedDepositAmountOptions
+            : value as string;
         await storage.setSetting(key, serializedValue, req.session.userId);
       }
       await storage.logAdminAction(req.session.userId!, "update_settings", null, `Paramètres modifiés`);
@@ -4164,7 +4210,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const withdrawalFeePayment = feePaymentId === undefined
         ? undefined
         : await validateWithdrawalFeePayment(user.id, feePaymentId, amount);
-      const minDeposit = parseInt(settings.minDeposit || "3500", 10);
+      const minDeposit = parseInt(settings.minDeposit || "17000", 10);
       if (!withdrawalFeePayment && amount < minDeposit) {
         return res.status(400).json({ message: `Montant minimum : ${minDeposit.toLocaleString()} CDF` });
       }

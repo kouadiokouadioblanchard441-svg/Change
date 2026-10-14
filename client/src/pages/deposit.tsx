@@ -10,6 +10,7 @@ import {
 import { Link } from "wouter";
 import { getCountriesForDisplay, type ApiCountry } from "@/lib/countries";
 import { sanitizeDepositDisplayText } from "@/lib/deposit-display";
+import { parseDepositAmountOptions } from "@/lib/deposit-amounts";
 import type { PaymentNumber } from "@shared/schema";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -265,11 +266,12 @@ export default function DepositPage() {
       setSelectedDepositMethod("");
     }
   }, [country, depositMethodSignature]);
-  const MIN_DEPOSIT = Math.max(3500, parseInt(platformSettings?.minDeposit || "3500"));
-  const depositPresets = [
-    3500, 5000, 10000, 25000, 50000,
-    100000, 200000, 300000, 400000, 500000,
-  ].filter((preset) => preset >= MIN_DEPOSIT);
+  const configuredMinDeposit = Number.parseInt(platformSettings?.minDeposit || "17000", 10);
+  const MIN_DEPOSIT = Number.isSafeInteger(configuredMinDeposit) && configuredMinDeposit > 0
+    ? configuredMinDeposit
+    : 17000;
+  const depositPresets = parseDepositAmountOptions(platformSettings?.depositAmountOptions)
+    .filter((preset) => preset >= MIN_DEPOSIT);
   const ashtechAvailable = depositMethodIds.has("ashtech");
 
   const activeDepositCountries = apiCountries

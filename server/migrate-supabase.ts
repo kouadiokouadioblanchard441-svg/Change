@@ -322,7 +322,7 @@ async function run() {
       ["omnipayChannelName", "OmniPay"], ["omnipayCallbackKey", ""],
        ["ashtechEnabled", "false"], ["ashtechChannelName", "AshtechPay"],
        ["ashtechCountries", ""],
-      ["supportLink", "https://t.me/intelappgroup"], ["supportType", "telegram"],
+      ["supportLink", ""], ["supportType", "telegram"],
       ["supportLabel", "Service client"], ["channelLink", "https://t.me/intelappgroup"],
       ["channelType", "telegram"], ["channelLabel", "Chaîne officielle"],
     ];
