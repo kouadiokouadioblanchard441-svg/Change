@@ -24,7 +24,7 @@ interface CountryForm {
 const emptyForm: CountryForm = {
   code: "",
   name: "",
-  currency: "XOF",
+  currency: "CDF",
   phonePrefix: "",
   operators: "",
   isActive: true,
@@ -211,11 +211,11 @@ export default function AdminCountries() {
                 />
               </div>
               <div>
-                <Label>Devise (ex: XAF)</Label>
+                <Label>Devise (ex: CDF)</Label>
                 <Input
                   value={form.currency}
                   onChange={e => setForm({ ...form, currency: e.target.value.toUpperCase() })}
-                  placeholder="XAF"
+                  placeholder="CDF"
                   maxLength={5}
                   required
                   data-testid="input-country-currency"

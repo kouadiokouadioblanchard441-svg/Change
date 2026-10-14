@@ -8,9 +8,18 @@ interface CountrySelectorProps {
   onClose: () => void;
   onSelect: (countryCode: string) => void;
   selectedCountryCode?: string;
+  apiPath?: string;
+  includeInactive?: boolean;
 }
 
-export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }: CountrySelectorProps) {
+export function CountrySelector({
+  open,
+  onClose,
+  onSelect,
+  selectedCountryCode,
+  apiPath = "/api/countries",
+  includeInactive = false,
+}: CountrySelectorProps) {
   const [search, setSearch] = useState("");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -18,7 +27,7 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const { data: apiCountries, isLoading, isError } = useQuery<ApiCountry[]>({
-    queryKey: ["/api/countries"],
+    queryKey: [apiPath],
     enabled: open,
   });
 
@@ -63,7 +72,7 @@ export function CountrySelector({ open, onClose, onSelect, selectedCountryCode }
 
   const countrySource = isError ? FALLBACK_API_COUNTRIES : apiCountries || [];
   const countries = countrySource
-    .filter(c => c.isActive)
+    .filter(c => includeInactive || c.isActive)
     .map(c => ({ code: c.code, name: c.name, phonePrefix: c.phonePrefix }))
     .filter(country => {
       const query = search.trim().toLowerCase();

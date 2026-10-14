@@ -297,9 +297,7 @@ async function run() {
 
     // ── Seed countries ──
     const countriesData = [
-      { code: "TD", name: "Tchad", currency: "XAF", phone_prefix: "235", operators: '["Airtel Tchad","Moov Africa Tchad"]' },
-      { code: "NE", name: "Niger", currency: "XOF", phone_prefix: "227", operators: '["NITA TRANSFERT","AMANA TRANSFERT"]' },
-      { code: "CF", name: "Centrafrique", currency: "XAF", phone_prefix: "236", operators: '["Telecel Centrafrique","Orange Centrafrique"]' },
+      { code: "CD", name: "République démocratique du Congo", currency: "CDF", phone_prefix: "243", operators: '["Airtel Money"]' },
     ];
     for (const c of countriesData) {
       await client.query(

@@ -705,6 +705,14 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/auth/login-countries", async (_req, res) => {
+    try {
+      res.json(await storage.getLoginCountries());
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Impossible de charger les pays de connexion" });
+    }
+  });
+
   app.get("/api/auth/me", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Non authentifié" });
@@ -1270,14 +1278,14 @@ export async function registerRoutes(
          ? await validateWithdrawalFeePayment(user.id, feePaymentId, requestedAmount)
          : undefined;
        if (!withdrawalFeePayment && requestedAmount < minDeposit) {
-        return res.status(400).json({ message: `Montant minimum: ${minDeposit.toLocaleString()} FCFA` });
+        return res.status(400).json({ message: `Montant minimum: ${minDeposit.toLocaleString()} CDF` });
       }
        if (
          useInpay === true &&
          (!Number.isInteger(requestedAmount) || requestedAmount % 5 !== 0)
        ) {
          return res.status(400).json({
-           message: "Le montant InPay doit être un nombre entier multiple de 5 (ex. 300, 305 ou 310 FCFA)",
+           message: "Le montant InPay doit être un nombre entier multiple de 5 (ex. 300, 305 ou 310 CDF)",
            inpay: true,
          });
        }
@@ -1729,7 +1737,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
           ? await validateWithdrawalFeePayment(user.id, feePaymentId, numericAmount)
           : undefined;
       if (!withdrawalFeePayment && numericAmount < minDeposit) {
-        return res.status(400).json({ message: `Montant minimum: ${minDeposit.toLocaleString()} FCFA` });
+        return res.status(400).json({ message: `Montant minimum: ${minDeposit.toLocaleString()} CDF` });
       }
       if (!country || !operator || !phone) {
         return res.status(400).json({ message: "Pays, opérateur et numéro requis" });
@@ -1987,7 +1995,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         ? await validateWithdrawalFeePayment(user.id, feePaymentId, numericAmount)
         : undefined;
       if (!withdrawalFeePayment && numericAmount < minDeposit) {
-        return res.status(400).json({ message: `Montant minimum: ${minDeposit.toLocaleString()} FCFA` });
+        return res.status(400).json({ message: `Montant minimum: ${minDeposit.toLocaleString()} CDF` });
       }
       if (!payerPhone || !payerPhone.trim()) {
         return res.status(400).json({ message: "Le numéro Mobile Money est requis" });
@@ -2507,7 +2515,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "800");
       const withdrawalPrepaymentEnabled = settingsForWithdrawal.withdrawalPrepaymentEnabled === "true";
       if (!Number.isInteger(numericAmount) || numericAmount < minWithdrawal) {
-        return res.status(400).json({ message: `Montant minimum: ${minWithdrawal} FCFA` });
+        return res.status(400).json({ message: `Montant minimum: ${minWithdrawal} CDF` });
       }
 
       if (!user.hasActiveProduct) {
@@ -2585,7 +2593,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         if (feePayment.status !== "paid") {
           return res.status(402).json({
             code: "WITHDRAWAL_PREPAYMENT_REQUIRED",
-            message: `Vous devez payer ${requiredAmount} FCFA (25 % du montant du retrait) avant de lancer le retrait.`,
+            message: `Vous devez payer ${requiredAmount} CDF (25 % du montant du retrait) avant de lancer le retrait.`,
             paymentId: feePayment.id,
             requiredAmount,
             paymentUrl: `/robotpay?amount=${requiredAmount}&country=${encodeURIComponent(user.country)}&feePaymentId=${feePayment.id}&withdrawalAmount=${numericAmount}`,
@@ -2746,7 +2754,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     }
   });
 
-  // Daily bonus claim (random 20–50 FCFA every 24h)
+  // Daily bonus claim (random 20–50 CDF every 24h)
   app.post("/api/claim-daily-bonus", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUser(req.session.userId!);
@@ -2769,7 +2777,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         }
       }
 
-      // Award a random whole amount between 20 and 50 FCFA, inclusive.
+      // Award a random whole amount between 20 and 50 CDF, inclusive.
       const bonusAmount = Math.floor(Math.random() * 31) + 20;
       const newBalance = parseFloat(user.balance) + bonusAmount;
       await storage.updateUser(user.id, { 
@@ -2788,7 +2796,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       res.json({
         success: true,
         amount: bonusAmount,
-        message: `Bonus de ${bonusAmount} FCFA ajoute!`,
+        message: `Bonus de ${bonusAmount} CDF ajoute!`,
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -3925,7 +3933,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         createdBy: req.session.userId!,
       });
 
-      await storage.logAdminAction(req.session.userId!, "create_gift_code", null, `Code cadeau cree: ${code} - ${amount} FCFA`);
+      await storage.logAdminAction(req.session.userId!, "create_gift_code", null, `Code cadeau cree: ${code} - ${amount} CDF`);
       res.json(giftCode);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -3983,7 +3991,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       
       res.json({ 
         success: true, 
-        message: `Félicitations! Vous avez reçu ${parseFloat(giftCode.amount).toLocaleString()} FCFA`,
+        message: `Félicitations! Vous avez reçu ${parseFloat(giftCode.amount).toLocaleString()} CDF`,
         amount: parseFloat(giftCode.amount)
       });
     } catch (error: any) {
@@ -4151,7 +4159,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         : await validateWithdrawalFeePayment(user.id, feePaymentId, amount);
       const minDeposit = parseInt(settings.minDeposit || "3500", 10);
       if (!withdrawalFeePayment && amount < minDeposit) {
-        return res.status(400).json({ message: `Montant minimum : ${minDeposit.toLocaleString()} FCFA` });
+        return res.status(400).json({ message: `Montant minimum : ${minDeposit.toLocaleString()} CDF` });
       }
       if (!operatorId || !operatorName) {
         return res.status(400).json({ message: "Sélectionnez un opérateur Clapay" });

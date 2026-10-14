@@ -94,13 +94,13 @@ export default function HomePage() {
 
   if (!user) return null;
   const country = getCountryByCode(user.country);
-  const currency = country?.currency || "XOF";
+  const currency = "CDF";
   const balance = Number.parseFloat(user.balance || "0");
   const totalEarnings = Number.parseFloat(user.totalEarnings || "0");
   const groupLink = settings?.groupLink || "";
   const popupButtonLabel = settings?.popupButtonLabel || settings?.groupLabel || "Rejoindre le groupe Telegram Officiel";
   const formatMoney = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${currency}`;
-  const popupCurrency = currency === "FCFA" ? "XOF" : currency;
+  const popupCurrency = currency;
   const formatPopupMoney = (amount: number) => `${Math.round(amount).toLocaleString("fr-FR")} ${popupCurrency}`;
   const parseIntegerSetting = (key: string, fallback: number) => {
     const value = Number.parseInt(settings?.[key] || "", 10);

@@ -1,5 +1,7 @@
 import { getWithdrawalMethods } from "@shared/withdrawal-methods";
 
+export const DISPLAY_CURRENCY = "CDF";
+
 // The API remains authoritative. These bootstrap entries are used only when its
 // request fails so public country pickers do not become unusable during an outage.
 export const COUNTRIES: Array<{
@@ -17,10 +19,7 @@ export const FALLBACK_COUNTRIES: Array<{
   phonePrefix: string;
   operators: string[];
 }> = [
-  { code: "TG", name: "Togo", currency: "XOF", phonePrefix: "228", operators: ["Togocel", "Moov Africa Togo"] },
-  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", phonePrefix: "225", operators: [] },
-  { code: "BF", name: "Burkina Faso", currency: "XOF", phonePrefix: "226", operators: ["Orange Burkina", "Moov Africa Burkina"] },
-  { code: "NE", name: "Niger", currency: "XOF", phonePrefix: "227", operators: ["NITA TRANSFERT", "AMANA TRANSFERT"] },
+  { code: "CD", name: "République démocratique du Congo", currency: DISPLAY_CURRENCY, phonePrefix: "243", operators: ["Airtel Money"] },
 ];
 
 // Legacy compatibility - kept for places still using ELIGIBLE_COUNTRIES directly
@@ -77,7 +76,7 @@ export function getCountryByCode(code: string, apiCountries?: ApiCountry[]) {
     return {
       code: c.code,
       name: c.name,
-      currency: c.currency,
+      currency: DISPLAY_CURRENCY,
       phonePrefix: c.phonePrefix,
       paymentMethods: parseOperators(c.operators),
     };
@@ -88,7 +87,7 @@ export function getCountryByCode(code: string, apiCountries?: ApiCountry[]) {
   return {
     code: fallback.code,
     name: fallback.name,
-    currency: fallback.currency,
+    currency: DISPLAY_CURRENCY,
     phonePrefix: fallback.phonePrefix,
     paymentMethods: fallback.operators,
   };
@@ -106,6 +105,5 @@ export function getWithdrawalMethodsForCountry(code: string, apiCountries?: ApiC
 
 export function formatCurrency(amount: number, countryCode: string, apiCountries?: ApiCountry[]): string {
   const country = getCountryByCode(countryCode, apiCountries);
-  const currency = country?.currency || "FCFA";
-  return `${amount.toLocaleString()} ${currency}`;
+  return `${amount.toLocaleString()} ${DISPLAY_CURRENCY}`;
 }

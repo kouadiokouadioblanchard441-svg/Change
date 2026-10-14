@@ -65,7 +65,7 @@ export default function ProductsPage() {
   if (!user) return null;
 
   const country = getCountryByCode(user.country);
-  const currency = country?.currency || "FCFA";
+  const currency = "CDF";
   const formatAmount = (value: number) => `${currency} ${Math.round(value).toLocaleString("fr-FR")}`;
   const availableProducts = products?.filter(product => !product.isFree) || [];
   const activeUserProducts = (userProducts || []).filter(product => product.status === "active");
@@ -237,7 +237,7 @@ export default function ProductsPage() {
             <span><strong className="cp-products-stat-value">{ownedCount}</strong><small className="cp-products-stat-label">Mes équipements</small></span>
           </div>
           <div className="cp-products-stat">
-            <span className="cp-products-stat-icon"><span aria-hidden="true">XAF</span></span>
+            <span className="cp-products-stat-icon"><span aria-hidden="true">CDF</span></span>
             <span><strong className="cp-products-stat-value">{formatAmount(dailyRevenue)}</strong><small className="cp-products-stat-label">Revenu quotidien</small></span>
           </div>
         </section>

@@ -17,7 +17,7 @@ interface Deposit {
 export default function DepositHistoryRealPage() {
   const { user } = useAuth();
   const countryInfo = user ? getCountryByCode(user.country) : null;
-  const currency = countryInfo?.currency || "FCFA";
+  const currency = "CDF";
 
   const { data: deposits = [], isLoading } = useQuery<Deposit[]>({
     queryKey: ["/api/deposits/history"],

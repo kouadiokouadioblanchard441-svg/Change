@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - **Middleware**: `requireAuth` and `requireAdmin` middleware for route protection
 
 ### Key Features
-- **Multi-country Support**: 7 African countries with different currencies (XAF, XOF, CDF) and payment methods
+- **Country availability**: New registrations and public country selectors are limited to the Democratic Republic of the Congo (+243); previous country rows remain inactive for history and legacy account login.
 - **Product System**: Virtual industrial robot products with daily earnings cycles
 - **Referral System**: 3-level commission structure for team building
 - **Task System**: Invite-based tasks with bonus rewards
@@ -127,21 +127,15 @@ The "Start application" workflow runs `npm run dev` and serves the app on port 5
 - Removed emoji usage in favor of text country codes
 
 ## Business Rules
-- **Signup Bonus**: 1000 FCFA
-- **Free Daily Product**: 50 FCFA per day
+- **Signup Bonus**: 1000 CDF
+- **Free Daily Product**: 50 CDF per day
 - **Withdrawal Fees**: 16%
-- **Minimum Deposit**: 3000 FCFA
-- **Minimum Withdrawal**: 1200 FCFA
+- **Minimum Deposit**: 3000 CDF
+- **Minimum Withdrawal**: 1200 CDF
 - **Withdrawal Hours**: 8h-17h (9h-18h for Cameroon/Benin)
 - **Max Withdrawals/Day**: 2
 - **Referral Commissions**: Level 1 (25%), Level 2 (4%), Level 3 (1%)
 - **Product Cycle**: 80 days by default
 
 ## Supported Countries
-- Cameroun (CM) - XAF - Orange Money, MTN
-- Burkina Faso (BF) - XOF - Orange Money, Moov Money
-- Togo (TG) - XOF - Moov Money, Mixx by Yas
-- Benin (BJ) - XOF - Celtis, Moov Money, MTN, Momo
-- Cote d'Ivoire (CI) - XOF - Wave, MTN, Orange Money, Moov Money
-- Congo Brazzaville (CG) - XAF - MTN
-- RDC (CD) - CDF (4:1 conversion) - Airtel Money
+- RDC (CD) - +243 - CDF (site display only; stored amounts are unchanged) - Airtel Money

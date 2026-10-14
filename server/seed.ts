@@ -100,50 +100,27 @@ export async function seed() {
     console.log("Super admin access verified");
   }
 
-  // Seed countries only on first install — never overwrite admin changes
-  const existingCountries = await db.select().from(countries);
-  if (existingCountries.length === 0) {
-    const defaultCountries = [
-      {
-        code: "TG",
-        name: "Togo",
-        currency: "XOF",
-        phonePrefix: "228",
-        operators: JSON.stringify(["Togocel", "Moov Africa Togo"]),
-        isActive: true,
-      },
-      {
-        code: "CI",
-        name: "Côte d'Ivoire",
-        currency: "XOF",
-        phonePrefix: "225",
-        operators: JSON.stringify([]),
-        isActive: true,
-      },
-      {
-        code: "BF",
-        name: "Burkina Faso",
-        currency: "XOF",
-        phonePrefix: "226",
-        operators: JSON.stringify(["Orange Burkina", "Moov Africa Burkina"]),
-        isActive: true,
-      },
-      {
-        code: "NE",
-        name: "Niger",
-        currency: "XOF",
-        phonePrefix: "227",
-        operators: JSON.stringify(["NITA TRANSFERT", "AMANA TRANSFERT"]),
-        isActive: true,
-      },
-    ];
-    for (const countryData of defaultCountries) {
-      await db.insert(countries).values(countryData);
-      console.log(`Country added: ${countryData.name}`);
-    }
-  } else {
-    console.log(`Countries skipped — ${existingCountries.length} existing countries preserved`);
-  }
+  // Keep the historical country rows, but make the DRC the only available country.
+  await db.insert(countries).values({
+    code: "CD",
+    name: "République démocratique du Congo",
+    currency: "CDF",
+    phonePrefix: "243",
+    operators: JSON.stringify(["Airtel Money"]),
+    isActive: true,
+  }).onConflictDoUpdate({
+    target: countries.code,
+    set: {
+      name: "République démocratique du Congo",
+      currency: "CDF",
+      phonePrefix: "243",
+      isActive: true,
+    },
+  });
+  await db.update(countries)
+    .set({ currency: "CDF", isActive: false })
+    .where(sql`${countries.code} <> 'CD'`);
+  console.log("Country availability enforced: DRC (+243), CDF");
 
   // Product and staking catalogs are administered in the panel; do not seed hardcoded catalog entries.
 
@@ -261,7 +238,7 @@ export async function seed() {
     await db.insert(platformSettings)
       .values({ key: signupBonusMigrationKey, value: "true" })
       .onConflictDoNothing();
-    console.log("Signup bonus setting migrated to 1000 FCFA");
+    console.log("Signup bonus setting migrated to 1000 CDF");
   }
 
   const minimumWithdrawalMigrationKey = "migration_min_withdrawal_800_applied";
@@ -272,7 +249,7 @@ export async function seed() {
     await db.insert(platformSettings)
       .values({ key: minimumWithdrawalMigrationKey, value: "true" })
       .onConflictDoNothing();
-    console.log("Minimum withdrawal setting migrated to 800 FCFA");
+    console.log("Minimum withdrawal setting migrated to 800 CDF");
   }
 
   // Preserve existing payment settings. Deposit routes are configured explicitly

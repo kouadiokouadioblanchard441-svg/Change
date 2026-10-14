@@ -31,13 +31,13 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       phone: "",
-      country: "NE",
+      country: "CD",
       password: "",
     },
   });
 
   const { data: apiCountries, isLoading: countriesLoading } = useQuery<ApiCountry[]>({
-    queryKey: ["/api/countries"],
+    queryKey: ["/api/auth/login-countries"],
   });
 
   const selectedCountry = form.watch("country");
@@ -50,18 +50,18 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!apiCountries || apiCountries.length === 0) return;
-    const isValid = apiCountries.some(ac => ac.code === selectedCountry && ac.isActive);
-    // Keep a remembered/selected country long enough for the server to apply
-    // the administrator-only cross-country login rule.
+    const isValid = apiCountries.some(ac => ac.code === selectedCountry);
+    // Keep inactive countries selectable only when existing accounts still use them.
     if (!isValid) {
       const first = apiCountries.find(ac => ac.isActive);
-      if (first) form.setValue("country", first.code);
+      const fallback = first || apiCountries[0];
+      if (fallback) form.setValue("country", fallback.code);
     }
   }, [apiCountries, selectedCountry, form]);
 
   const countryData = (() => {
     if (apiCountries !== undefined) {
-      const c = apiCountries.find(ac => ac.code === selectedCountry && ac.isActive);
+      const c = apiCountries.find(ac => ac.code === selectedCountry);
       if (c) return { phonePrefix: c.phonePrefix, name: c.name };
       return null;
     }
@@ -164,7 +164,7 @@ export default function LoginPage() {
         </section>
       </div>
 
-      <CountrySelector selectedCountryCode={selectedCountry} open={countryModalOpen} onClose={() => setCountryModalOpen(false)} onSelect={(code) => form.setValue("country", code, { shouldValidate: true })} />
+      <CountrySelector apiPath="/api/auth/login-countries" includeInactive selectedCountryCode={selectedCountry} open={countryModalOpen} onClose={() => setCountryModalOpen(false)} onSelect={(code) => form.setValue("country", code, { shouldValidate: true })} />
     </main>
   );
 }

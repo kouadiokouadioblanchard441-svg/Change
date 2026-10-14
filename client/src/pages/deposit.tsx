@@ -237,7 +237,7 @@ export default function DepositPage() {
   const apiCountries = getCountriesForDisplay(loadedCountries, countriesError);
 
   const countryInfo = apiCountries.find(c => c.code === country && c.isActive);
-  const currency = countryInfo?.currency || "FCFA";
+  const currency = "CDF";
 
   const { data: platformSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
@@ -1417,7 +1417,7 @@ export default function DepositPage() {
           {ashtechCountriesLoading ? <Loader2 className="w-6 h-6 animate-spin text-[#FF7A14] mx-auto" /> : (
             <select value={ashtechCountry} onChange={(e) => { setAshtechCountry(e.target.value); setAshtechOperator(""); }}
               className="deposit-step-field w-full px-4 py-4 text-sm text-gray-700 outline-none appearance-none">
-              {availableAshtechCountries.map(c => <option key={c.code} value={c.code}>{c.name} ({c.currency})</option>)}
+              {availableAshtechCountries.map(c => <option key={c.code} value={c.code}>{c.name} (CDF)</option>)}
             </select>
           )}
         </div>

@@ -1660,6 +1660,19 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(countries).where(eq(countries.isActive, true));
   }
 
+  async getLoginCountries(): Promise<Country[]> {
+    const accountCountries = await db
+      .select({ country: users.country })
+      .from(users)
+      .groupBy(users.country);
+    const codes = accountCountries.map(({ country }) => country).filter(Boolean);
+    if (codes.length === 0) return this.getActiveCountries();
+
+    return await db.select().from(countries).where(
+      or(eq(countries.isActive, true), inArray(countries.code, codes)),
+    );
+  }
+
   async getCountry(id: number): Promise<Country | undefined> {
     const [country] = await db.select().from(countries).where(eq(countries.id, id));
     return country || undefined;
@@ -1752,7 +1765,7 @@ export class DatabaseStorage implements IStorage {
     const user = await this.getUser(userId);
     if (!user) throw new Error("Utilisateur introuvable");
     if (parseFloat(user.balance) < sp.price) {
-      throw new Error(`Solde insuffisant. Il vous manque ${(sp.price - parseFloat(user.balance)).toLocaleString()} ${user.country === "TD" ? "XAF" : "XOF"}`);
+      throw new Error(`Solde insuffisant. Il vous manque ${(sp.price - parseFloat(user.balance)).toLocaleString()} CDF`);
     }
 
     // Check user has at least one active regular product
