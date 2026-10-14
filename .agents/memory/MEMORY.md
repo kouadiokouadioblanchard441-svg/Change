@@ -14,6 +14,7 @@
 - [Fictitious financial examples](demo-referrals.md) — demo referrals and rotating financial examples stay visibly distinguished from real activity and financially inert.
 - [Dev workflow port conflict](workflow-port-conflict.md) — a failed restart can leave a prior server child listening on port 5000; inspect the listener before retrying.
 - [Withdrawal balance policy](withdrawal-balance-policy.md) — deposits remain protected; only earnings, commissions, bonuses, and other non-deposit funds are withdrawable.
+- [Withdrawal hours](withdrawal-hours.md) — Site-wide withdrawal requests run 09:00–18:00 in Kinshasa time.
 - [VIP duration](vip-duration.md) — Product cycle length is admin-managed; startup code must never force a fixed duration.
 - [Mockup sandbox isolation](mockup-sandbox-dependencies.md) — Separate dependencies and preview ports mean a main-app screenshot can misreport a healthy sandbox preview.
 - [Workflow secret scope](workflow-secret-scope.md) — One-off shell commands may lack secrets available to the managed app workflow; use scoped presence checks and guarded execution.

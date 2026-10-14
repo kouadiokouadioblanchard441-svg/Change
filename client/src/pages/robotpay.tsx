@@ -602,6 +602,9 @@ export default function RobotPayPage() {
                       </p>
                     </div>
                   )}
+                  <p className="mt-2 text-sm font-semibold text-slate-700">
+                    Titulaire du compte : {operator.manualNumber.ownerName}
+                  </p>
                   <button
                     type="button"
                     onClick={copyPaymentNumber}

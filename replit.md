@@ -131,12 +131,13 @@ The "Start application" workflow runs `npm run dev` and serves the app on port 5
 - **Free Daily Product**: 50 CDF per day
 - **Withdrawal Fees**: 5%
 - **Editable Financial Configuration**: VIP prices, daily earnings and cycle lengths, referral commission tiers, and withdrawal fees are managed as database values in the admin panel. Startup seeding must not overwrite existing admin changes or hardcode VIP catalog entries.
+- **Manual Deposit Accounts**: RDC deposit operators, recipient numbers, and account holder names are stored in the database and editable in the admin panel. Never hardcode these account details.
 - **Minimum Deposit**: 3000 CDF
 - **Minimum Withdrawal**: 1200 CDF
-- **Withdrawal Hours**: 8h-17h (9h-18h for Cameroon/Benin)
+- **Withdrawal Hours**: 9h-18h, Kinshasa time (Africa/Kinshasa)
 - **Max Withdrawals/Day**: 2
 - **Referral Commissions**: Level 1 (20%), Level 2 (3%), Level 3 (1%)
 - **Product Cycle**: Current VIP1–VIP6 plans use 90-day cycles; each product’s duration remains editable in the admin panel.
 
 ## Supported Countries
-- RDC (CD) - +243 - CDF (site display only; stored amounts are unchanged) - Airtel Money
+- RDC (CD) - +243 - CDF (site display only; stored amounts are unchanged) - Manual deposits: Airtel Money, Orange Money, M-Pesa/Vodacom (destination account details are admin-managed)

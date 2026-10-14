@@ -13,7 +13,7 @@ export default function RulesPage() {
   const minWithdrawal = settings?.minWithdrawal || "800";
   const withdrawalFees = settings?.withdrawalFees || "5";
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
-  const withdrawalEndHour = settings?.withdrawalEndHour || "17";
+  const withdrawalEndHour = settings?.withdrawalEndHour || "18";
   const maxWithdrawalsPerDay = settings?.maxWithdrawalsPerDay || "1";
   const lv1 = settings?.level1Commission || "20";
   const lv2 = settings?.level2Commission || "3";
@@ -49,7 +49,7 @@ export default function RulesPage() {
             <li>Le montant minimum d'achat d'un produit est de 4 500 CDF.</li>
             <li>Le montant minimum de retrait est de {parseInt(minWithdrawal).toLocaleString()} CDF.</li>
             <li>Les frais de retrait sont fixés à {withdrawalFees}% pour couvrir les frais de transaction et d'entretien.</li>
-            <li>Les retraits sont traités entre {withdrawalStartHour}h et {withdrawalEndHour}h les jours ouvrables.</li>
+            <li>Les retraits sont ouverts entre {withdrawalStartHour}h et {withdrawalEndHour}h, heure de Kinshasa (RDC), les jours ouvrables.</li>
             <li>Limite de {maxWithdrawalsPerDay} retrait(s) maximum par jour par utilisateur.</li>
           </ul>
         </section>

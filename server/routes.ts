@@ -13,6 +13,7 @@ import {
   type ClapayPayout,
 } from "@shared/schema";
 import { getWithdrawalMethods, isAllowedWithdrawalMethod } from "@shared/withdrawal-methods";
+import { isWithdrawalTimeOpen } from "@shared/withdrawal-hours";
 import { z } from "zod";
 import ConnectPgSimple from "connect-pg-simple";
 import { 
@@ -2471,6 +2472,13 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       if (settings.withdrawalPrepaymentEnabled !== "true") {
         return res.status(400).json({ message: "Le prépaiement des retraits est désactivé." });
       }
+      const startHour = parseInt(settings.withdrawalStartHour || "9", 10);
+      const endHour = parseInt(settings.withdrawalEndHour || "18", 10);
+      if (!isWithdrawalTimeOpen(new Date(), startHour, endHour)) {
+        return res.status(400).json({
+          message: `Les retraits sont disponibles de ${startHour} h à ${endHour} h, heure de Kinshasa (RDC).`,
+        });
+      }
       const withdrawalAmount = Number(req.body.amount);
       if (!Number.isInteger(withdrawalAmount) || withdrawalAmount <= 0) {
         return res.status(400).json({ message: "Montant de retrait invalide" });
@@ -2504,6 +2512,13 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
 
       const settingsForWithdrawal = await storage.getSettings();
+      const withdrawalStartHour = parseInt(settingsForWithdrawal.withdrawalStartHour || "9", 10);
+      const withdrawalEndHour = parseInt(settingsForWithdrawal.withdrawalEndHour || "18", 10);
+      if (!isWithdrawalTimeOpen(new Date(), withdrawalStartHour, withdrawalEndHour)) {
+        return res.status(400).json({
+          message: `Les retraits sont disponibles de ${withdrawalStartHour} h à ${withdrawalEndHour} h, heure de Kinshasa (RDC).`,
+        });
+      }
       const minWithdrawal = parseInt(settingsForWithdrawal.minWithdrawal || "800");
       const withdrawalPrepaymentEnabled = settingsForWithdrawal.withdrawalPrepaymentEnabled === "true";
       if (!Number.isInteger(numericAmount) || numericAmount < minWithdrawal) {
@@ -2868,7 +2883,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         channelLabel: settings.channelLabel || "Chaîne officielle",
         groupLabel: settings.groupLabel || "Groupe de discussion",
         withdrawalStartHour: settings.withdrawalStartHour || "9",
-        withdrawalEndHour: settings.withdrawalEndHour || "17",
+        withdrawalEndHour: settings.withdrawalEndHour || "18",
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -2881,7 +2896,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       res.json({
         withdrawalFees: parseFloat(settings.withdrawalFees || "5"),
         withdrawalStartHour: parseInt(settings.withdrawalStartHour || "9"),
-        withdrawalEndHour: parseInt(settings.withdrawalEndHour || "17"),
+        withdrawalEndHour: parseInt(settings.withdrawalEndHour || "18"),
         maxWithdrawalsPerDay: parseInt(settings.maxWithdrawalsPerDay || "1"),
         minWithdrawal: parseInt(settings.minWithdrawal || "800"),
         withdrawalPrepaymentEnabled: settings.withdrawalPrepaymentEnabled === "true",

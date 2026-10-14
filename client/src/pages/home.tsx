@@ -114,7 +114,7 @@ export default function HomePage() {
   const minimumWithdrawal = parseIntegerSetting("minWithdrawal", 800);
   const withdrawalFee = parseDecimalSetting("withdrawalFees", 5);
   const withdrawalStartHour = parseIntegerSetting("withdrawalStartHour", 9);
-  const withdrawalEndHour = parseIntegerSetting("withdrawalEndHour", 17);
+  const withdrawalEndHour = parseIntegerSetting("withdrawalEndHour", 18);
   const maxWithdrawalsPerDay = parseIntegerSetting("maxWithdrawalsPerDay", 1);
   const withdrawalPrepaymentEnabled = settings?.withdrawalPrepaymentEnabled === "true";
   const popupRules = [
@@ -122,7 +122,7 @@ export default function HomePage() {
     `Montant minimum du retrait : ${formatPopupMoney(minimumWithdrawal)}.`,
     `Frais de retrait : ${withdrawalFee.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} % du montant demandé. Le montant net estimé après frais est affiché avant validation.`,
     `Limite quotidienne de retrait : ${maxWithdrawalsPerDay} demande${maxWithdrawalsPerDay === 1 ? "" : "s"} par jour.`,
-    `Horaires de retrait : de ${withdrawalStartHour} h à ${withdrawalEndHour} h.`,
+    `Horaires de retrait : de ${withdrawalStartHour} h à ${withdrawalEndHour} h, heure de Kinshasa (RDC).`,
     "Délai de traitement : généralement sous 2 heures et, exceptionnellement, jusqu’à 24 heures.",
     ...(withdrawalPrepaymentEnabled
       ? ["Prépaiement : 25 % du montant demandé, avant traitement."]

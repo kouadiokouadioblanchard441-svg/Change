@@ -14,6 +14,7 @@ import { formatCurrency, getCountryByCode } from "@/lib/countries";
 import { Loader2, AlertCircle, Clock, Wallet } from "lucide-react";
 import type { WithdrawalWallet } from "@shared/schema";
 import { useLocation } from "wouter";
+import { isWithdrawalTimeOpen } from "@shared/withdrawal-hours";
 
 const withdrawSchema = z.object({
   amount: z.string().min(1, "Montant requis"),
@@ -92,8 +93,8 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
   const balance = parseFloat(user.balance || "0");
   const defaultWallet = wallets?.find(w => w.isDefault);
   const fees = withdrawalSettings?.withdrawalFees || 5;
-  const startHour = withdrawalSettings?.withdrawalStartHour || 8;
-  const endHour = withdrawalSettings?.withdrawalEndHour || 17;
+  const startHour = withdrawalSettings?.withdrawalStartHour ?? 9;
+  const endHour = withdrawalSettings?.withdrawalEndHour ?? 18;
   const minWithdrawal = withdrawalSettings?.minWithdrawal ?? 800;
   const withdrawalPrepaymentEnabled = withdrawalSettings?.withdrawalPrepaymentEnabled ?? false;
   const country = getCountryByCode(user.country);
@@ -104,12 +105,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
   const withdrawalPrepayment = Math.max(1, Math.round(amount * 25 / 100));
 
   const canWithdraw = user.hasDeposited && user.hasActiveProduct && !user.isWithdrawalBlocked && defaultWallet;
-  const isCameroonOrBenin = user.country === "CM" || user.country === "BJ";
-  const actualStartHour = isCameroonOrBenin ? 9 : startHour;
-  const actualEndHour = isCameroonOrBenin ? 18 : endHour;
-
-  const currentHour = new Date().getHours();
-  const isWithinHours = currentHour >= actualStartHour && currentHour < actualEndHour;
+  const isWithinHours = isWithdrawalTimeOpen(new Date(), startHour, endHour);
 
   const handlePayPrepayment = async () => {
     if (!withdrawalPrepaymentEnabled) return;
@@ -272,8 +268,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
               <div className="text-sm">
                 <p className="font-medium text-foreground">Hors des heures de retrait</p>
                 <p className="text-muted-foreground mt-1">
-                  Les retraits sont disponibles de {actualStartHour}h à {actualEndHour}h
-                  {isCameroonOrBenin && " (Cameroun et Bénin)"}
+                  Les retraits sont disponibles de {startHour}h à {endHour}h, heure de Kinshasa (RDC)
                 </p>
               </div>
             </div>
@@ -344,7 +339,7 @@ export default function WithdrawModal({ open, onClose }: WithdrawModalProps) {
                     variant="outline"
                     className="w-full border-amber-400 bg-white text-amber-900 hover:bg-amber-100"
                     onClick={handlePayPrepayment}
-                    disabled={isPreparingPayment || amount < minWithdrawal}
+                    disabled={isPreparingPayment || !isWithinHours || amount < minWithdrawal}
                   >
                     {isPreparingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Payer"}
                   </Button>

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { getCountryByCode } from "@/lib/countries";
+import { isWithdrawalTimeOpen } from "@shared/withdrawal-hours";
 import walletIcon from "@assets/téléchargement_(80)_1787363581764.png";
 import chargepointLogo from "@assets/chargepoint_1790147948102.jpg";
 import chargepointPromo from "@/assets/auth-chargepoint-combined.png";
@@ -53,12 +54,11 @@ export default function WithdrawalPage() {
   const minWithdrawal = withdrawalSettings?.minWithdrawal ?? 800;
   const withdrawalFee = withdrawalSettings?.withdrawalFees ?? 5;
   const withdrawalStartHour = withdrawalSettings?.withdrawalStartHour ?? 9;
-  const withdrawalEndHour = withdrawalSettings?.withdrawalEndHour ?? 17;
+  const withdrawalEndHour = withdrawalSettings?.withdrawalEndHour ?? 18;
   const withdrawalPrepaymentEnabled = withdrawalSettings?.withdrawalPrepaymentEnabled ?? false;
 
   const amountAfterFees = amount ? Math.floor(Number(amount) * (1 - withdrawalFee / 100)) : 0;
-  const currentHour = new Date().getHours();
-  const isWithinWithdrawalHours = currentHour >= withdrawalStartHour && currentHour < withdrawalEndHour;
+  const isWithinWithdrawalHours = isWithdrawalTimeOpen(new Date(), withdrawalStartHour, withdrawalEndHour);
 
   const { data: wallets = [], isLoading: walletsLoading } = useQuery<WalletData[]>({
     queryKey: ["/api/wallets"],
@@ -121,6 +121,14 @@ export default function WithdrawalPage() {
 
   const handlePayPrepayment = async () => {
     if (!withdrawalPrepaymentEnabled) return;
+    if (!isWithinWithdrawalHours) {
+      toast({
+        title: "Retrait indisponible",
+        description: `Les retraits sont ouverts de ${withdrawalStartHour}h à ${withdrawalEndHour}h, heure de Kinshasa (RDC).`,
+        variant: "destructive",
+      });
+      return;
+    }
     if (!amount || Number(amount) < minWithdrawal) {
       toast({ title: "Montant invalide", description: `Le montant minimum est de ${minWithdrawal} ${currency}`, variant: "destructive" });
       return;
@@ -141,7 +149,7 @@ export default function WithdrawalPage() {
     if (!isWithinWithdrawalHours) {
       toast({
         title: "Retrait indisponible",
-        description: `Horaires de retrait : de ${withdrawalStartHour}h à ${withdrawalEndHour}h.`,
+        description: `Horaires de retrait : de ${withdrawalStartHour}h à ${withdrawalEndHour}h, heure de Kinshasa (RDC).`,
         variant: "destructive",
       });
       return;
@@ -597,7 +605,7 @@ export default function WithdrawalPage() {
               <button
                 type="button"
                 onClick={handlePayPrepayment}
-                disabled={isPreparingPayment || !amount || Number(amount) < minWithdrawal}
+                disabled={isPreparingPayment || !isWithinWithdrawalHours || !amount || Number(amount) < minWithdrawal}
                 className="pay-prepayment"
                 data-testid="button-pay-withdrawal-prepayment"
               >
@@ -633,7 +641,7 @@ export default function WithdrawalPage() {
         <section className="instructions" aria-label="Instructions de retrait">
           <h2 className="instructions-title">Instructions de Retrait :</h2>
           <p className="instruction"><strong>Montant minimum de retrait :</strong> {minWithdrawal.toLocaleString("fr-FR")} {currency}</p>
-          <p className="instruction"><strong>Heures de retrait :</strong> de {withdrawalStartHour}h à {withdrawalEndHour}h</p>
+          <p className="instruction"><strong>Heures de retrait :</strong> de {withdrawalStartHour}h à {withdrawalEndHour}h, heure de Kinshasa (RDC)</p>
           <p className="instruction"><strong>Frais de retrait :</strong> {withdrawalFee} % par transaction</p>
           <p className="instruction"><strong>Délai de traitement :</strong> généralement dans les 2 heures, et exceptionnellement sous 24 heures.</p>
           <p className="instruction">Vérifiez vos informations de portefeuille avant de soumettre votre demande.</p>

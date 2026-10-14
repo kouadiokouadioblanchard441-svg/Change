@@ -17,7 +17,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
   const minWithdrawal = settings?.minWithdrawal || "800";
   const withdrawalFees = settings?.withdrawalFees || "5";
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
-  const withdrawalEndHour = settings?.withdrawalEndHour || "17";
+  const withdrawalEndHour = settings?.withdrawalEndHour || "18";
   const maxWithdrawalsPerDay = settings?.maxWithdrawalsPerDay || "1";
   const lv1 = settings?.level1Commission || "20";
   const lv2 = settings?.level2Commission || "3";
@@ -46,7 +46,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
               <ul className="space-y-1">
                 <li>- Montant minimum : {parseInt(minWithdrawal).toLocaleString()} CDF</li>
                 <li>- Frais de retrait : {withdrawalFees}%</li>
-                <li>- Horaires : {withdrawalStartHour}h - {withdrawalEndHour}h</li>
+                <li>- Horaires : {withdrawalStartHour}h - {withdrawalEndHour}h, heure de Kinshasa (RDC)</li>
                 <li>- Maximum {maxWithdrawalsPerDay} retrait(s) par jour</li>
                 <li>- Un produit actif est requis pour retirer</li>
                 <li>- Un portefeuille de retrait doit être enregistré</li>
