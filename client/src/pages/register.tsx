@@ -35,7 +35,7 @@ export default function RegisterPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const params = new URLSearchParams(searchString);
-  // Referral links use /html/register?code=ABC123.
+  // Referral links use /index/register?code=ABC123.
   const currentInvitationMatch = searchString.match(/[?&]code=([^&?#]+)/i);
   const refCode = currentInvitationMatch?.[1]
     || params.get("money")

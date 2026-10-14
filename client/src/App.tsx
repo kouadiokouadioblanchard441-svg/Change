@@ -169,6 +169,11 @@ function Router() {
           <RegisterPage />
         </PublicRoute>
       </Route>
+      <Route path="/index/register">
+        <PublicRoute>
+          <RegisterPage />
+        </PublicRoute>
+      </Route>
       <Route path="/html/register">
         <PublicRoute>
           <RegisterPage />
