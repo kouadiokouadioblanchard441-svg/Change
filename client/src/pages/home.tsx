@@ -127,7 +127,7 @@ export default function HomePage() {
     ...(withdrawalPrepaymentEnabled
       ? ["Prépaiement : 25 % du montant demandé, avant traitement."]
       : []),
-    `Bonus de pointage quotidien : de ${formatPopupMoney(20)} à ${formatPopupMoney(50)}, disponible une fois toutes les 24 heures.`,
+    `Bonus de pointage quotidien : de ${formatPopupMoney(20)} à ${formatPopupMoney(30)}, disponible une fois toutes les 24 heures.`,
     "Avant de confirmer une demande, vérifiez les coordonnées du portefeuille et le montant net affiché.",
   ];
   const withdrawnTotal = withdrawals?.filter((item) => item.status === "approved")

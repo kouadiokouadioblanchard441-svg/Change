@@ -436,7 +436,7 @@ export default function CheckinPage() {
             <div className="reward-image"><img src={chargepointHero} alt="Solutions de recharge ChargePoint" /></div>
             <div className="reward-copy">
               <p>Recevez une récompense chaque jour</p>
-              <strong>20 à 50 {currency}</strong>
+              <strong>20 à 30 {currency}</strong>
             </div>
           </div>
           <div className="stats">

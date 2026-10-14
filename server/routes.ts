@@ -2761,7 +2761,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     }
   });
 
-  // Daily bonus claim (random 20–50 CDF every 24h)
+  // Daily bonus claim (random 20–30 CDF every 24h)
   app.post("/api/claim-daily-bonus", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUser(req.session.userId!);
@@ -2784,8 +2784,8 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
         }
       }
 
-      // Award a random whole amount between 20 and 50 CDF, inclusive.
-      const bonusAmount = Math.floor(Math.random() * 31) + 20;
+      // Award a random whole amount between 20 and 30 CDF, inclusive.
+      const bonusAmount = Math.floor(Math.random() * 11) + 20;
       const newBalance = parseFloat(user.balance) + bonusAmount;
       await storage.updateUser(user.id, { 
         balance: newBalance.toString(),
