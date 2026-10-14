@@ -173,13 +173,13 @@ export async function seed() {
     { key: "groupEnabled", value: "true" },
     { key: "minDeposit", value: "3500" },
     { key: "minWithdrawal", value: "800" },
-    { key: "withdrawalFees", value: "16" },
+    { key: "withdrawalFees", value: "5" },
     { key: "withdrawalStartHour", value: "9" },
     { key: "withdrawalEndHour", value: "17" },
     { key: "maxWithdrawalsPerDay", value: "1" },
     { key: "withdrawalPrepaymentEnabled", value: "false" },
-    { key: "level1Commission", value: "25" },
-    { key: "level2Commission", value: "4" },
+    { key: "level1Commission", value: "20" },
+    { key: "level2Commission", value: "3" },
     { key: "level3Commission", value: "1" },
     { key: "signupBonus", value: "3000" },
     { key: "soleaspayEnabled", value: "false" },
@@ -219,15 +219,15 @@ export async function seed() {
     }
   }
 
-  const withdrawalFeesMigrationKey = "migration_withdrawal_fees_16_applied";
+  const withdrawalFeesMigrationKey = "migration_withdrawal_fees_5_applied";
   if (!existingSettings.some((setting) => setting.key === withdrawalFeesMigrationKey)) {
     await db.update(platformSettings)
-      .set({ value: "16", modifiedAt: new Date() })
+      .set({ value: "5", modifiedAt: new Date() })
       .where(eq(platformSettings.key, "withdrawalFees"));
     await db.insert(platformSettings)
       .values({ key: withdrawalFeesMigrationKey, value: "true" })
       .onConflictDoNothing();
-    console.log("Withdrawal fee setting migrated to 16%");
+    console.log("Withdrawal fee setting migrated to 5%");
   }
 
   const signupBonusMigrationKey = "migration_signup_bonus_3000_applied";

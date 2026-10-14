@@ -313,10 +313,10 @@ async function run() {
 
     // ── Seed platform settings ──
     const settings = [
-      ["minDeposit", "3500"], ["minWithdrawal", "800"], ["withdrawalFees", "16"],
+      ["minDeposit", "3500"], ["minWithdrawal", "800"], ["withdrawalFees", "5"],
       ["withdrawalStartHour", "9"], ["withdrawalEndHour", "17"], ["maxWithdrawalsPerDay", "1"],
       ["withdrawalPrepaymentEnabled", "false"],
-      ["level1Commission", "25"], ["level2Commission", "4"], ["level3Commission", "1"],
+      ["level1Commission", "20"], ["level2Commission", "3"], ["level3Commission", "1"],
       ["signupBonus", "3000"], ["soleaspayEnabled", "false"], ["soleaspayCountries", ""],
       ["soleaspayChannelName", "Westpay"], ["omnipayEnabled", "false"],
       ["omnipayChannelName", "OmniPay"], ["omnipayCallbackKey", ""],

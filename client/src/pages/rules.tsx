@@ -11,12 +11,12 @@ export default function RulesPage() {
   const signupBonus = settings?.signupBonus || "3000";
   const minDeposit = settings?.minDeposit || "3500";
   const minWithdrawal = settings?.minWithdrawal || "800";
-  const withdrawalFees = settings?.withdrawalFees || "16";
+  const withdrawalFees = settings?.withdrawalFees || "5";
   const withdrawalStartHour = settings?.withdrawalStartHour || "9";
   const withdrawalEndHour = settings?.withdrawalEndHour || "17";
   const maxWithdrawalsPerDay = settings?.maxWithdrawalsPerDay || "1";
-  const lv1 = settings?.level1Commission || "25";
-  const lv2 = settings?.level2Commission || "4";
+  const lv1 = settings?.level1Commission || "20";
+  const lv2 = settings?.level2Commission || "3";
   const lv3 = settings?.level3Commission || "1";
 
   return (

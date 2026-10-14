@@ -129,13 +129,14 @@ The "Start application" workflow runs `npm run dev` and serves the app on port 5
 ## Business Rules
 - **Signup Bonus**: 3000 CDF
 - **Free Daily Product**: 50 CDF per day
-- **Withdrawal Fees**: 16%
+- **Withdrawal Fees**: 5%
+- **Editable Financial Configuration**: VIP prices, daily earnings and cycle lengths, referral commission tiers, and withdrawal fees are managed as database values in the admin panel. Startup seeding must not overwrite existing admin changes or hardcode VIP catalog entries.
 - **Minimum Deposit**: 3000 CDF
 - **Minimum Withdrawal**: 1200 CDF
 - **Withdrawal Hours**: 8h-17h (9h-18h for Cameroon/Benin)
 - **Max Withdrawals/Day**: 2
-- **Referral Commissions**: Level 1 (25%), Level 2 (4%), Level 3 (1%)
-- **Product Cycle**: 80 days by default
+- **Referral Commissions**: Level 1 (20%), Level 2 (3%), Level 3 (1%)
+- **Product Cycle**: Current VIP1–VIP6 plans use 90-day cycles; each product’s duration remains editable in the admin panel.
 
 ## Supported Countries
 - RDC (CD) - +243 - CDF (site display only; stored amounts are unchanged) - Airtel Money

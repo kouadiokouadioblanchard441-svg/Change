@@ -2604,7 +2604,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
       }
 
       const settings = await storage.getSettings();
-       const fees = parseFloat(settings.withdrawalFees || "16");
+       const fees = parseFloat(settings.withdrawalFees || "5");
       const feeAmount = Math.round(numericAmount * fees / 100);
       const netAmount = numericAmount - feeAmount;
 
@@ -2879,7 +2879,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
     try {
       const settings = await storage.getSettings();
       res.json({
-        withdrawalFees: parseFloat(settings.withdrawalFees || "16"),
+        withdrawalFees: parseFloat(settings.withdrawalFees || "5"),
         withdrawalStartHour: parseInt(settings.withdrawalStartHour || "9"),
         withdrawalEndHour: parseInt(settings.withdrawalEndHour || "17"),
         maxWithdrawalsPerDay: parseInt(settings.maxWithdrawalsPerDay || "1"),

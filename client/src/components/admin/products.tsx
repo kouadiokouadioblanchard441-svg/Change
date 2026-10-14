@@ -186,14 +186,14 @@ export default function AdminProducts() {
       <div className="grid grid-cols-2 gap-4">
         <FormField control={form.control} name="price" render={({ field }) => (
           <FormItem>
-            <FormLabel>Prix (F)</FormLabel>
+            <FormLabel>Prix (CDF)</FormLabel>
           <FormControl><Input {...field} type="number" min="0" step="1" placeholder="Ex: 15000" /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
         <FormField control={form.control} name="dailyEarnings" render={({ field }) => (
           <FormItem>
-            <FormLabel>Gains/jour (F)</FormLabel>
+            <FormLabel>Gains/jour (CDF)</FormLabel>
           <FormControl><Input {...field} type="number" min="0" step="1" placeholder="Ex: 300" /></FormControl>
             <FormMessage />
           </FormItem>
@@ -248,7 +248,7 @@ export default function AdminProducts() {
         <div className="bg-primary/10 rounded-lg p-3 text-sm">
           <p className="text-muted-foreground">Retour total estimé :</p>
           <p className="font-bold text-primary text-lg">
-            {(parseInt(form.watch("dailyEarnings") || "0") * parseInt(form.watch("cycleDays") || "0")).toLocaleString()} F
+            {(parseInt(form.watch("dailyEarnings") || "0") * parseInt(form.watch("cycleDays") || "0")).toLocaleString()} CDF
           </p>
         </div>
       )}
@@ -292,7 +292,7 @@ export default function AdminProducts() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {product.price.toLocaleString()} F — {product.dailyEarnings.toLocaleString()} F/jour
+                      {product.price.toLocaleString()} CDF — {product.dailyEarnings.toLocaleString()} CDF/jour
                     </p>
                   </div>
                 </div>
@@ -325,15 +325,15 @@ export default function AdminProducts() {
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
                   <p className="text-muted-foreground">Prix</p>
-                  <p className="font-medium text-foreground">{product.price.toLocaleString()} F</p>
+                  <p className="font-medium text-foreground">{product.price.toLocaleString()} CDF</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Gains/jour</p>
-                  <p className="font-medium text-foreground">{product.dailyEarnings.toLocaleString()} F</p>
+                  <p className="font-medium text-foreground">{product.dailyEarnings.toLocaleString()} CDF</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Total ({product.cycleDays}j)</p>
-                  <p className="font-medium text-primary">{product.totalReturn.toLocaleString()} F</p>
+                  <p className="font-medium text-primary">{product.totalReturn.toLocaleString()} CDF</p>
                 </div>
               </div>
             </CardContent>
