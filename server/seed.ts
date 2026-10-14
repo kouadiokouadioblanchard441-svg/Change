@@ -64,12 +64,17 @@ export async function seed() {
   const adminPhone = process.env.ADMIN_PHONE || "99935673";
   const adminCountry = process.env.ADMIN_COUNTRY || "TG";
   const existingAdmin = await db.select().from(users).where(eq(users.phone, adminPhone));
+  const existingSuperAdmin = existingAdmin.length === 0
+    ? await db.select({ id: users.id }).from(users).where(eq(users.isSuperAdmin, true)).limit(1)
+    : [];
   const adminPassword = process.env.ADMIN_PASSWORD;
 
   const adminPin = process.env.ADMIN_PIN;
 
   if (existingAdmin.length === 0) {
-    if (!adminPassword) {
+    if (existingSuperAdmin.length > 0) {
+      console.warn("Configured admin phone differs from an existing super admin; preserving the existing account.");
+    } else if (!adminPassword) {
       console.warn("No administrator exists yet; set ADMIN_PASSWORD to provision the initial admin.");
     } else {
       const hashedPassword = await bcrypt.hash(adminPassword, 12);
