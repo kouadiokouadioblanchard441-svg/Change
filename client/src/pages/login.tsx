@@ -37,7 +37,7 @@ export default function LoginPage() {
   });
 
   const { data: apiCountries, isLoading: countriesLoading } = useQuery<ApiCountry[]>({
-    queryKey: ["/api/auth/login-countries"],
+    queryKey: ["/api/countries"],
   });
 
   const selectedCountry = form.watch("country");
@@ -50,18 +50,16 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!apiCountries || apiCountries.length === 0) return;
-    const isValid = apiCountries.some(ac => ac.code === selectedCountry);
-    // Keep inactive countries selectable only when existing accounts still use them.
+    const isValid = apiCountries.some(ac => ac.code === selectedCountry && ac.isActive && ac.code === "CD");
     if (!isValid) {
       const first = apiCountries.find(ac => ac.isActive);
-      const fallback = first || apiCountries[0];
-      if (fallback) form.setValue("country", fallback.code);
+      if (first) form.setValue("country", first.code);
     }
   }, [apiCountries, selectedCountry, form]);
 
   const countryData = (() => {
     if (apiCountries !== undefined) {
-      const c = apiCountries.find(ac => ac.code === selectedCountry);
+      const c = apiCountries.find(ac => ac.code === selectedCountry && ac.isActive && ac.code === "CD");
       if (c) return { phonePrefix: c.phonePrefix, name: c.name };
       return null;
     }
@@ -164,7 +162,7 @@ export default function LoginPage() {
         </section>
       </div>
 
-      <CountrySelector apiPath="/api/auth/login-countries" includeInactive selectedCountryCode={selectedCountry} open={countryModalOpen} onClose={() => setCountryModalOpen(false)} onSelect={(code) => form.setValue("country", code, { shouldValidate: true })} />
+      <CountrySelector selectedCountryCode={selectedCountry} open={countryModalOpen} onClose={() => setCountryModalOpen(false)} onSelect={(code) => form.setValue("country", code, { shouldValidate: true })} />
     </main>
   );
 }

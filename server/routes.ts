@@ -616,7 +616,7 @@ export async function registerRoutes(
     try {
       const data = registerSchema.parse(req.body);
       const activeCountries = await storage.getActiveCountries();
-      if (!activeCountries.some(country => country.code === data.country)) {
+      if (data.country !== "CD" || !activeCountries.some(country => country.code === "CD")) {
         return res.status(400).json({ message: "Pays indisponible" });
       }
       
@@ -702,14 +702,6 @@ export async function registerRoutes(
         return res.status(400).json({ message: error.errors[0].message });
       }
       res.status(500).json({ message: error.message || "Erreur serveur" });
-    }
-  });
-
-  app.get("/api/auth/login-countries", async (_req, res) => {
-    try {
-      res.json(await storage.getLoginCountries());
-    } catch (error: any) {
-      res.status(500).json({ message: error.message || "Impossible de charger les pays de connexion" });
     }
   });
 
@@ -4003,7 +3995,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
   app.get("/api/countries", async (req, res) => {
     try {
       const activeCountries = await storage.getActiveCountries();
-      res.json(activeCountries);
+      res.json(activeCountries.filter(country => country.code === "CD" && country.isActive));
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -4406,7 +4398,7 @@ async function refundRejectedWithdrawal(withdrawal: { id: number; userId: number
   app.get("/api/admin/countries", requireAdmin, async (req, res) => {
     try {
       const allCountries = await storage.getCountries();
-      res.json(allCountries);
+      res.json(allCountries.filter(country => country.code === "CD"));
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

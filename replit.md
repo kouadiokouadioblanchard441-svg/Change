@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - **Middleware**: `requireAuth` and `requireAdmin` middleware for route protection
 
 ### Key Features
-- **Country availability**: New registrations and public country selectors are limited to the Democratic Republic of the Congo (+243); previous country rows remain inactive for history and legacy account login.
+- **Country availability**: Public country selectors, including login, registration, deposits, and admin country settings, show only the Democratic Republic of the Congo (+243); previous country rows remain inactive for historical records.
 - **Product System**: Virtual industrial robot products with daily earnings cycles
 - **Referral System**: 3-level commission structure for team building
 - **Task System**: Invite-based tasks with bonus rewards
@@ -127,7 +127,7 @@ The "Start application" workflow runs `npm run dev` and serves the app on port 5
 - Removed emoji usage in favor of text country codes
 
 ## Business Rules
-- **Signup Bonus**: 1000 CDF
+- **Signup Bonus**: 3000 CDF
 - **Free Daily Product**: 50 CDF per day
 - **Withdrawal Fees**: 16%
 - **Minimum Deposit**: 3000 CDF

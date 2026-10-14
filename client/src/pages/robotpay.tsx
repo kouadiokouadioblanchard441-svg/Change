@@ -513,7 +513,7 @@ export default function RobotPayPage() {
     setStep(1);
   };
 
-   if (!amount || !country) return <main className="flex min-h-screen items-center justify-center bg-[#FF7A14] p-6 text-center text-[#111827]"><p className="rounded-xl border-2 border-[#111827] bg-white p-5 font-semibold shadow-[0_4px_0_#111827]">Données de dépôt invalides.</p></main>;
+   if (!amount || country !== "CD") return <main className="flex min-h-screen items-center justify-center bg-[#FF7A14] p-6 text-center text-[#111827]"><p className="rounded-xl border-2 border-[#111827] bg-white p-5 font-semibold shadow-[0_4px_0_#111827]">Données de dépôt invalides.</p></main>;
   return (
       <main className="min-h-screen bg-[#FF7A14] p-3 text-[#111827] sm:p-6">
        <aside

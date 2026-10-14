@@ -237,11 +237,11 @@ export class DatabaseStorage implements IStorage {
     const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const hashedPassword = await bcrypt.hash(data.password!, 10);
 
-    // Get signup bonus from settings (default 1000)
-    let signupBonus = "1000";
+    // Get signup bonus from settings (default 3000 CDF)
+    let signupBonus = "3000";
     try {
       const settings = await this.getSettings();
-      signupBonus = settings.signupBonus || "1000";
+      signupBonus = settings.signupBonus || "3000";
     } catch {}
 
     const [user] = await db.insert(users).values({
@@ -1657,19 +1657,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActiveCountries(): Promise<Country[]> {
-    return await db.select().from(countries).where(eq(countries.isActive, true));
-  }
-
-  async getLoginCountries(): Promise<Country[]> {
-    const accountCountries = await db
-      .select({ country: users.country })
-      .from(users)
-      .groupBy(users.country);
-    const codes = accountCountries.map(({ country }) => country).filter(Boolean);
-    if (codes.length === 0) return this.getActiveCountries();
-
     return await db.select().from(countries).where(
-      or(eq(countries.isActive, true), inArray(countries.code, codes)),
+      and(eq(countries.isActive, true), eq(countries.code, "CD")),
     );
   }
 

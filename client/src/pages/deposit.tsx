@@ -190,7 +190,7 @@ export default function DepositPage() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const [amount, setAmount] = useState<number | "">("");
-  const [depositCountry, setDepositCountry] = useState("");
+  const [depositCountry, setDepositCountry] = useState("CD");
   const [senderPhone, setSenderPhone] = useState(user?.phone || "");
   const [screenshot, setScreenshot] = useState<string>("");
   const [screenshotName, setScreenshotName] = useState("");
@@ -198,7 +198,7 @@ export default function DepositPage() {
   const [reference, setReference] = useState("");
 
   // SendavaPay state
-  const [svCountry, setSvCountry] = useState(user?.country || "");
+  const [svCountry, setSvCountry] = useState("CD");
   const [svPhone, setSvPhone] = useState("");
   const [svOperator, setSvOperator] = useState<SvOperator | null>(null);
   const [svDepositId, setSvDepositId] = useState<number | null>(null);
@@ -218,7 +218,7 @@ export default function DepositPage() {
   const [soleaspayPolling, setSoleaspayPolling] = useState(false);
 
   // AshtechPay state
-  const [ashtechCountry, setAshtechCountry] = useState(user?.country || "");
+  const [ashtechCountry, setAshtechCountry] = useState("CD");
   const [ashtechPhone, setAshtechPhone] = useState("");
   const [ashtechOperator, setAshtechOperator] = useState("");
   const [ashtechDepositId, setAshtechDepositId] = useState<number | null>(null);
@@ -272,13 +272,8 @@ export default function DepositPage() {
   ].filter((preset) => preset >= MIN_DEPOSIT);
   const ashtechAvailable = depositMethodIds.has("ashtech");
 
-  const depositCountryPriority: Record<string, number> = { CI: 0, NE: 1 };
   const activeDepositCountries = apiCountries
-    .filter(c => c.isActive)
-    .sort((first, second) =>
-      (depositCountryPriority[first.code.toUpperCase()] ?? 2) -
-      (depositCountryPriority[second.code.toUpperCase()] ?? 2),
-    ) as Array<{ code: string; name: string; currency: string }>;
+    .filter(c => c.isActive && c.code.toUpperCase() === "CD") as Array<{ code: string; name: string; currency: string }>;
   const ashtechConfiguredCountryCodes = ashtechAvailable ? [country.toUpperCase()] : [];
 
   const { data: paymentNumbersList = [], isLoading: numbersLoading } = useQuery<PaymentNumber[]>({

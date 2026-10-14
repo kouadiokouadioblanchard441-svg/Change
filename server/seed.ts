@@ -181,7 +181,7 @@ export async function seed() {
     { key: "level1Commission", value: "25" },
     { key: "level2Commission", value: "4" },
     { key: "level3Commission", value: "1" },
-    { key: "signupBonus", value: "1000" },
+    { key: "signupBonus", value: "3000" },
     { key: "soleaspayEnabled", value: "false" },
     { key: "soleaspayCountries", value: "" },
     { key: "soleaspayChannelName", value: "SoleaPay" },
@@ -230,15 +230,15 @@ export async function seed() {
     console.log("Withdrawal fee setting migrated to 16%");
   }
 
-  const signupBonusMigrationKey = "migration_signup_bonus_1000_applied";
+  const signupBonusMigrationKey = "migration_signup_bonus_3000_applied";
   if (!existingSettings.some((setting) => setting.key === signupBonusMigrationKey)) {
     await db.update(platformSettings)
-      .set({ value: "1000", modifiedAt: new Date() })
+      .set({ value: "3000", modifiedAt: new Date() })
       .where(eq(platformSettings.key, "signupBonus"));
     await db.insert(platformSettings)
       .values({ key: signupBonusMigrationKey, value: "true" })
       .onConflictDoNothing();
-    console.log("Signup bonus setting migrated to 1000 CDF");
+    console.log("Signup bonus setting migrated to 3000 CDF");
   }
 
   const minimumWithdrawalMigrationKey = "migration_min_withdrawal_800_applied";

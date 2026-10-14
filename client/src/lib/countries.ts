@@ -56,7 +56,8 @@ export function getCountriesForDisplay(
   apiCountries: ApiCountry[] | undefined,
   apiFailed = false,
 ): ApiCountry[] {
-  return apiFailed ? FALLBACK_API_COUNTRIES : apiCountries ?? [];
+  if (apiFailed) return FALLBACK_API_COUNTRIES;
+  return (apiCountries ?? []).filter(country => country.code.toUpperCase() === "CD" && country.isActive);
 }
 
 export function parseOperators(operatorsJson: string): string[] {
@@ -68,6 +69,7 @@ export function parseOperators(operatorsJson: string): string[] {
 }
 
 export function getCountryByCode(code: string, apiCountries?: ApiCountry[]) {
+  if (code.toUpperCase() !== "CD") return undefined;
   if (apiCountries !== undefined) {
     // API data is loaded — only use it, never fall back to hardcoded data
     // This ensures disabled countries and updated operators are respected
